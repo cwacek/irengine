@@ -15,6 +15,7 @@ func setupLogging(config_xml string) {
 type Document interface {
   Identifier() string
   Tokens() <-chan *Token
+  Len() int /* The number of tokens in this document */
 }
 
 type FileReader interface {
