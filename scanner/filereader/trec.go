@@ -18,6 +18,10 @@ func NewTrecDocument() (*TrecDocument) {
   return doc
 }
 
+func (d *TrecDocument) Len() int {
+  return len(d.tokens)
+}
+
 func (d *TrecDocument) Tokens() <-chan *Token{
 
   c := make(chan *Token)
