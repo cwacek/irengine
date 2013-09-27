@@ -52,6 +52,7 @@ func BadXMLTokenizer_FromReader(rd io.ReadSeeker) (Tokenizer){
     t.rd = rd
     t.scanner = new(scanner.Scanner).Init(rd)
     t.scanner.Whitespace = 0
+    t.scanner.Error = func(s *scanner.Scanner, msg string) { panic(msg)}
     t.scanner.Mode = scanner.ScanStrings
     return t
 }
@@ -63,6 +64,7 @@ func (tz *BadXMLTokenizer) Reset() {
     }
     tz.scanner = new(scanner.Scanner).Init(tz.rd)
     tz.scanner.Whitespace = 0
+    tz.scanner.Error = func(s *scanner.Scanner, msg string) { panic(msg)}
     tz.scanner.Mode = scanner.ScanStrings
 }
 
@@ -83,8 +85,10 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
         }
 
         switch  {
+        case unicode.IsPrint(tok) == false:
+          log.Debug("Skipping unprintable character")
+          fallthrough
         case unicode.IsSpace(tok):
-            log.Debugf("Skipping whitespace")
             tz.scanner.Scan()
             continue
 

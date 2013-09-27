@@ -72,15 +72,20 @@ func (fr *TrecFileReader) read_next_doc() (Document, error) {
   var in_text, in_title bool
   var titlebuf = new(bytes.Buffer)
 
-  for token := range fr.scanner.Tokens() {
-    /*log.Debugf("Going to read another token")*/
-    /*token, ok := <- tokens*/
+
+  for {
+    token, ok := fr.scanner.Next()
+
+    if ok != nil {
+      return nil, ok
+    }
     log.Debugf("Read token '%s'", token)
 
     switch {
     case token.Type == XMLStartToken && token.Text == "DOC":
-      log.Debugf("Start Document")
+      fr.docCounter += 1
       doc = NewTrecDocument()
+      log.Debugf("Start Document %d => $v", fr.docCounter, doc)
     case token.Type == XMLEndToken && token.Text == "DOC":
       if doc == nil {
         panic(fmt.Sprintf("Found %s before DOC beginning", token))
@@ -103,6 +108,9 @@ func (fr *TrecFileReader) read_next_doc() (Document, error) {
       in_title = true
       titlebuf.Reset()
     case token.Type == XMLEndToken && token.Text == "DOCNO":
+      if doc == nil {
+        panic(fmt.Sprintf("Found DOCNO before DOC beginning. Doc => %v", doc))
+      }
       doc.id = titlebuf.String()
       in_title = false
 
@@ -112,7 +120,7 @@ func (fr *TrecFileReader) read_next_doc() (Document, error) {
       case in_title && token.Type == TextToken:
         titlebuf.WriteString(token.Text)
       case in_text:
-        log.Debugf("Adding %s to document tokens. Doc is %s", token, doc)
+        log.Debugf("Adding %s to document tokens. Doc is %d tokens long", token, doc.Len())
         doc.tokens = append(doc.tokens, token)
       }
     }
@@ -122,19 +130,33 @@ func (fr *TrecFileReader) read_next_doc() (Document, error) {
 }
 
 func (fr *TrecFileReader) read_to_chan(count int) (i int) {
+  //Catch and log panics
+  defer func() {
+    if x := recover(); x != nil {
+      log.Criticalf("Error in document %d of %s", fr.docCounter, fr.filename)
+      log.Flush()
+    }
+  }()
 
-  for i := 0; i < count; i++ {
-    log.Infof("Reading document %d", i)
-		doc, ok := fr.read_next_doc()
-    log.Infof("Read document. Error: %v", ok)
+  for i := 0; i < count || count == -1; i++ {
+    log.Infof("Reading document %d from %s", i, fr.filename)
+		doc, err := fr.read_next_doc()
 
-		if ok == io.EOF {
-      break
+    switch err {
+
+    case io.EOF:
+      log.Infof("Got EOF for file %s", fr.filename)
       close(fr.documents)
-		}
+      return i
 
-    log.Infof("Pushing document %s to channel %v", doc.Identifier(), fr.documents)
-		fr.documents <- doc
+    case nil:
+      log.Infof("Successfully read document %s", doc.Identifier())
+      fr.documents <- doc
+
+    default:
+      panic(err)
+
+    }
 	}
   log.Infof("Returning")
 	return i
@@ -149,7 +171,15 @@ func (fr *TrecFileReader) Read() Document {
 }
 
 func (fr *TrecFileReader) ReadAll() <-chan Document {
+  defer func() {
+    if x := recover(); x != nil {
+      log.Flush()
+    }
+  }()
+
+  log.Debug("Reading documents")
   fr.scanner.Reset()
+  log.Debug("Reset")
 	go fr.read_to_chan(-1)
 	return fr.documents
 }
