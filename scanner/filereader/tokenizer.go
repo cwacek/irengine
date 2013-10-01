@@ -163,8 +163,6 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
             t.scanner.Scan()
             entity.WriteString(t.scanner.TokenText())
 
-        case next == ',':
-            fallthrough
         case next =='\'':
             t.scanner.Scan()
             part2, ok := t.parseCompound()

@@ -69,7 +69,7 @@ basis for the past three crop years
 The Secretary of Agricultures Advisory Committee on Cotton Marketing recommended that if no significant problems
 were encountered during the 1993 classing season the module averaging procedure be expanded to include all cotton
 classed in 1994 and subsequent crop years For the 1993 expanded voluntary program there were 242 gins participating
-and the production from these gins totaled 3053716 bales This represented 20 percent of the 1993 cotton crop No
+and the production from these gins totaled 3 , 053 , 716 bales This represented 20 percent of the 1993 cotton crop No
 problems of any significance are known to have developed during the 1993 project In keeping with the advisory committees
 recommendation AMS proposed that module averaging be applied to all bales classed effective with the 1994 cotton
 crop 

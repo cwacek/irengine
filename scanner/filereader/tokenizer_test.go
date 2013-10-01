@@ -35,11 +35,21 @@ var (
             },
         },
         {
-            "8:43pm",
+            "8:43pm 100.242 100,000,1.10",
             []Token{
                 {"8", TextToken},
                 {":", SymbolToken},
                 {"43pm", TextToken},
+                {"100", TextToken},
+                {".", SymbolToken},
+                {"242", TextToken},
+                {"100", TextToken},
+                {",", SymbolToken},
+                {"000", TextToken},
+                {",", SymbolToken},
+                {"1", TextToken},
+                {".", SymbolToken},
+                {"10", TextToken},
             },
         },
         {
