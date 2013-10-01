@@ -21,6 +21,14 @@ type Token struct {
     Type TokenType
 }
 
+func NewToken(text string, ttype TokenType) (*Token) {
+  t := new(Token)
+  t.Text = text
+  t.Type = ttype
+
+  return t
+}
+
 type Tokenizer interface {
     Next() (*Token, error)
     Tokens() <-chan *Token
@@ -108,16 +116,18 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
             }
 
         case unicode.Is(unicode.Terminal_Punctuation, tok):
-            /*log.Infof("Removing terminal punctuation %c", tok)*/
-            tz.scanner.Scan()
-            if tok == ':' &&
-               unicode.IsOneOf(alnum,tz.scanner.Peek()) {
-                   return &Token{":", SymbolToken}, nil
+            tok = tz.scanner.Scan()
+            next := tz.scanner.Peek()
+            /*log.Infof("Removing terminal punctuation %c. Next is %c", tok, next)*/
+            if unicode.IsOneOf(alnum,next) {
+              /*log.Infof("Just kidding. Storing this symbol %s because %s follows it",*/
+              /*string(tok), string(next))*/
+              return NewToken(string(tok), SymbolToken), nil
             }
 
         case unicode.IsOneOf(symbols, tok):
             tz.scanner.Scan()
-            token := &Token{tz.scanner.TokenText(), SymbolToken}
+            token := NewToken(tz.scanner.TokenText(), SymbolToken )
             log.Debugf("Read symbol: %s", token)
             return token, nil
 
@@ -164,9 +174,7 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
 
         default:
             if entity.Len() > 0 {
-                tok := new(Token)
-                tok.Text = entity.String()
-                tok.Type = TextToken
+                tok := NewToken(entity.String(), TextToken)
                 return tok, true
             } else {
                 return nil, false}
@@ -202,9 +210,7 @@ func parseHTMLEntity(sc *scanner.Scanner) (*Token, bool) {
         switch {
         case unicode.IsSpace(tok):
             if entity.Len() > 1 {
-                token := new(Token)
-                token.Text = entity.String()
-                token.Type = TextToken
+                token := NewToken(entity.String(), TextToken)
                 log.Debugf("ParseHTML. Returning non-HTML '%s'",
             token.Text)
                 return token, false
@@ -215,9 +221,7 @@ func parseHTMLEntity(sc *scanner.Scanner) (*Token, bool) {
         case tok == ';':
             entity.WriteRune(tok)
             if decoded, ok := decodeEntity(entity.String()); ok {
-                token := new(Token)
-                token.Text = decoded
-                token.Type = TextToken
+                token := NewToken(decoded, TextToken)
                 log.Debugf("ParseHTML. Returning HTML '%s'",
                 token.Text)
                 return token, true
