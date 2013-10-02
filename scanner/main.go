@@ -1,7 +1,6 @@
 package main
 
 import "flag"
-import "path/filepath"
 import "os"
 import "github.com/cwacek/irengine/scanner/actions"
 import log "github.com/cihub/seelog"
@@ -50,6 +49,6 @@ func DoAction() {
 	switch flag.Lookup("action").Value.String() {
 	case "print_tokens":
 		root := flag.Lookup("doc.root").Value.String()
-		filepath.Walk(root, actions.PrintTokens)
+    actions.PrintTokens(root)
 	}
 }

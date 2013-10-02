@@ -1,7 +1,7 @@
 package main
 
-import log "github.com/cihub/seelog"
 import "fmt"
+import log "github.com/cihub/seelog"
 
 var appConfig = `
   <seelog type="sync" minlevel='%s'>
