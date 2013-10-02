@@ -22,6 +22,7 @@ type Filter interface {
   Follow(f Filter, force bool)
   Output() *FilterPipe
 
+  Apply()
   Pull()
   Terminate()
 }

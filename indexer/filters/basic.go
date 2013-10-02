@@ -29,7 +29,7 @@ func (f *LowerCaseFilter) IsDestructive() bool {
 	return true
 }
 
-func (f *LowerCaseFilter) apply() {
+func (f *LowerCaseFilter) Apply() {
 		for tok := range f.Input().Pipe {
       log.Debugf("Received '%s'", tok)
       converted := tok.Clone()
@@ -41,20 +41,7 @@ func (f *LowerCaseFilter) apply() {
 		f.Terminate()
   }
 
-func (f *LowerCaseFilter) Pull() {
-  log.Debugf("%v was Pulled", f)
-
-  if !f.running {
-    go f.apply()
-    f.running = true
-  }
-
-  if f.parent != nil {
-    f.parent.Pull()
-  }
-}
-
-func (f *NullFilter) apply() {
+func (f *NullFilter) Apply() {
   for tok := range f.input.Pipe {
     log.Debugf("Read %v. Forwarding to ", tok)
     f.SendAll(tok)
@@ -63,16 +50,3 @@ func (f *NullFilter) apply() {
   f.Terminate()
 }
 
-func (f *NullFilter) Pull() {
-  log.Debugf("%v was Pulled. Will read from %v", f, f.input)
-
-  if !f.running {
-    go f.apply()
-    f.running = true
-  }
-
-  if f.parent != nil {
-    log.Debugf("Calling Pull on %v", f.parent)
-    f.parent.Pull()
-  }
-}

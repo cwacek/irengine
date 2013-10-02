@@ -75,3 +75,13 @@ func (fc *FilterPlumbing) Terminate() {
   }
 }
 
+func (fc *FilterPlumbing) Pull() {
+  if !fc.running {
+    go fc.self.Apply()
+    fc.running = true
+  }
+
+  if fc.parent != nil {
+    fc.parent.Pull()
+  }
+}
