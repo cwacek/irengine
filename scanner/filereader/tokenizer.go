@@ -19,6 +19,15 @@ const (
 type Token struct {
     Text string
     Type TokenType
+    DocId string
+    Position int
+}
+
+func (t *Token) Clone() *Token {
+  newtok := NewToken(t.Text, t.Type)
+  newtok.DocId = t.DocId
+  newtok.Position = t.Position
+  return newtok
 }
 
 func NewToken(text string, ttype TokenType) (*Token) {

@@ -22,6 +22,12 @@ func (d *TrecDocument) Len() int {
   return len(d.tokens)
 }
 
+func (d *TrecDocument) Add(token *Token) {
+  token.Position = len(d.tokens) + 1
+  token.DocId = d.id
+  d.tokens = append(d.tokens, token)
+}
+
 func (d *TrecDocument) Tokens() <-chan *Token{
 
   c := make(chan *Token)
@@ -45,6 +51,10 @@ type TrecFileReader struct {
 	docCounter int
   scanner    Tokenizer
 	documents  chan Document
+}
+
+func (fr *TrecFileReader) Path() string {
+  return fr.filename
 }
 
 func (fr *TrecFileReader) Init(filename string) {
@@ -121,7 +131,7 @@ func (fr *TrecFileReader) read_next_doc() (Document, error) {
         titlebuf.WriteString(token.Text)
       case in_text:
         log.Debugf("Adding %s to document tokens. Doc is %d tokens long", token, doc.Len())
-        doc.tokens = append(doc.tokens, token)
+        doc.Add(token)
       }
     }
   }
