@@ -18,6 +18,10 @@ func NewTrecDocument() (*TrecDocument) {
   return doc
 }
 
+func (d TrecDocument) String() string {
+  return fmt.Sprintf("{Doc: %s, Tokens: %d}",d.id, len(d.tokens))
+}
+
 func (d *TrecDocument) Len() int {
   return len(d.tokens)
 }
@@ -56,6 +60,7 @@ type TrecFileReader struct {
 func (fr *TrecFileReader) Path() string {
   return fr.filename
 }
+
 
 func (fr *TrecFileReader) Init(filename string) {
 	fr.docCounter = 0
@@ -100,7 +105,7 @@ func (fr *TrecFileReader) read_next_doc() (Document, error) {
       if doc == nil {
         panic(fmt.Sprintf("Found %s before DOC beginning", token))
       }
-      log.Debugf("Return Document %v", doc)
+      log.Debugf("Return Document %s", doc)
       return doc, nil
 
     case token.Type == XMLStartToken && token.Text == "TEXT":

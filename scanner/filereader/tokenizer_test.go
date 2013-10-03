@@ -15,10 +15,8 @@ var (
         {
             "(7 CFR)",
             []Token{
-              Token{Text: "(", Type: SymbolToken},
                 Token{Text: "7", Type:  TextToken},
                 Token{Text: "CFR", Type:  TextToken},
-                Token{Text: ")", Type:  SymbolToken},
             },
         },
         {
@@ -37,19 +35,9 @@ var (
         {
             "8:43pm 100.242 100,000,1.10",
             []Token{
-                Token{Text: "8", Type:  TextToken},
-                Token{Text: ":", Type:  SymbolToken},
-                Token{Text: "43pm", Type:  TextToken},
-                Token{Text: "100", Type:  TextToken},
-                Token{Text: ".", Type:  SymbolToken},
-                Token{Text: "242", Type:  TextToken},
-                Token{Text: "100", Type:  TextToken},
-                Token{Text: ",", Type:  SymbolToken},
-                Token{Text: "000", Type:  TextToken},
-                Token{Text: ",", Type:  SymbolToken},
-                Token{Text: "1", Type:  TextToken},
-                Token{Text: ".", Type:  SymbolToken},
-                Token{Text: "10", Type:  TextToken},
+                Token{Text: "8:43pm", Type:  TextToken},
+                Token{Text: "100.242", Type:  TextToken},
+                Token{Text: "100,000,1.10", Type:  TextToken},
             },
         },
         {
@@ -69,12 +57,12 @@ var (
             },
         },
         {
-            "<CFRNO>7 CFR Part 28 <!-- blah elsld --></CFRNO>",
+            "<CFRNO>7 CFR Part£ 28 <!-- blah elsld --></CFRNO>",
             []Token{
                 Token{Text: "CFRNO", Type:  XMLStartToken},
                 Token{Text: "7", Type:  TextToken},
                 Token{Text: "CFR", Type:  TextToken},
-                Token{Text: "Part", Type:  TextToken},
+                Token{Text: "Part£", Type:  TextToken},
                 Token{Text: "28", Type:  TextToken},
                 Token{Text: "CFRNO", Type:  XMLEndToken},
             },
@@ -84,9 +72,7 @@ var (
             "<RINDOCK>[CN&hyph;94&hyph;003] </RINDOCK>",
             []Token{
                 Token{Text: "RINDOCK", Type:  XMLStartToken},
-                Token{Text: "[", Type:  SymbolToken},
                 Token{Text: "CN-94-003", Type:  TextToken},
-                Token{Text: "]", Type:  SymbolToken},
                 Token{Text: "RINDOCK", Type:  XMLEndToken},
             },
 
@@ -119,7 +105,8 @@ func run_testcase(test testcase, t *testing.T) {
         }
         i += 1
         if i > len(test.expected) {
-            t.Error(fmt.Sprintf("Tokenizer has more tokens than expected)"))
+            t.Error(fmt.Sprintf("Tokenizer has more tokens (%d) than expected (%d)",
+            i, len(test.expected)))
             break
         }
     }

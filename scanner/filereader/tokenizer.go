@@ -10,6 +10,7 @@ import "unicode"
 type TokenType int
 
 const (
+    NullToken = 0
     TextToken TokenType = iota
     XMLStartToken
     XMLEndToken
@@ -21,19 +22,36 @@ type Token struct {
     Type TokenType
     DocId string
     Position int
+    Final bool
 }
 
 func (t *Token) Clone() *Token {
   newtok := NewToken(t.Text, t.Type)
   newtok.DocId = t.DocId
   newtok.Position = t.Position
+  newtok.Final = t.Final
   return newtok
+}
+
+func (t *Token) Eql(other *Token) (equal bool) {
+  equal = true
+
+  if t.Text != other.Text {
+    equal = false
+  }
+
+  if t.Type != other.Type {
+    equal = false
+  }
+
+  return
 }
 
 func NewToken(text string, ttype TokenType) (*Token) {
   t := new(Token)
   t.Text = text
   t.Type = ttype
+  t.Final = false
 
   return t
 }
@@ -124,25 +142,13 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
                 return token, nil
             }
 
-        case unicode.Is(unicode.Terminal_Punctuation, tok):
+        case unicode.Is(unicode.Punct, tok):
+            log.Debugf("Ignoring punctuation: %v", tok)
             tok = tz.scanner.Scan()
-            next := tz.scanner.Peek()
-            /*log.Infof("Removing terminal punctuation %c. Next is %c", tok, next)*/
-            if unicode.IsOneOf(alnum,next) {
-              /*log.Infof("Just kidding. Storing this symbol %s because %s follows it",*/
-              /*string(tok), string(next))*/
-              return NewToken(string(tok), SymbolToken), nil
-            }
-
-        case unicode.IsOneOf(symbols, tok):
-            tz.scanner.Scan()
-            token := NewToken(tz.scanner.TokenText(), SymbolToken )
-            log.Debugf("Read symbol: %s", token)
-            return token, nil
 
         default:
             /* Catch special things in words */
-            log.Debugf("Found '%s' . Parsing Text", tok)
+            log.Debugf("Found '%v' . Parsing Text", tok)
             token, ok := tz.parseCompound()
             if ok {
                 return token, nil
@@ -157,35 +163,56 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
     var entity = new(bytes.Buffer)
 
     for {
-        next := t.scanner.Peek()
-        log.Debugf("Next is '%s'. Text entity is %s",
-                   next, entity.String())
+      next := t.scanner.Peek()
+      log.Debugf("Next is '%v'. Text entity is %s",
+      next, entity.String())
+
+      switch {
+
+      case next == '&':
+        log.Debugf("parsing HTML")
+        token, _ := parseHTMLEntity(t.scanner)
+        entity.WriteString(token.Text)
+
+      case next == '<':
+        if entity.Len() > 0 {
+          tok := NewToken(entity.String(), TextToken)
+          return tok, true
+        } else {
+          return nil, false
+        }
+
+      case unicode.IsOneOf(alnum, next):
+        t.scanner.Scan()
+        entity.WriteString(t.scanner.TokenText())
+
+      case unicode.IsOneOf(symbols, next):
+        t.scanner.Scan()
+        part2, ok := t.parseCompound()
 
         switch {
+        case unicode.Is(unicode.Sc, next): //currency
+          entity.WriteRune(next)
 
-        case next == '&':
-            log.Debugf("parsing HTML")
-            token, _ := parseHTMLEntity(t.scanner)
-            entity.WriteString(token.Text)
+        case ok && next == '\'':
+          if ok {
+             entity.WriteString(part2.Text)
+          }
 
-        case unicode.IsOneOf(alnum, next):
-            t.scanner.Scan()
-            entity.WriteString(t.scanner.TokenText())
+        case ok:
+          entity.WriteRune(next)
+          entity.WriteString(part2.Text)
 
-        case next =='\'':
-            t.scanner.Scan()
-            part2, ok := t.parseCompound()
-            if ok {
-                entity.WriteString(part2.Text)
-            }
+        }
 
-        default:
-            if entity.Len() > 0 {
-                tok := NewToken(entity.String(), TextToken)
-                return tok, true
-            } else {
-                return nil, false}
-            }
+      default:
+        if entity.Len() > 0 {
+          tok := NewToken(entity.String(), TextToken)
+          return tok, true
+        } else {
+          return nil, false
+        }
+      }
     }
 }
 

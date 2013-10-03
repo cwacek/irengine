@@ -51,7 +51,7 @@ func expected() <-chan string {
 DEPARTMENT OF AGRICULTURE
 Agricultural Marketing Service
 7 CFR Part 28
-[ CN-94-003 ]
+CN-94-003
 RIN 0581-AB06
 Cotton Classification Services for Cotton Producers Withdrawal of Proposed Rule 
 AGENCY
@@ -68,31 +68,31 @@ FOR FURTHER INFORMATION CONTACT
  Craig Shackelford 202-720-2259
 SUPPLEMENTARY INFORMATION
  The proposed rule was issued as amendments to regulations governing Cotton Classification Services for Producers
-( 7 CFR part 28 ) The proposal was issued on January 31 1994 and published in the 
+7 CFR part 28 The proposal was issued on January 31 1994 and published in the
 Federal Register
- ( 59 FR 4257 ) It proposed the implementation of module averaging a method by which the accuracy of fiber quality measurements
+ 59 FR 4257 It proposed the implementation of module averaging a method by which the accuracy of fiber quality measurements
 can be improved The module averaging procedure would use all the bales from a module or trailer as the testing unit
 rather than using a single bale as the test unit The module averaging procedure has been offered to growers on a voluntary
 basis for the past three crop years 
 The Secretary of Agricultures Advisory Committee on Cotton Marketing recommended that if no significant problems
 were encountered during the 1993 classing season the module averaging procedure be expanded to include all cotton
 classed in 1994 and subsequent crop years For the 1993 expanded voluntary program there were 242 gins participating
-and the production from these gins totaled 3 , 053 , 716 bales This represented 20 percent of the 1993 cotton crop No
+and the production from these gins totaled 3,053,716 bales This represented 20 percent of the 1993 cotton crop No
 problems of any significance are known to have developed during the 1993 project In keeping with the advisory committees
 recommendation AMS proposed that module averaging be applied to all bales classed effective with the 1994 cotton
 crop 
 Written comments regarding this proposal were accepted from January 31 1994 through March 2 1994 Comments were
 received from individuals and organizations representing several segments of the cotton industry including producers
 ginners warehousers merchants cooperatives national and international trade associations textile manufacturers
-and others This broad cross section of the cotton industry together with a significant number of comments ( 61 ) indicates
+and others This broad cross section of the cotton industry together with a significant number of comments 61 indicates
 a strong interest in the module averaging concept throughout the industry 
 The textile manufacturing segment submitted four comments one from a national organization representing domestic
 textile manufacturers and three from individual firms All of these comments expressed support for the proposal
 The national organization representing textile manufacturers favored the implementation of the proposal provided
-four conditions were met ( 1 ) That at least two tests per bale be made ( 2 ) that the integrity of the module be maintained
-by preventing the intermingling of cotton between module test units ( 3 ) that when the module averaging procedure
+four conditions were met 1 That at least two tests per bale be made 2 that the integrity of the module be maintained
+by preventing the intermingling of cotton between module test units 3 that when the module averaging procedure
 is used only those measurements that fall within three standard deviations of the average be included in the module
-average and ( 4 ) that for the purposes of review classification all bales from the module be retested The remaining
+average and 4 that for the purposes of review classification all bales from the module be retested The remaining
 three comments all reiterated the suggestion for the use of three standard deviations as a determination for including
 bales in the module average The Agency is currently and will continue studying how best to determine the inclusion
 or exclusion of bales from the module average 
@@ -124,7 +124,7 @@ Accordingly the proposed rule is withdrawn effective April 5 1994
 Dated March 30 1994
 Lon Hatamiya
 Administrator
-[ FR Doc 94-8028 Filed 4-4-94 8 : 45 am ]
+FR Doc 94-8028 Filed 4-4-94 8:45 am
 BILLING CODE 3410-02-P
 `
 
