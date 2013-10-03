@@ -121,8 +121,8 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
 
         switch  {
         case unicode.IsPrint(tok) == false:
-          log.Debug("Skipping unprintable character")
-          fallthrough
+            log.Debug("Skipping unprintable character")
+            fallthrough
         case unicode.IsSpace(tok):
             tz.scanner.Scan()
             continue
@@ -148,7 +148,7 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
 
         default:
             /* Catch special things in words */
-            log.Debugf("Found '%v' . Parsing Text", tok)
+            log.Debugf("Found '%s' . Parsing Text", string(tok))
             token, ok := tz.parseCompound()
             if ok {
                 return token, nil
@@ -191,8 +191,6 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
         part2, ok := t.parseCompound()
 
         switch {
-        case unicode.Is(unicode.Sc, next): //currency
-          entity.WriteRune(next)
 
         case ok && next == '\'':
           if ok {
@@ -203,6 +201,8 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
           entity.WriteRune(next)
           entity.WriteString(part2.Text)
 
+        case unicode.Is(unicode.Sc, next): //currency
+          entity.WriteRune(next)
         }
 
       default:

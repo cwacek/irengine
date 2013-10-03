@@ -57,11 +57,11 @@ var (
             },
         },
         {
-            "<CFRNO>7 CFR Part£ 28 <!-- blah elsld --></CFRNO>",
+            "<CFRNO>7 $CFR Part£ 28 <!-- blah elsld --></CFRNO>",
             []Token{
                 Token{Text: "CFRNO", Type:  XMLStartToken},
                 Token{Text: "7", Type:  TextToken},
-                Token{Text: "CFR", Type:  TextToken},
+                Token{Text: "$CFR", Type:  TextToken},
                 Token{Text: "Part£", Type:  TextToken},
                 Token{Text: "28", Type:  TextToken},
                 Token{Text: "CFRNO", Type:  XMLEndToken},
