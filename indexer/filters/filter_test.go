@@ -41,11 +41,11 @@ func TestLowerCase(t *testing.T) {
 
 	done := make(chan int)
 
-  go compareFiltered(t, lower_output, postFilter, done)
+  go CompareFiltered(t, lower_output, postFilter, done)
 
 	for _, tok := range test_input {
 		log.Debugf("Inserting %v into input", tok)
-		input.Pipe <- tok
+    input.Push(tok)
 	}
 
 	close(input.Pipe)
@@ -55,14 +55,15 @@ func TestLowerCase(t *testing.T) {
 
 /* Check and see if each value pulled from actual is equivalent
 to the ones in expected */
-func compareFiltered(t *testing.T, expected []*filereader.Token,
+func CompareFiltered(t *testing.T, expected []*filereader.Token,
                      actual *FilterPipe, signal chan int) {
+
 		i := 0
 		for filtered := range actual.Pipe {
 
 			log.Debugf("Reading. Got %v", filtered)
 
-			if *filtered != *expected[i] {
+			if ! filtered.Eql(expected[i]) {
 				t.Errorf("Expected %v, but got %v, at position %d",
                  expected[i], filtered, i)
 			} else {
@@ -88,11 +89,11 @@ func TestChainedFilters(t *testing.T) {
 	f_null.Pull()
 
 	done := make(chan int)
-  go compareFiltered(t, lower_output, f_null.Output(), done)
+  go CompareFiltered(t, lower_output, f_null.Output(), done)
 
 	for _, tok := range test_input {
 		log.Debugf("Inserting %v into input", tok)
-		input.Pipe <- tok
+		input.Push(tok)
 	}
 
 	close(input.Pipe)
@@ -116,12 +117,12 @@ func TestMultipleOutputs(t *testing.T) {
   f_null2.Pull()
 
 	done := make(chan int)
-  go compareFiltered(t, lower_output, f_null.Output(), done)
-  go compareFiltered(t, lower_output, f_null2.Output(), done)
+  go CompareFiltered(t, lower_output, f_null.Output(), done)
+  go CompareFiltered(t, lower_output, f_null2.Output(), done)
 
 	for _, tok := range test_input {
 		log.Debugf("Inserting %v into input", tok)
-		input.Pipe <- tok
+		input.Push(tok)
 	}
 
 	close(input.Pipe)

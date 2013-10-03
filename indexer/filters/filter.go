@@ -45,3 +45,7 @@ func (f FilterPipe) String() string {
   return fmt.Sprintf("<%s:%p>",f.Id, f.Pipe)
 }
 
+func (f *FilterPipe) Push(t *filereader.Token) {
+  f.Pipe <- t
+
+}
