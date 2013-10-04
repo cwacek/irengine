@@ -8,6 +8,26 @@ import "unicode"
 
 var alpha_num = regexp.MustCompile(`([A-z]+)-([0-9]+)`)
 var num_alpha = regexp.MustCompile(`([0-9]+)-([A-z]+)`)
+var WordPrefixes = map[string] bool {
+  "anti": true,
+  "intra": true,
+  "re": true,
+  "co": true,
+  "macro": true,
+  "semi": true,
+  "de": true,
+  "micro": true,
+  "sub": true,
+  "hyper": true,
+  "non": true,
+  "supra": true,
+  "hypo": true,
+  "pre": true,
+  "trans": true,
+  "infra": true,
+  "pseudo": true,
+  "un": true,
+}
 
 type HyphenFilter struct {
 	FilterPlumbing
@@ -65,15 +85,41 @@ func (f *HyphenFilter) Apply(tok *filereader.Token) (res []*filereader.Token) {
 		hyphenated := strings.FieldsFunc(tok.Text,
 			func(r rune) bool { return unicode.Is(unicode.Hyphen, r) })
 
-    if len(hyphenated) > 0 {
+      switch len(hyphenated) {
 
-    }
+      case 1:
+        //No hyphens
+        res = append(res, tok)
 
-		// This doesn't match, send it along.
-		res = append(res, tok)
-	}
+      case 2:
+        if _, ok := WordPrefixes[hyphenated[0]]; ok {
+          // include just prefixed and unprefixed
+          res = append(res, CloneWithText(tok, hyphenated...))
+          res = append(res, CloneWithText(tok, hyphenated[1]))
 
+        } else {
+          // Include both separatedly
+          res = append(res, CloneWithText(tok, hyphenated[0]))
+          res = append(res, CloneWithText(tok, hyphenated[1]))
+        }
+
+      case 3:
+        for _, hyph_term := range hyphenated {
+          res = append(res, CloneWithText(tok, hyph_term))
+        }
+        res = append(res, CloneWithText(tok, hyphenated...))
+      }
+
+}
 	return
+}
+
+func CloneWithText(t *filereader.Token, parts... string) *filereader.Token {
+
+  tok := t.Clone()
+  tok.Text = strings.Join(parts, "")
+
+  return tok
 }
 
 func isPrefix(chars string) bool{
@@ -83,5 +129,5 @@ func isPrefix(chars string) bool{
   default:
     return false
 
-}
+  }
 }
