@@ -2,7 +2,6 @@ package filters
 
 import "testing"
 import "github.com/cwacek/irengine/scanner/filereader"
-import "fmt"
 import log "github.com/cihub/seelog"
 
 var (
@@ -30,6 +29,7 @@ var (
 )
 
 func TestLowerCase(t *testing.T) {
+  SetupTestLogging()
 
 	toLower := NewLowerCaseFilter("lowercase")
 
@@ -55,28 +55,9 @@ func TestLowerCase(t *testing.T) {
 
 /* Check and see if each value pulled from actual is equivalent
 to the ones in expected */
-func CompareFiltered(t *testing.T, expected []*filereader.Token,
-                     actual *FilterPipe, signal chan int) {
-
-		i := 0
-		for filtered := range actual.Pipe {
-
-			log.Debugf("Reading. Got %v", filtered)
-
-			if ! filtered.Eql(expected[i]) {
-				t.Errorf("Expected %v, but got %v, at position %d",
-                 expected[i], filtered, i)
-			} else {
-				log.Debugf("Filter success: %s = %s", expected[i], filtered)
-			}
-
-			i += 1
-		}
-
-		signal<- 1
-	}
 
 func TestChainedFilters(t *testing.T) {
+  SetupTestLogging()
 
 	input := NewFilterPipe("test")
 
@@ -102,6 +83,8 @@ func TestChainedFilters(t *testing.T) {
 }
 
 func TestMultipleOutputs(t *testing.T) {
+  SetupTestLogging()
+
 	input := NewFilterPipe("test")
 
   f_lower := NewLowerCaseFilter("lowercase")
@@ -131,30 +114,3 @@ func TestMultipleOutputs(t *testing.T) {
   log.Infof("TestMultipleOutputs Complete")
 }
 
-func init() {
-	var appConfig = `
-  <seelog type="sync" minlevel='debug'>
-  <outputs formatid="scanner">
-    <filter levels="critical,error,warn,info">
-      <console formatid="scanner" />
-    </filter>
-    <filter levels="debug">
-      <console formatid="debug" />
-    </filter>
-  </outputs>
-  <formats>
-  <format id="scanner" format="test: [%LEV] %Msg%n" />
-  <format id="debug" format="test: [%LEV] %Func :: %Msg%n" />
-  </formats>
-  </seelog>
-`
-
-	logger, err := log.LoggerFromConfigAsBytes([]byte(appConfig))
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	log.ReplaceLogger(logger)
-}

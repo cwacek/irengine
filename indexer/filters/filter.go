@@ -22,7 +22,7 @@ type Filter interface {
   Follow(f Filter, force bool)
   Output() *FilterPipe
 
-  Apply()
+  Apply(*filereader.Token) ([]*filereader.Token)
   Pull()
   Terminate()
 }
@@ -47,5 +47,4 @@ func (f FilterPipe) String() string {
 
 func (f *FilterPipe) Push(t *filereader.Token) {
   f.Pipe <- t
-
 }

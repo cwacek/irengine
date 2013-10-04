@@ -51,23 +51,18 @@ func (f *LowerCaseFilter) IsDestructive() bool {
 	return true
 }
 
-func (f *LowerCaseFilter) Apply() {
-	for tok := range f.Input().Pipe {
-		log.Debugf("Received '%s'", tok)
-		converted := tok.Clone()
-		converted.Text = strings.ToLower(tok.Text)
-		log.Debugf("Translated to '%s'", converted)
-		f.SendAll(converted)
-	}
+func (f *LowerCaseFilter) Apply(tok *filereader.Token) ([]*filereader.Token){
+  res := make([]*filereader.Token, 0, 1)
 
-	f.Terminate()
+  converted := tok.Clone()
+  converted.Text = strings.ToLower(tok.Text)
+
+  res = append(res, converted)
+  return res
 }
 
-func (f *NullFilter) Apply() {
-	for tok := range f.input.Pipe {
-		log.Debugf("Read %v. Forwarding to ", tok)
-		f.SendAll(tok)
-	}
+func (f *NullFilter)  Apply(tok *filereader.Token) ([]*filereader.Token){
+  res := make([]*filereader.Token, 0, 1)
 
-	f.Terminate()
+  return res
 }

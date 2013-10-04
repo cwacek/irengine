@@ -5,7 +5,7 @@ import "strings"
 import log "github.com/cihub/seelog"
 
 func TestTrecFileReader(t *testing.T) {
-  setupLogging("test/seelog.xml")
+  /*setupLogging("test/seelog.xml")*/
 
   log.Debugf("Creating FileReader")
   fr := new(TrecFileReader)

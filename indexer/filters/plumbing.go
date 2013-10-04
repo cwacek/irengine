@@ -62,10 +62,22 @@ func (fc *FilterPlumbing) Connect(f Filter, force bool) {
   fc.output = append(fc.output, newconn)
 }
 
-func (fc *FilterPlumbing) SendAll(tok *filereader.Token) {
+func (fc *FilterPlumbing) Send(tok *filereader.Token) {
   log.Debugf("Sending '%s' to %d output pipes: %v", tok, len(fc.output), fc.output)
   for _, out := range fc.output {
     out.Pipe <- tok
+  }
+}
+
+func (fc *FilterPlumbing) SendAll(tokens []*filereader.Token) {
+
+  log.Debugf("Sending '%s' to %d output pipes: %v",
+             tokens, len(fc.output), fc.output)
+
+  for _, out := range fc.output {
+    for _, tok := range tokens {
+      out.Pipe <- tok
+    }
   }
 }
 
@@ -75,9 +87,24 @@ func (fc *FilterPlumbing) Terminate() {
   }
 }
 
+func (fc *FilterPlumbing) apply() {
+  for tok := range fc.Input().Pipe {
+
+    if tok.Final {
+      fc.Send(tok)
+      continue
+    }
+
+    fc.SendAll(fc.self.Apply(tok))
+  }
+
+  fc.Terminate()
+
+}
+
 func (fc *FilterPlumbing) Pull() {
   if !fc.running {
-    go fc.self.Apply()
+    go fc.apply()
     fc.running = true
   }
 
