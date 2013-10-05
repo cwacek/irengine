@@ -81,46 +81,57 @@ func (f *HyphenFilter) Apply(tok *filereader.Token) (res []*filereader.Token) {
 			res = append(res, newtok)
 		}
 
-	} else {
-		hyphenated := strings.FieldsFunc(tok.Text,
-			func(r rune) bool { return unicode.Is(unicode.Hyphen, r) })
+  } else {
+      justDigits := func(r rune) rune {
+      switch {
+      case unicode.IsDigit(r):
+        return r
+      default:
+        return -1
+      }
+    }
 
-      switch len(hyphenated) {
+    if len(strings.Map(justDigits, tok.Text)) > 0 {
+      //There are digits in there
+      res = append(res, tok)
+      goto Exit
+    }
 
-      case 1:
-        //No hyphens
-        res = append(res, tok)
+    hyphenated := strings.FieldsFunc(tok.Text,
+      func(r rune) bool { return unicode.Is(unicode.Hyphen, r) })
 
-      case 2:
-        if _, ok := WordPrefixes[hyphenated[0]]; ok {
-          // include just prefixed and unprefixed
-          res = append(res, CloneWithText(tok, hyphenated...))
-          res = append(res, CloneWithText(tok, hyphenated[1]))
 
-        } else {
-          // Include both separatedly
-          res = append(res, CloneWithText(tok, hyphenated[0]))
-          res = append(res, CloneWithText(tok, hyphenated[1]))
-        }
+    switch len(hyphenated) {
 
-      case 3:
-        for _, hyph_term := range hyphenated {
-          res = append(res, CloneWithText(tok, hyph_term))
-        }
+    case 1:
+      //No hyphens
+      res = append(res, tok)
+
+    case 2:
+      if _, ok := WordPrefixes[hyphenated[0]]; ok {
+        // include just prefixed and unprefixed
         res = append(res, CloneWithText(tok, hyphenated...))
+        res = append(res, CloneWithText(tok, hyphenated[1]))
+
+      } else {
+        // Include both separatedly
+        res = append(res, CloneWithText(tok, hyphenated[0]))
+        res = append(res, CloneWithText(tok, hyphenated[1]))
       }
 
-}
+    default:
+      for _, hyph_term := range hyphenated {
+        res = append(res, CloneWithText(tok, hyph_term))
+      }
+      res = append(res, CloneWithText(tok, hyphenated...))
+    }
+
+  }
+
+Exit:
 	return
 }
 
-func CloneWithText(t *filereader.Token, parts... string) *filereader.Token {
-
-  tok := t.Clone()
-  tok.Text = strings.Join(parts, "")
-
-  return tok
-}
 
 func isPrefix(chars string) bool{
 

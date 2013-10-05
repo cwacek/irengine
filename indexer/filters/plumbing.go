@@ -71,8 +71,8 @@ func (fc *FilterPlumbing) Send(tok *filereader.Token) {
 
 func (fc *FilterPlumbing) SendAll(tokens []*filereader.Token) {
 
-  log.Debugf("Sending '%s' to %d output pipes: %v",
-             tokens, len(fc.output), fc.output)
+  log.Debugf("%s Sending '%s' to %d output pipes: %v",
+             fc.Id, tokens, len(fc.output), fc.output)
 
   for _, out := range fc.output {
     for _, tok := range tokens {
@@ -88,9 +88,12 @@ func (fc *FilterPlumbing) Terminate() {
 }
 
 func (fc *FilterPlumbing) apply() {
+  log.Debugf("Applying %v. Reading %v", fc, fc.Input())
   for tok := range fc.Input().Pipe {
+    log.Debugf("%s received %s", fc.Id, tok)
 
     if tok.Final {
+      log.Debugf("Passing Final token %s along", tok)
       fc.Send(tok)
       continue
     }
@@ -103,6 +106,7 @@ func (fc *FilterPlumbing) apply() {
 }
 
 func (fc *FilterPlumbing) Pull() {
+  log.Debugf("Pulled %v. Have parent %v and input %v", fc, fc.parent, fc.input)
   if !fc.running {
     go fc.apply()
     fc.running = true

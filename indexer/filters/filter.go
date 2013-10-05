@@ -1,6 +1,7 @@
 package filters
 
 import "fmt"
+import "strings"
 import "github.com/cwacek/irengine/scanner/filereader"
 
 /* 
@@ -10,7 +11,6 @@ actions are applied consecutively.
 
 */
 type Filter interface {
-  IsDestructive() bool
   GetId() string
 
   SetParent(Filter)
@@ -47,4 +47,13 @@ func (f FilterPipe) String() string {
 
 func (f *FilterPipe) Push(t *filereader.Token) {
   f.Pipe <- t
+}
+
+func CloneWithText(t *filereader.Token, parts... string) *filereader.Token {
+
+  tok := t.Clone()
+  tok.Text = strings.Join(parts, "")
+  tok.Final = true // If you cloned it, you modified it, so it's final
+
+  return tok
 }

@@ -33,6 +33,19 @@ func (t *Token) Clone() *Token {
   return newtok
 }
 
+func (t *Token) Equal(other *Token) (equal bool) {
+  equal = true
+
+  equal = t.Eql(other)
+
+  if t.Position != other.Position {
+  equal = false
+}
+
+  return
+}
+
+
 func (t *Token) Eql(other *Token) (equal bool) {
   equal = true
 
@@ -73,7 +86,7 @@ func (t TokenType) String() string {
 }
 
 func (t Token) String() string {
-    return fmt.Sprintf("%s [%s]", t.Text, t.Type)
+    return fmt.Sprintf("%s [%s@%d]", t.Text, t.Type, t.Position)
 }
 
 type BadXMLTokenizer struct{
