@@ -11,9 +11,9 @@ type TrecDocument struct {
 	id   string
 }
 
-func NewTrecDocument() (*TrecDocument) {
+func NewTrecDocument(id string) (*TrecDocument) {
   doc := new(TrecDocument)
-  doc.id = ""
+  doc.id = id
   doc.tokens = make([]*Token, 0)
   return doc
 }
@@ -99,8 +99,7 @@ func (fr *TrecFileReader) read_next_doc() (Document, error) {
     switch {
     case token.Type == XMLStartToken && token.Text == "DOC":
       fr.docCounter += 1
-      doc = NewTrecDocument()
-      log.Debugf("Start Document %d => $v", fr.docCounter, doc)
+      log.Debugf("Start Document %d", fr.docCounter)
     case token.Type == XMLEndToken && token.Text == "DOC":
       if doc == nil {
         panic(fmt.Sprintf("Found %s before DOC beginning", token))
@@ -123,10 +122,7 @@ func (fr *TrecFileReader) read_next_doc() (Document, error) {
       in_title = true
       titlebuf.Reset()
     case token.Type == XMLEndToken && token.Text == "DOCNO":
-      if doc == nil {
-        panic(fmt.Sprintf("Found DOCNO before DOC beginning. Doc => %v", doc))
-      }
-      doc.id = titlebuf.String()
+      doc = NewTrecDocument(titlebuf.String())
       in_title = false
 
     case token.Type == TextToken || token.Type == SymbolToken:
@@ -148,7 +144,7 @@ func (fr *TrecFileReader) read_to_chan(count int) (i int) {
   //Catch and log panics
   defer func() {
     if x := recover(); x != nil {
-      log.Criticalf("Error in document %d of %s", fr.docCounter, fr.filename)
+      log.Criticalf("Error in document %d of %s: %v", fr.docCounter, fr.filename, x)
       log.Flush()
     }
   }()
