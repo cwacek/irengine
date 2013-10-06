@@ -2,6 +2,7 @@ package filters
 
 import "testing"
 import "github.com/cwacek/irengine/scanner/filereader"
+import "github.com/cwacek/irengine/logging"
 import "strings"
 import log "github.com/cihub/seelog"
 
@@ -9,6 +10,10 @@ type TestCase struct {
 	FilterFunc func(string) Filter
 	Input      string
 	Expected   []*filereader.Token
+}
+
+func AddTestCase(id string, t TestCase) {
+	TestCases[id] = t
 }
 
 var (
@@ -106,16 +111,18 @@ var (
 		},
 	}
 
-	chained_order = []string{"digits",
+	chained_order = []string{
+		"digits",
 		"dates",
 		"hyphens",
 		"acronyms",
 		"filenames",
+		"email",
 	}
 )
 
 func TestChained(t *testing.T) {
-	SetupTestLogging()
+	logging.SetupTestLogging()
 
 	var expected = make([]*filereader.Token, 0, len(chained_order))
 	var inputs = make([]string, 0, len(chained_order))
@@ -195,11 +202,15 @@ func RunTestCase(testname string, t *testing.T) {
 }
 
 func TestFilters(t *testing.T) {
-	SetupTestLogging()
+	logging.SetupTestLogging()
 
-	RunTestCase("acronyms", t)
-	RunTestCase("hyphens", t)
-	RunTestCase("dates", t)
-	RunTestCase("digits", t)
-	RunTestCase("filenames", t)
+	for name, _ := range TestCases {
+		RunTestCase(name, t)
+		/*RunTestCase("hyphens", t)*/
+		/*RunTestCase("dates", t)*/
+		/*RunTestCase("digits", t)*/
+		/*RunTestCase("filenames", t)*/
+		/*RunTestCase("email", t)*/
+		/*RunTestCase("email", t)*/
+	}
 }

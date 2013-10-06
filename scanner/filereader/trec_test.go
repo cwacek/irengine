@@ -3,9 +3,10 @@ package filereader
 import "testing"
 import "strings"
 import log "github.com/cihub/seelog"
+import "github.com/cwacek/irengine/logging"
 
 func TestTrecFileReader(t *testing.T) {
-  /*setupLogging("test/seelog.xml")*/
+  logging.SetupTestLogging()
 
   log.Debugf("Creating FileReader")
   fr := new(TrecFileReader)

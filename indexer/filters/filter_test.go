@@ -2,6 +2,7 @@ package filters
 
 import "testing"
 import "github.com/cwacek/irengine/scanner/filereader"
+import "github.com/cwacek/irengine/logging"
 import log "github.com/cihub/seelog"
 
 var (
@@ -29,7 +30,7 @@ var (
 )
 
 func TestLowerCase(t *testing.T) {
-  SetupTestLogging()
+  logging.SetupTestLogging()
 
 	toLower := NewLowerCaseFilter("lowercase")
 
@@ -57,7 +58,7 @@ func TestLowerCase(t *testing.T) {
 to the ones in expected */
 
 func TestChainedFilters(t *testing.T) {
-  SetupTestLogging()
+  logging.SetupTestLogging()
 
 	input := NewFilterPipe("test")
 
@@ -83,7 +84,7 @@ func TestChainedFilters(t *testing.T) {
 }
 
 func TestMultipleOutputs(t *testing.T) {
-  SetupTestLogging()
+  logging.SetupTestLogging()
 
 	input := NewFilterPipe("test")
 
