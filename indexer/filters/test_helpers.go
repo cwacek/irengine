@@ -25,7 +25,7 @@ func LoadTestDocument(teststring string) filereader.Document {
 
 
 func CompareFiltered(t *testing.T, expected []*filereader.Token,
-                     actual *FilterPipe, signal chan int) {
+                     actual *FilterPipe, signal chan int, verbose bool) {
 
 		i := 0
 		for filtered := range actual.Pipe {
@@ -43,8 +43,13 @@ func CompareFiltered(t *testing.T, expected []*filereader.Token,
 				log.Debugf("Filter success: %s = %s", expected[i], filtered)
 			}
 
+      if verbose {
+        fmt.Printf("%s, ", filtered)
+      }
+
 			i += 1
 		}
 
+    fmt.Printf("\n")
 		signal<- 1
 	}

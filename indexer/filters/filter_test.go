@@ -42,7 +42,7 @@ func TestLowerCase(t *testing.T) {
 
 	done := make(chan int)
 
-  go CompareFiltered(t, lower_output, postFilter, done)
+  go CompareFiltered(t, lower_output, postFilter, done, false)
 
 	for _, tok := range test_input {
 		log.Debugf("Inserting %v into input", tok)
@@ -71,7 +71,7 @@ func TestChainedFilters(t *testing.T) {
 	f_null.Pull()
 
 	done := make(chan int)
-  go CompareFiltered(t, lower_output, f_null.Output(), done)
+  go CompareFiltered(t, lower_output, f_null.Output(), done, false)
 
 	for _, tok := range test_input {
 		log.Debugf("Inserting %v into input", tok)
@@ -101,8 +101,8 @@ func TestMultipleOutputs(t *testing.T) {
   f_null2.Pull()
 
 	done := make(chan int)
-  go CompareFiltered(t, lower_output, f_null.Output(), done)
-  go CompareFiltered(t, lower_output, f_null2.Output(), done)
+  go CompareFiltered(t, lower_output, f_null.Output(), done, false)
+  go CompareFiltered(t, lower_output, f_null2.Output(), done, false)
 
 	for _, tok := range test_input {
 		log.Debugf("Inserting %v into input", tok)
