@@ -2,6 +2,7 @@ package filereader
 
 import "text/scanner"
 import "io"
+import "math/rand"
 import log "github.com/cihub/seelog"
 import "fmt"
 import "bytes"
@@ -23,6 +24,11 @@ type Token struct {
     DocId string
     Position int
     Final bool
+    // An unique identifier to denote phrases which do not cross
+    // a punctuation barrier.
+    // This allows indexers to identify phrases without having to
+    // process punctuation itself
+    PhraseId int
 }
 
 func (t *Token) Clone() *Token {
@@ -65,9 +71,10 @@ func NewToken(text string, ttype TokenType) (*Token) {
   t.Text = text
   t.Type = ttype
   t.Final = false
-
+  t.PhraseId = 0
   return t
 }
+
 
 type Tokenizer interface {
     Next() (*Token, error)
@@ -93,6 +100,7 @@ type BadXMLTokenizer struct{
     tok_start, tok_end int
     scanner  *scanner.Scanner
     rd io.ReadSeeker
+    current_phrase_id int
 }
 
 func BadXMLTokenizer_FromReader(rd io.ReadSeeker) (Tokenizer){
@@ -102,6 +110,7 @@ func BadXMLTokenizer_FromReader(rd io.ReadSeeker) (Tokenizer){
     t.scanner.Whitespace = 0
     t.scanner.Error = func(s *scanner.Scanner, msg string) { panic(msg)}
     t.scanner.Mode = scanner.ScanStrings
+    t.current_phrase_id = rand.Int()
     return t
 }
 
@@ -114,6 +123,7 @@ func (tz *BadXMLTokenizer) Reset() {
     tz.scanner.Whitespace = 0
     tz.scanner.Error = func(s *scanner.Scanner, msg string) { panic(msg)}
     tz.scanner.Mode = scanner.ScanStrings
+    tz.current_phrase_id = rand.Int()
 }
 
 var alnum = []*unicode.RangeTable{unicode.Digit, unicode.Letter,
@@ -143,6 +153,9 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
         case tok == '<':
             log.Debugf("parsing XML")
             token, ok := parseXML(tz.scanner)
+            // We actually bump the phrase no matter what. It's
+            // either a comment, an xml token, or something weird
+            tz.current_phrase_id = rand.Int()
             if ok {
                 log.Debugf("Returning XML Token: %s", token)
                 return token, nil
@@ -157,6 +170,7 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
 
         case unicode.Is(unicode.Punct, tok):
             log.Debugf("Ignoring punctuation: %v", tok)
+            tz.current_phrase_id = rand.Int()
             tok = tz.scanner.Scan()
 
         default:
@@ -164,9 +178,9 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
             log.Debugf("Found '%s' . Parsing Text", string(tok))
             token, ok := tz.parseCompound()
             if ok {
-                return token, nil
+              return token, nil
             } else {
-                tz.scanner.Scan()
+              tz.scanner.Scan()
             }
         }
     }
@@ -174,6 +188,7 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
 
 func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
     var entity = new(bytes.Buffer)
+    var compoundPhraseId = t.current_phrase_id
 
     for {
       next := t.scanner.Peek()
@@ -190,6 +205,7 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
       case next == '<':
         if entity.Len() > 0 {
           tok := NewToken(entity.String(), TextToken)
+          tok.PhraseId = compoundPhraseId
           return tok, true
         } else {
           return nil, false
@@ -216,11 +232,18 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
 
         case unicode.Is(unicode.Sc, next): //currency
           entity.WriteRune(next)
+
+        case next == '\'':
+          // Trailing single punctuation should not make a new phrase
+
+        default:
+          t.current_phrase_id = rand.Int()
         }
 
       default:
         if entity.Len() > 0 {
           tok := NewToken(entity.String(), TextToken)
+          tok.PhraseId = compoundPhraseId
           return tok, true
         } else {
           return nil, false
