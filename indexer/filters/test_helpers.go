@@ -2,12 +2,13 @@ package filters
 
 import log "github.com/cihub/seelog"
 import "testing"
+import "fmt"
 import "github.com/cwacek/irengine/scanner/filereader"
 import "strings"
 
 
-func LoadTestDocument(teststring string) filereader.Document {
-  testDoc := new(filereader.TrecDocument)
+func LoadTestDocument(id, teststring string) filereader.Document {
+  testDoc := filereader.NewTrecDocument(id)
   tokenizer := filereader.BadXMLTokenizer_FromReader(
                   strings.NewReader(teststring))
 
