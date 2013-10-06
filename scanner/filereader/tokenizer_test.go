@@ -21,7 +21,7 @@ func init() {
 	rand.Seed(0)
 	RandInts = make([]int, 10)
 	for x := 0; x < 10; x++ {
-		RandInts[x] = rand.Int()
+		RandInts[x] = rand.Intn(1000)
     log.Infof("RandInt[%d] = %d", x, RandInts[x])
 	}
 

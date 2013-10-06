@@ -36,6 +36,7 @@ func (t *Token) Clone() *Token {
   newtok.DocId = t.DocId
   newtok.Position = t.Position
   newtok.Final = t.Final
+  newtok.PhraseId = t.PhraseId
   return newtok
 }
 
@@ -93,7 +94,7 @@ func (t TokenType) String() string {
 }
 
 func (t Token) String() string {
-    return fmt.Sprintf("%s [%s@%d]", t.Text, t.Type, t.Position)
+  return fmt.Sprintf("%s [%s@%d:%d]", t.Text, t.Type, t.Position, t.PhraseId)
 }
 
 type BadXMLTokenizer struct{
@@ -110,7 +111,7 @@ func BadXMLTokenizer_FromReader(rd io.ReadSeeker) (Tokenizer){
     t.scanner.Whitespace = 0
     t.scanner.Error = func(s *scanner.Scanner, msg string) { panic(msg)}
     t.scanner.Mode = scanner.ScanStrings
-    t.current_phrase_id = rand.Int()
+    t.current_phrase_id = rand.Intn(1000)
     return t
 }
 
@@ -123,7 +124,7 @@ func (tz *BadXMLTokenizer) Reset() {
     tz.scanner.Whitespace = 0
     tz.scanner.Error = func(s *scanner.Scanner, msg string) { panic(msg)}
     tz.scanner.Mode = scanner.ScanStrings
-    tz.current_phrase_id = rand.Int()
+    tz.current_phrase_id = rand.Intn(1000)
 }
 
 var alnum = []*unicode.RangeTable{unicode.Digit, unicode.Letter,
@@ -155,7 +156,7 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
             token, ok := parseXML(tz.scanner)
             // We actually bump the phrase no matter what. It's
             // either a comment, an xml token, or something weird
-            tz.current_phrase_id = rand.Int()
+            tz.current_phrase_id = rand.Intn(1000)
             if ok {
                 log.Debugf("Returning XML Token: %s", token)
                 return token, nil
@@ -170,7 +171,7 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
 
         case unicode.Is(unicode.Punct, tok):
             log.Debugf("Ignoring punctuation: %v", tok)
-            tz.current_phrase_id = rand.Int()
+            tz.current_phrase_id = rand.Intn(1000)
             tok = tz.scanner.Scan()
 
         default:
@@ -237,7 +238,7 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
           // Trailing single punctuation should not make a new phrase
 
         default:
-          t.current_phrase_id = rand.Int()
+          t.current_phrase_id = rand.Intn(1000)
         }
 
       default:
