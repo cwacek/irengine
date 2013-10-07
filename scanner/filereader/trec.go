@@ -40,6 +40,7 @@ func (d *TrecDocument) Tokens() <-chan *Token{
     for _, token := range tokens {
       c <- token
     }
+    c <- &Token{Type: NullToken, DocId: d.Identifier(), Position: d.Len()+1, Final: true}
     close(c)
   }(c, d.tokens)
 

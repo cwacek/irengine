@@ -56,13 +56,18 @@ func (t *Token) Equal(other *Token) (equal bool) {
 func (t *Token) Eql(other *Token) (equal bool) {
   equal = true
 
+  if t.Type != other.Type {
+    equal = false
+  }
+
+  if t.Type == NullToken {
+    return true
+  }
+
   if t.Text != other.Text {
     equal = false
   }
 
-  if t.Type != other.Type {
-    equal = false
-  }
 
   return
 }
@@ -89,7 +94,7 @@ func (t TokenType) String() string {
         case XMLStartToken: return "XMLSTART"
         case XMLEndToken: return "XMLEND"
         case SymbolToken: return "SYMBOL"
-        default: return "UNKNOWN"
+        default: return "NULL"
     }
 }
 

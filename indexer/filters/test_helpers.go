@@ -36,6 +36,9 @@ func CompareFiltered(t *testing.T, expected []*filereader.Token,
 
 			log.Debugf("Reading. Got %v", filtered)
       if i >= len(expected) {
+        if filtered.Type == filereader.NullToken {
+          break
+        }
         t.Error("Received addl unexpected token.")
         continue
       }

@@ -111,6 +111,7 @@ func (f *LowerCaseFilter) Apply(tok *filereader.Token) ([]*filereader.Token){
   converted.Text = strings.ToLower(tok.Text)
 
   res[0] = converted
+  log.Debugf("LowerCaseFilter converted %s to %s", tok.Text, converted.Text)
   return res
 }
 

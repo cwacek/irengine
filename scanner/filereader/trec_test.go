@@ -26,12 +26,16 @@ func TestTrecFileReader(t *testing.T) {
   for tok := range tokens {
     exp, ok := <- exp_tokens
     if ! ok {
-      t.Error("Read all of 'expected' before reaching end of tokens")
+      if tok.Type != NullToken {
+        t.Error("Read all of 'expected' before reaching end of tokens")
+      } else {
+      
+      }
     }
     i += 1
 
     if pos := tok.Position; pos != i {
-      t.Errorf("'%s' was not at position %d as expected", tok.Text, pos)
+      t.Errorf("'%s' was not at position %d as expected", tok, i)
     }
 
     if id := tok.DocId; id != doc.Identifier() {

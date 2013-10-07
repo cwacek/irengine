@@ -31,6 +31,7 @@ func init() {
 			[]Token{
 				Token{Text: "7", Type: TextToken, PhraseId: RandInts[1]},
 				Token{Text: "CFR", Type: TextToken, PhraseId: RandInts[1]},
+				Token{Type: NullToken},
 			},
 		},
 		{
@@ -44,6 +45,7 @@ func init() {
 				Token{Text: "Not", Type: TextToken, PhraseId: RandInts[2]},
 				Token{Text: "jims", Type: TextToken, PhraseId: RandInts[2]},
 				Token{Text: "house", Type: TextToken, PhraseId: RandInts[2]},
+				Token{Type: NullToken},
 			},
 		},
 		{
@@ -52,6 +54,7 @@ func init() {
 				Token{Text: "8:43pm", Type: TextToken, PhraseId: RandInts[0]},
 				Token{Text: "100.242", Type: TextToken, PhraseId: RandInts[0]},
 				Token{Text: "100,000,1.10", Type: TextToken, PhraseId: RandInts[0]},
+				Token{Type: NullToken},
 			},
 		},
 		{
@@ -60,6 +63,7 @@ func init() {
 				Token{Text: "PARENT", Type: XMLStartToken, PhraseId: 0},
 				Token{Text: "FR940405-1-00001", Type: TextToken, PhraseId: RandInts[1]},
 				Token{Text: "PARENT", Type: XMLEndToken, PhraseId: 0},
+				Token{Type: NullToken},
 			},
 		},
 		{
@@ -68,6 +72,7 @@ func init() {
 				Token{Text: "DOCNO", Type: XMLStartToken, PhraseId: 0},
 				Token{Text: "DEADBEEF", Type: TextToken, PhraseId: RandInts[1]},
 				Token{Text: "DOCNO", Type: XMLEndToken, PhraseId: 0},
+				Token{Type: NullToken},
 			},
 		},
 		{
@@ -79,6 +84,7 @@ func init() {
 				Token{Text: "Part£", Type: TextToken, PhraseId: RandInts[1]},
 				Token{Text: "28", Type: TextToken, PhraseId: RandInts[2]},
 				Token{Text: "CFRNO", Type: XMLEndToken, PhraseId: 0},
+				Token{Type: NullToken},
 			},
 		},
 		{
@@ -87,6 +93,7 @@ func init() {
 				Token{Text: "RINDOCK", Type: XMLStartToken, PhraseId: 0},
 				Token{Text: "CN-94-003", Type: TextToken, PhraseId: RandInts[2]},
 				Token{Text: "RINDOCK", Type: XMLEndToken, PhraseId: 0},
+				Token{Type: NullToken},
 			},
 		},
 	}
@@ -127,7 +134,4 @@ func run_testcase(test testcase, t *testing.T) {
 		}
 	}
 
-	if i != len(test.expected) {
-		t.Error(fmt.Sprintf("Tokenizer had too few tokens"))
-	}
 }
