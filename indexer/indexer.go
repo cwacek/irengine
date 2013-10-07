@@ -2,7 +2,7 @@ package indexer
 
 import "github.com/cwacek/irengine/indexer/filters"
 import "github.com/cwacek/irengine/scanner/filereader"
-import "bufio"
+import "io"
 import radix "github.com/cwacek/radix_go"
 
 type Lexicon interface {
@@ -67,7 +67,7 @@ type Indexer interface {
 
   //Print each term in the lexicon, along with
   // it's posting list
-  PrintLexicon(r *bufio.Writer)
+  PrintLexicon(r io.Writer)
 
   // Insert a document into the index
   Insert(t filereader.Document)

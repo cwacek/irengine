@@ -1,7 +1,7 @@
 package indexer
 
 import "fmt"
-import "bufio"
+import "io"
 import "os"
 import "github.com/cwacek/irengine/indexer/filters"
 import "github.com/cwacek/irengine/scanner/filereader"
@@ -75,7 +75,7 @@ func (t *SingleTermIndex) AddFilter(f filters.Filter) {
   t.filterChain.Pull()
 }
 
-func (t *SingleTermIndex) PrintLexicon(w *bufio.Writer) {
+func (t *SingleTermIndex) PrintLexicon(w io.Writer) {
 
   var term *Term
   t.insertLock.RLock()
@@ -83,7 +83,7 @@ func (t *SingleTermIndex) PrintLexicon(w *bufio.Writer) {
   for i, entry := range t.lexicon.Walk() {
     term = entry.(*Term)
     log.Debugf("Walking found term %v", term)
-    _, err := w.WriteString(fmt.Sprintf("%d. '%s' [%d]: %s\n", i, term.Text(),
+    _, err := io.WriteString(w, fmt.Sprintf("%d. '%s' [%d]: %s\n", i+1, term.Text(),
                   term.Tf(), term.PostingList()))
 
     if err != nil {

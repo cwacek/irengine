@@ -51,12 +51,13 @@ func (pl *positional_pl) InsertEntry(token *filereader.Token) PostingListEntry {
 }
 
 func (pl positional_pl) String() string {
-    entries := make([]string, pl.list.Len())
+    entries := make([]string,0)
 
-    for i := pl.list.Iterator(); i.Next(); {
+    for  i := pl.list.Iterator(); i.Next(); {
         entries = append(entries,i.Value().(*skiplist_entry).String())
     }
-    log.Debugf("Printing PL entries %v", entries)
+    log.Debugf("Printing PL entries %v as '%s'", entries,
+    strings.Join(entries, " "))
     return strings.Join(entries, " ")
 }
 
