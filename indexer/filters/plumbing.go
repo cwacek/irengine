@@ -15,6 +15,15 @@ type FilterPlumbing struct {
   ignoresFinal bool
 }
 
+func (fc *FilterPlumbing) Head() Filter {
+  log.Debugf("Looking for head in %v, which has parent %v", fc.self, fc.parent)
+  if fc.parent != nil {
+    return fc.parent.Head()
+  } else {
+    return fc.self
+  }
+}
+
 func (fc *FilterPlumbing) Input() (*FilterPipe) {
   return fc.input
 }

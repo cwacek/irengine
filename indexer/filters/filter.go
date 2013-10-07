@@ -13,6 +13,9 @@ actions are applied consecutively.
 type Filter interface {
   GetId() string
 
+  //Get the filter at the head of the chain
+  Head() Filter
+
   SetParent(Filter)
 
   Input() *FilterPipe

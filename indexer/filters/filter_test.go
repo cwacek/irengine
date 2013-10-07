@@ -70,6 +70,10 @@ func TestChainedFilters(t *testing.T) {
 
 	f_null.Pull()
 
+  if head := f_null.Head(); head != f_lower {
+    t.Errorf("Head of %v was %v. Expected %v", f_null, head, f_lower)
+  }
+
 	done := make(chan int)
   go CompareFiltered(t, lower_output, f_null.Output(), done, false)
 
