@@ -1,6 +1,7 @@
 package filters
 
 import "github.com/cwacek/irengine/scanner/filereader"
+import "strings"
 import log "github.com/cihub/seelog"
 
 type FilterPlumbing struct {
@@ -58,7 +59,7 @@ func (fc *FilterPlumbing) Follow(f Filter, force bool) {
   f.Connect(fc.self, force)
 }
 
-func (fc *FilterPlumbing) Connect(f Filter, force bool) {
+func (fc *FilterPlumbing) Connect(f Filter, force bool) Filter{
   log.Debugf("Connecting %v after %v", f, fc)
 
   if f.Input() != nil && ! force {
@@ -70,6 +71,19 @@ func (fc *FilterPlumbing) Connect(f Filter, force bool) {
   f.SetInput(newconn)
   f.SetParent(fc.self)
   fc.output = append(fc.output, newconn)
+  return f
+}
+
+func  (fc *FilterPlumbing) String() string {
+  parts := make([]string, 0)
+
+  if fc.parent != nil {
+    parts = append(parts,fc.parent.String())
+  }
+
+  parts = append(parts, fc.Id)
+
+  return strings.Join(parts, " -> ")
 }
 
 func (fc *FilterPlumbing) Send(tok *filereader.Token) {
@@ -93,6 +107,7 @@ func (fc *FilterPlumbing) SendAll(tokens []*filereader.Token) {
 
 func (fc *FilterPlumbing) Terminate() {
   for _, out := range fc.output {
+    log.Debugf("Filter %s terminating", fc)
     close(out.Pipe)
   }
 }

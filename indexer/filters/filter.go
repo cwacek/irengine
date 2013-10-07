@@ -21,13 +21,17 @@ type Filter interface {
   Input() *FilterPipe
   SetInput(*FilterPipe)
 
-  Connect(f Filter, force bool)
+  //Connect :f: after this filter. Returns the bottom of the chain (i.e. f)
+  Connect(f Filter, force bool) Filter
+
   Follow(f Filter, force bool)
   Output() *FilterPipe
 
   Apply(*filereader.Token) ([]*filereader.Token)
   Pull()
   Terminate()
+
+  String() string
 }
 
 

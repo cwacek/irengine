@@ -4,10 +4,13 @@ import log "github.com/cihub/seelog"
 import "testing"
 import "fmt"
 import "github.com/cwacek/irengine/scanner/filereader"
+import "github.com/cwacek/irengine/logging"
 import "strings"
 
 
 func LoadTestDocument(id, teststring string) filereader.Document {
+  logging.SetupTestLogging()
+
   testDoc := filereader.NewTrecDocument(id)
   tokenizer := filereader.BadXMLTokenizer_FromReader(
                   strings.NewReader(teststring))
