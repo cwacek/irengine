@@ -15,6 +15,7 @@ var (
 		&filereader.Token{Text: "Not", Type: filereader.TextToken},
 		&filereader.Token{Text: "Jims", Type: filereader.TextToken},
 		&filereader.Token{Text: "HOUSE", Type: filereader.TextToken},
+		&filereader.Token{Text: "F16", Type: filereader.TextToken},
 	}
 
 	lower_output = []*filereader.Token{
@@ -26,6 +27,7 @@ var (
 		&filereader.Token{Text: "not", Type: filereader.TextToken},
 		&filereader.Token{Text: "jims", Type: filereader.TextToken},
 		&filereader.Token{Text: "house", Type: filereader.TextToken},
+		&filereader.Token{Text: "f16", Type: filereader.TextToken},
 	}
 )
 
