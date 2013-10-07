@@ -12,6 +12,7 @@ type FilterPlumbing struct {
   self Filter
 
   running bool
+  ignoresFinal bool
 }
 
 func (fc *FilterPlumbing) Input() (*FilterPipe) {
@@ -92,7 +93,7 @@ func (fc *FilterPlumbing) apply() {
   for tok := range fc.Input().Pipe {
     log.Debugf("%s received %s", fc.Id, tok)
 
-    if tok.Final {
+    if tok.Final && fc.ignoresFinal == false {
       log.Debugf("Passing Final token %s along", tok)
       fc.Send(tok)
       continue

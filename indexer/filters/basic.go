@@ -35,6 +35,7 @@ func NewLowerCaseFilter(id string) Filter {
 	f := new(LowerCaseFilter)
 	f.Id = id
 	f.self = f
+  f.ignoresFinal = true
 	return f
 }
 
