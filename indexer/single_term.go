@@ -15,12 +15,17 @@ type SingleTermIndex struct {
 
 	lexicon Lexicon
 
+  diskStores map[string]string
+  termsPerDiskStore int
+
 	termCount     int
 	documentCount int
 
+  // utility vars
   inserterRunning bool
   insertLock *sync.RWMutex
   shutdown chan bool
+
 }
 
 func (t *SingleTermIndex) String() string {
@@ -30,7 +35,7 @@ func (t *SingleTermIndex) String() string {
 		t.dataDir)
 }
 
-func (t *SingleTermIndex) Init(datadir string) error {
+func (t *SingleTermIndex) Init(datadir string, memLimit int) error {
   t.dataDir = datadir
 
   if err := os.MkdirAll(datadir, 0775); err != nil {
@@ -71,20 +76,8 @@ func (t *SingleTermIndex) AddFilter(f filters.Filter) {
 
 func (t *SingleTermIndex) PrintLexicon(w io.Writer) {
 
-  var term *Term
   t.insertLock.RLock()
-
-  for i, entry := range t.lexicon.Walk() {
-    term = entry.(*Term)
-    log.Debugf("Walking found term %v", term)
-    _, err := io.WriteString(w, fmt.Sprintf("%d. '%s' [%d]: %s\n", i+1, term.Text(),
-                  term.Tf(), term.PostingList()))
-
-    if err != nil {
-      panic(err)
-    }
-
-  }
+  t.lexicon.Print(w)
   t.insertLock.RUnlock()
 
   return
@@ -144,19 +137,7 @@ func (t *SingleTermIndex) inserter() {
     }
 
     log.Debugf("Read %s from the filter chain.", token)
-
-    if term, ok := t.lexicon.FindTerm([]byte(token.Text)); ok {
-      // We found the term
-      log.Debugf("Found %s in the lexicon: %s", token.Text, term)
-
-      term.Register(token)
-    } else {
-
-      term = NewTermFromToken(token , NewPositionalPostingList)
-
-      // Insert the new term
-      t.lexicon.Insert(term.(*Term))
-    }
+    t.lexicon.InsertToken(token)
   }
 
   log.Criticalf("Filter chain %s closed")

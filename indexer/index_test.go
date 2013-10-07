@@ -3,6 +3,7 @@ package indexer
 import "bytes"
 import "testing"
 import "io/ioutil"
+import "encoding/json"
 import "github.com/cwacek/irengine/scanner/filereader"
 import "github.com/cwacek/irengine/logging"
 import "github.com/cwacek/irengine/indexer/filters"
@@ -44,6 +45,22 @@ var  (
 
 )
 
+func TestMarshalTerm(t *testing.T) {
+  logging.SetupTestLogging()
+  token := filereader.NewToken("james", filereader.TextToken)
+  token.Position = 10
+  token.DocId = "TestDocument"
+
+  term := NewTermFromToken(token, NewPositionalPostingList)
+
+  if bytes, err := json.Marshal(term); err != nil {
+    log.Infof("Failed")
+    t.Errorf("Error marshalling term %v: %v", term.String(), err)
+  } else {
+    log.Infof("Marshaled %v to %s", term.String(), bytes)
+  }
+}
+
 func TestSingleTermIndex(t *testing.T) {
   logging.SetupTestLogging()
 
@@ -59,7 +76,7 @@ func TestSingleTermIndex(t *testing.T) {
   index = new(SingleTermIndex)
   if tempdir, err := ioutil.TempDir("", "index"); err == nil {
 
-    if err2 := index.Init(tempdir); err != nil {
+    if err2 := index.Init(tempdir, -1); err != nil {
       panic(err2)
     }
 
@@ -99,5 +116,5 @@ func TestSingleTermIndex(t *testing.T) {
   }
 
   index.Delete()
-
 }
+

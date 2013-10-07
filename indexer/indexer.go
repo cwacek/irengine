@@ -3,11 +3,15 @@ package indexer
 import "github.com/cwacek/irengine/indexer/filters"
 import "github.com/cwacek/irengine/scanner/filereader"
 import "io"
+import "encoding/json"
 import radix "github.com/cwacek/radix_go"
 
 type Lexicon interface {
   radix.RadixTree
   FindTerm([]byte) (LexiconTerm, bool)
+  InsertToken(*filereader.Token)
+  Print(io.Writer)
+  SetPLInitializer(PostingListInitializer)
 }
 
 type LexiconTerm interface {
@@ -17,6 +21,9 @@ type LexiconTerm interface {
   Idf(totalDocCount int) float64
   PostingList() PostingList
   Register(token *filereader.Token)
+  String() string
+  json.Marshaler
+  /*json.Unmarshaler*/
 }
 
 type PostingListEntry interface {
@@ -32,26 +39,22 @@ type PostingList interface {
   InsertEntry(token *filereader.Token) PostingListEntry
   String() string
   Len() int
+  Iterator() PostingListIterator
+}
+
+type PostingListIterator interface {
+  Next() bool
+  Value() PostingListEntry
+  Key() string
 }
 
 type PostingListInitializer func() PostingList
 
-type StopWordList interface {
-  Contains(string) bool
-}
-
-type StopWordFrequencyList interface {
-  StopWordList
-  Insert(string) int
-  // Filter the StopWord list so that it only contains 
-  // words for which the frequency is above freq
-  Filter(freq float64)
-}
-
 type Indexer interface {
   // Set the data directory to store index
-  // files in
-  Init(datadir string) error
+  // files in and the memory limit. -1 means unlimited
+  // memory
+  Init(datadir string, memLimit int) error
 
   // Add filters to use when reading terms into
   // the index

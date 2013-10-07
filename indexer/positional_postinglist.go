@@ -1,12 +1,31 @@
 package indexer
 
-import "bytes"
 import "sort"
 import "strconv"
 import "strings"
 import "github.com/ryszard/goskiplist/skiplist"
 import "github.com/cwacek/irengine/scanner/filereader"
 import log "github.com/cihub/seelog"
+
+type pl_iterator struct {
+    sk_iter skiplist.Iterator
+}
+
+func (it *pl_iterator) Value() PostingListEntry {
+    return it.sk_iter.Value().(PostingListEntry)
+}
+
+func (it *pl_iterator) Next() bool {
+    log.Debug("Calling Next()")
+    cont := it.sk_iter.Next() 
+    log.Debugf("returned %v", cont)
+
+    return cont
+}
+
+func (it *pl_iterator) Key() string {
+    return it.sk_iter.Key().(string)
+}
 
 type positional_pl struct {
     list *skiplist.SkipList
@@ -18,6 +37,14 @@ func NewPositionalPostingList() PostingList {
     return pl
 }
 
+func (pl *positional_pl) Iterator() PostingListIterator {
+    iter := new(pl_iterator)
+    log.Debug("Creating new iterator")
+    iter.sk_iter = pl.list.Iterator()
+    log.Debug("Done")
+    return iter
+}
+
 func (pl *positional_pl) Len() int {
     return pl.list.Len()
 }
@@ -26,8 +53,10 @@ func (pl *positional_pl) GetEntry(id string) (PostingListEntry,
 bool) {
     log.Debugf("Looking for %s in posting list", id)
     if elem, ok := pl.list.Get(id); ok {
+        log.Debugf("Found %#v", elem)
         return elem.(*skiplist_entry), true
     }
+    log.Debugf("Found nothing.")
     return  nil, false
 }
 
@@ -44,21 +73,24 @@ func (pl *positional_pl) InsertEntry(token *filereader.Token) PostingListEntry {
         return entry
     }
 
+    log.Debugf("Creating new positional entry")
     entry := NewPositionalEntry(token.DocId)
+    log.Debugf("Adding position %d to entry", token.Position)
     entry.AddPosition(token.Position)
 
+    log.Debugf("Inserting entry in posting list")
     pl.list.Set(entry.DocId(), entry)
+    log.Debugf("Complete")
     return entry
 }
 
 func (pl positional_pl) String() string {
     entries := make([]string,0)
 
+    log.Debugf("Converting PL %#v to string", pl)
     for  i := pl.list.Iterator(); i.Next(); {
         entries = append(entries,i.Value().(*skiplist_entry).String())
     }
-    log.Debugf("Printing PL entries %v as '%s'", entries,
-    strings.Join(entries, " "))
     return strings.Join(entries, " ")
 }
 
@@ -75,22 +107,20 @@ func NewPositionalEntry(docId string) PostingListEntry {
 }
 
 func (p *skiplist_entry) String() string {
+    log.Debugf("Converting %#v skiplist_entry to string", p)
     parts := make([]string, 0, len(p.positions) + 2)
     posParts := make([]string, len(p.positions))
-    repr := new(bytes.Buffer)
 
     parts = append(parts, p.docId)
     parts = append(parts, strconv.Itoa(len(p.positions)))
 
-    repr.WriteRune('{')
     for i,position := range p.positions {
         posParts[i] =  strconv.Itoa(position)
     }
-    repr.WriteRune('}')
 
     parts = append(parts, "{" + strings.Join(posParts,",")+ "}")
 
-    log.Debugf("Writing PL entry: %v", parts)
+    log.Debugf("Writing PL entry: %#v", parts)
     return "(" + strings.Join(parts, ", ") + ")"
 }
 
