@@ -57,11 +57,6 @@ type Indexer interface {
   // the index
   AddFilter(f filters.Filter)
 
-  //Tell the indexer to use a stopword list.
-  //Note that  some indexers may not actually
-  //respect this 
-  SetStopWordList(sw StopWordList)
-
   //Human readable 
   String() string
 

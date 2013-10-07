@@ -12,7 +12,6 @@ type SingleTermIndex struct {
 	dataDir string
 
 	filterChain filters.Filter
-	stopWords   StopWordList
 
 	lexicon Lexicon
 
@@ -40,7 +39,6 @@ func (t *SingleTermIndex) Init(datadir string) error {
 
   // Initialize some stuff
 	t.filterChain = nil
-  t.stopWords = nil
 
   t.lexicon = NewTrieLexicon()
 
@@ -52,10 +50,6 @@ func (t *SingleTermIndex) Init(datadir string) error {
   t.insertLock = new(sync.RWMutex)
 
   return nil
-}
-
-func (t *SingleTermIndex) SetStopWordList(sw StopWordList) {
-  t.stopWords = sw
 }
 
 func (t *SingleTermIndex) AddFilter(f filters.Filter) {
@@ -149,7 +143,8 @@ func (t *SingleTermIndex) inserter() {
       continue
     }
 
-    log.Debugf("Read %s from the filter chain. Inserting into index", token)
+    log.Debugf("Read %s from the filter chain.", token)
+
     if term, ok := t.lexicon.FindTerm([]byte(token.Text)); ok {
       // We found the term
       log.Debugf("Found %s in the lexicon: %s", token.Text, term)

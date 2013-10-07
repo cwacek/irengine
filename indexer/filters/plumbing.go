@@ -117,16 +117,27 @@ func (fc *FilterPlumbing) apply() {
   for tok := range fc.Input().Pipe {
     log.Debugf("%s received %s", fc.Id, tok)
 
-    if tok.Final && fc.ignoresFinal == false {
+    switch {
+
+    case tok.Type == filereader.NullToken:
+      fc.self.NotifyDocComplete()
+      fc.Send(tok)
+
+    case tok.Final && fc.ignoresFinal == false:
       log.Debugf("Passing Final token %s along", tok)
       fc.Send(tok)
-      continue
+
+    default:
+      fc.SendAll(fc.self.Apply(tok))
     }
 
-    fc.SendAll(fc.self.Apply(tok))
   }
 
   fc.Terminate()
+
+}
+
+func (fc *FilterPlumbing) NotifyDocComplete() {
 
 }
 

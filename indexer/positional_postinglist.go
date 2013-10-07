@@ -34,6 +34,7 @@ bool) {
 func (pl *positional_pl) InsertEntry(token *filereader.Token) PostingListEntry {
 
     log.Debugf("Inserting %s into posting list.", token)
+
     if entry, ok := pl.GetEntry(token.DocId); ok {
         //We have an entry for this doc, so we're adding a
         //position
@@ -41,7 +42,7 @@ func (pl *positional_pl) InsertEntry(token *filereader.Token) PostingListEntry {
         token.Position)
         entry.AddPosition(token.Position)
         return entry
-    } 
+    }
 
     entry := NewPositionalEntry(token.DocId)
     entry.AddPosition(token.Position)

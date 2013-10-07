@@ -15,7 +15,7 @@ var  (
     filters.LoadTestDocument("A03","Since Ph.D's don't fly F-16 jets, but they might work for the CDC on the CDC-50 project"),
   }
 
-  lexiconOutput = [][]byte{
+  basicOutput = [][]byte{
     []byte("1. 'a' [1]: (A02, 1, {4})"),
     []byte("2. 'ball' [1]: (A02, 1, {11})"),
     []byte("3. 'boy' [1]: (A02, 1, {6})"),
@@ -41,6 +41,7 @@ var  (
     []byte("23. 'work' [1]: (A03, 1, {10})"),
     []byte("24. 'young' [1]: (A02, 1, {5})"),
   }
+
 )
 
 func TestSingleTermIndex(t *testing.T) {
@@ -82,7 +83,7 @@ func TestSingleTermIndex(t *testing.T) {
   output := new(bytes.Buffer)
   index.PrintLexicon(output)
 
-  for i, expected := range lexiconOutput {
+  for i, expected := range basicOutput {
     if line, err := output.ReadBytes('\n'); err != nil {
       t.Errorf("Error reading lexicon output at line %d. Expected '%s'", i+1, expected)
       break

@@ -181,7 +181,7 @@ func RunTestCase(testname string, t *testing.T) {
 	filter := testcase.FilterFunc(testname)
 	log.Debugf("Created filter %v", filter)
 	log.Flush()
-	filter.SetInput(input)
+	filter.Head().SetInput(input)
 	postFilter := filter.Output()
 
 	filter.Pull()

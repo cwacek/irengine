@@ -31,6 +31,9 @@ type Filter interface {
   Pull()
   Terminate()
 
+  // Notify the filter that the current document is complete.
+  NotifyDocComplete()
+
   String() string
 }
 
