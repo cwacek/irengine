@@ -4,11 +4,22 @@ import "fmt"
 import "strings"
 import "github.com/cwacek/irengine/scanner/filereader"
 
+var SingleTermFilterSequence Filter
+
+func init() {
+  f := NewDigitsFilter("digits")
+  f = f.Connect(NewDateFilter("dates"), false)
+  f = f.Connect(NewHyphenFilter("hyphens"), false)
+  f = f.Connect(NewAcronymFilter("acronyms"), false)
+  f = f.Connect(NewFilenameFilter("filenames"), false)
+  f = f.Connect(NewLowerCaseFilter("lower"), false)
+  SingleTermFilterSequence = f
+}
+
 /* 
 A filter reads a sequence of tokens and returns a token representing anything
 special parsed from the words. Filters can be chained together, in which case
 actions are applied consecutively.
-
 */
 type Filter interface {
   GetId() string
