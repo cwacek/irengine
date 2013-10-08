@@ -14,6 +14,12 @@ type Lexicon interface {
   SetPLInitializer(PostingListInitializer)
 }
 
+type PersistentLexicon interface {
+  SaveToDisk()
+}
+
+type TermFromTokenFunc func(*filereader.Token, PostingListInitializer) LexiconTerm
+
 type LexiconTerm interface {
   Text() string
   Tf() int
@@ -32,11 +38,18 @@ type PostingListEntry interface {
   Positions() []int
   String() string
   AddPosition(int)
+  Serialize() string
 }
 
 type PostingList interface {
   GetEntry(id string) (PostingListEntry, bool)
-  InsertEntry(token *filereader.Token) PostingListEntry
+
+  // Insert an entry into the posting list. Return true
+  // If it creates a new PostingListEntry, false if it does
+  // not (and just adds a position or something
+  InsertEntry(token *filereader.Token) bool
+  InsertRawEntry(text, docid string, pos int) bool
+
   String() string
   Len() int
   Iterator() PostingListIterator

@@ -1,6 +1,7 @@
 package indexer
 
 import "sort"
+import "fmt"
 import "strconv"
 import "strings"
 import "github.com/ryszard/goskiplist/skiplist"
@@ -16,9 +17,9 @@ func (it *pl_iterator) Value() PostingListEntry {
 }
 
 func (it *pl_iterator) Next() bool {
-    log.Debug("Calling Next()")
-    cont := it.sk_iter.Next() 
-    log.Debugf("returned %v", cont)
+    log.Trace("Calling Next()")
+    cont := it.sk_iter.Next()
+    log.Tracef("returned %v", cont)
 
     return cont
 }
@@ -39,9 +40,8 @@ func NewPositionalPostingList() PostingList {
 
 func (pl *positional_pl) Iterator() PostingListIterator {
     iter := new(pl_iterator)
-    log.Debug("Creating new iterator")
+    log.Trace("Creating new iterator")
     iter.sk_iter = pl.list.Iterator()
-    log.Debug("Done")
     return iter
 }
 
@@ -60,34 +60,37 @@ bool) {
     return  nil, false
 }
 
-func (pl *positional_pl) InsertEntry(token *filereader.Token) PostingListEntry {
-
+func (pl *positional_pl) InsertEntry(token *filereader.Token) bool {
     log.Debugf("Inserting %s into posting list.", token)
+    return pl.InsertRawEntry(token.Text, token.DocId, token.Position)
+}
 
-    if entry, ok := pl.GetEntry(token.DocId); ok {
+func (pl *positional_pl) InsertRawEntry(text, docid string,
+position int) bool {
+
+    if entry, ok := pl.GetEntry(docid); ok {
         //We have an entry for this doc, so we're adding a
         //position
-        log.Debugf("%s exists. Adding postion %d", token,
-        token.Position)
-        entry.AddPosition(token.Position)
-        return entry
+        log.Debugf("%s exists. Adding position %d", docid, position)
+        entry.AddPosition(position)
+        return false
     }
 
-    log.Debugf("Creating new positional entry")
-    entry := NewPositionalEntry(token.DocId)
-    log.Debugf("Adding position %d to entry", token.Position)
-    entry.AddPosition(token.Position)
+    log.Debug("Creating new positional entry")
+    entry := NewPositionalEntry(docid)
+    log.Tracef("Adding position %d to entry", position)
+    entry.AddPosition(position)
 
-    log.Debugf("Inserting entry in posting list")
+    log.Trace("Inserting entry in posting list")
     pl.list.Set(entry.DocId(), entry)
-    log.Debugf("Complete")
-    return entry
+    log.Trace("Complete")
+    return true
 }
 
 func (pl positional_pl) String() string {
     entries := make([]string,0)
 
-    log.Debugf("Converting PL %#v to string", pl)
+    log.Tracef("Converting PL %#v to string", pl)
     for  i := pl.list.Iterator(); i.Next(); {
         entries = append(entries,i.Value().(*skiplist_entry).String())
     }
@@ -106,8 +109,18 @@ func NewPositionalEntry(docId string) PostingListEntry {
     return entry
 }
 
+func (p *skiplist_entry) Serialize() string {
+
+    posParts := make([]string, len(p.positions))
+    for i,position := range p.positions {
+        posParts[i] =  strconv.Itoa(position)
+    }
+
+    return fmt.Sprintf("%s %s", p.docId, strings.Join(posParts,","))
+}
+
 func (p *skiplist_entry) String() string {
-    log.Debugf("Converting %#v skiplist_entry to string", p)
+    log.Tracef("Converting %#v skiplist_entry to string", p)
     parts := make([]string, 0, len(p.positions) + 2)
     posParts := make([]string, len(p.positions))
 
@@ -120,7 +133,7 @@ func (p *skiplist_entry) String() string {
 
     parts = append(parts, "{" + strings.Join(posParts,",")+ "}")
 
-    log.Debugf("Writing PL entry: %#v", parts)
+    log.Tracef("Writing PL entry: %#v", parts)
     return "(" + strings.Join(parts, ", ") + ")"
 }
 

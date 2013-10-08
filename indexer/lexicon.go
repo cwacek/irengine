@@ -12,6 +12,7 @@ import log "github.com/cihub/seelog"
 type TrieLexicon struct {
   radix.Trie
   pl_init PostingListInitializer
+  TermInit TermFromTokenFunc
 }
 
 func (t *TrieLexicon) FindTerm(key []byte) (LexiconTerm, bool) {
@@ -32,6 +33,13 @@ func (t *TrieLexicon) SetPLInitializer(pl_func PostingListInitializer) {
 
 func (t *TrieLexicon) InsertToken(token *filereader.Token) {
 
+    if token.Type == filereader.NullToken {
+      // This shouldn't get through, but ignore it if it does
+      return
+    }
+
+    log.Debugf("Looking for %s in the lexicon.", token)
+
     if term, ok := t.FindTerm([]byte(token.Text)); ok {
       // We found the term
       log.Debugf("Found %s in the lexicon: %s", token.Text, term.String())
@@ -39,21 +47,20 @@ func (t *TrieLexicon) InsertToken(token *filereader.Token) {
       term.Register(token)
     } else {
 
-      term = NewTermFromToken(token, NewPositionalPostingList)
+      log.Tracef("Creating new term via %v", t.TermInit)
+      term = t.TermInit(token, t.pl_init)
 
-      log.Debug("Created new term")
-      log.Flush()
-      log.Debugf("Created new term: %#v. Inserting into lexicon", term)
+      log.Debugf("Created new term: %s. Inserting into lexicon", term.String())
       // Insert the new term
-      t.Insert(term.(*Term))
+      t.Insert(term.(radix.RadixTreeEntry))
     }
 }
 
 func (t *TrieLexicon) Print(w io.Writer) {
 
   for i, entry := range t.Walk() {
-    term := entry.(*Term)
-    log.Debugf("Walking found term %s", term.String())
+    term := entry.(LexiconTerm)
+    log.Tracef("Walking found term %s", term.String())
     _, err := io.WriteString(w, fmt.Sprintf("%d. '%s' [%d]: %s\n", i+1, term.Text(),
                   term.Tf(), term.PostingList()))
 
@@ -67,6 +74,7 @@ func NewTrieLexicon() Lexicon {
   lex := new(TrieLexicon)
   lex.Init()
   lex.pl_init = NewPositionalPostingList
+  lex.TermInit = NewTermFromToken
   return lex
 }
 
@@ -77,14 +85,14 @@ type Term struct {
   Pl PostingList
 }
 
-func NewTermFromToken(t *filereader.Token, p PostingListInitializer) *Term {
+func NewTermFromToken(t *filereader.Token, p PostingListInitializer) LexiconTerm {
   term := new(Term)
   term.Text_ = t.Text
   term.Tf_ = 0 // because we increment with Register
   term.Pl = p() // THis allows passing differnt types of posting lists.
 
   term.Register(t)
-  log.Debugf("Created term: %#v",term)
+  log.Tracef("Created term: %#v",term)
   return term
 }
 
@@ -99,7 +107,7 @@ func (t *Term) Text() string {
 
 func (t *Term) Register(token *filereader.Token) {
   log.Debugf("Registering %s in Term",token)
-  t.Pl.InsertEntry(token)
+  t.PostingList().InsertEntry(token)
   t.Tf_ += 1
   log.Debug("Registered")
 }
@@ -113,21 +121,21 @@ func (t *Term) Tf() int {
 }
 
 func (t *Term) Df() int {
-  return t.Pl.Len()
+  return t.PostingList().Len()
 }
 
 func (t *Term) Idf(totalDocCount int) float64 {
-  return (float64(totalDocCount) / float64(t.Pl.Len()))
+  return (float64(totalDocCount) / float64(t.PostingList().Len()))
 }
 
 func (t Term) String() string {
-  return fmt.Sprintf("['%s' %s]", t.Text_, t.Pl.String())
+  return fmt.Sprintf("['%s' %s]", t.Text_, t.PostingList().String())
 }
 
 func (t *Term) MarshalJSON() ([]byte, error) {
   buf := new(bytes.Buffer)
   log.Debugf("Marshalling term %#v", t)
-  for i := t.Pl.Iterator(); i.Next(); {
+  for i := t.PostingList().Iterator(); i.Next(); {
     log.Debugf("Iterating with %#v", i)
     log.Debugf("Iterating over PL. Entry is %#v", i.Value())
     log.Flush()
