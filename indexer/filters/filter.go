@@ -45,7 +45,10 @@ type Filter interface {
   // Notify the filter that the current document is complete.
   NotifyDocComplete()
 
+  //Write the filter chain to string
   String() string
+  // Write just this filter to string
+  Serialize() string
 }
 
 

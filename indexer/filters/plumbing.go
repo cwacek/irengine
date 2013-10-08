@@ -81,9 +81,13 @@ func  (fc *FilterPlumbing) String() string {
     parts = append(parts,fc.parent.String())
   }
 
-  parts = append(parts, fc.Id)
+  parts = append(parts, fc.self.Serialize())
 
   return strings.Join(parts, " -> ")
+}
+
+func (fc *FilterPlumbing) Serialize() string {
+  return fc.Id
 }
 
 func (fc *FilterPlumbing) Send(tok *filereader.Token) {

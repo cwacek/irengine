@@ -3,6 +3,7 @@ package filters
 import log "github.com/cihub/seelog"
 import "bufio"
 import "io"
+import "fmt"
 import "github.com/cwacek/irengine/scanner/filereader"
 
 type StopWordFilter struct {
@@ -12,6 +13,9 @@ type StopWordFilter struct {
 }
 
 
+func (f *StopWordFilter) Serialize() string {
+  return fmt.Sprintf("%s{%d}",f.Id, len(f.stopwords))
+}
 
 func NewStopWordFilterFromReader(r io.Reader) Filter {
 
