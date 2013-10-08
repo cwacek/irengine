@@ -6,6 +6,8 @@ import "io"
 import "encoding/json"
 import radix "github.com/cwacek/radix_go"
 
+type LexiconInitializer func(datadir string, memLimit int) PostingList
+
 type Lexicon interface {
   radix.RadixTree
   FindTerm([]byte) (LexiconTerm, bool)
@@ -41,6 +43,8 @@ type PostingListEntry interface {
   Serialize() string
 }
 
+type PostingListInitializer func() PostingList
+
 type PostingList interface {
   GetEntry(id string) (PostingListEntry, bool)
 
@@ -61,13 +65,10 @@ type PostingListIterator interface {
   Key() string
 }
 
-type PostingListInitializer func() PostingList
 
 type Indexer interface {
-  // Set the data directory to store index
-  // files in and the memory limit. -1 means unlimited
-  // memory
-  Init(datadir string, memLimit int) error
+  //Set the lexicon to the following
+  Init(Lexicon) error
 
   // Add filters to use when reading terms into
   // the index

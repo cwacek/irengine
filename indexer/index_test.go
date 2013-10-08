@@ -2,7 +2,6 @@ package indexer
 
 import "bytes"
 import "testing"
-import "io/ioutil"
 import "encoding/json"
 import "github.com/cwacek/irengine/scanner/filereader"
 import "github.com/cwacek/irengine/logging"
@@ -72,17 +71,12 @@ func TestSingleTermIndex(t *testing.T) {
   }()
 
   var index Indexer
+  var lexicon Lexicon
+
+  lexicon = NewTrieLexicon()
 
   index = new(SingleTermIndex)
-  if tempdir, err := ioutil.TempDir("", "index"); err == nil {
-
-    if err2 := index.Init(tempdir, -1); err != nil {
-      panic(err2)
-    }
-
-  } else {
-    panic(err)
-  }
+  index.Init(lexicon)
 
   filterChain := filters.NewAcronymFilter("acronyms")
   filterChain = filterChain.Connect(filters.NewHyphenFilter("hyphens"), false)

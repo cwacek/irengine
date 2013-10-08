@@ -35,17 +35,13 @@ func (t *SingleTermIndex) String() string {
 		t.dataDir)
 }
 
-func (t *SingleTermIndex) Init(datadir string, memLimit int) error {
-  t.dataDir = datadir
+func (t *SingleTermIndex) Init(lexicon Lexicon) error {
 
-  if err := os.MkdirAll(datadir, 0775); err != nil {
-    return err
-  }
 
   // Initialize some stuff
 	t.filterChain = nil
 
-  t.lexicon = NewTrieLexicon()
+  t.lexicon = lexicon
 
   t.termCount = 0
   t.documentCount = 0
