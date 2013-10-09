@@ -106,12 +106,11 @@ func (a *run_index_action) Run() {
     /*// For each document.*/
     for doc := range docStream {
         index.Insert(doc)
-
-        break
     }
 
     index.WaitInsert()
 
+    log.Flush()
     fmt.Println(index.String())
     index.PrintLexicon(os.Stdout)
 }
