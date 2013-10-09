@@ -67,25 +67,35 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
     switch *a.indexType {
     case "single-term":
         //Set the initializer, then fall through
-        lexicon.SetPLInitializer(indexer.NewBasicPostingList)
         index.AddFilter(filters.SingleTermFilterSequence)
-        fallthrough
+        lexicon.SetPLInitializer(indexer.NewBasicPostingList)
 
     case "single-term-positional":
         //This is the default PL Initializer, so we won't set it
         // However, all the single-terms use the same filters, so
         // set them up.
-        if file, err := os.Open(*a.stopWordList); err != nil {
-            return nil, errors.New("Invalid path for stopwordlist: " + *a.stopWordList)
-        } else {
-            index.AddFilter(filters.NewStopWordFilterFromReader(file))
-        }
+        lexicon.SetPLInitializer(indexer.NewBasicPostingList)
+        index.AddFilter(filters.SingleTermFilterSequence)
+
+    case "stemmed":
+        lexicon.SetPLInitializer(indexer.NewBasicPostingList)
+        index.AddFilter(filters.SingleTermFilterSequence)
+        index.AddFilter(filters.NewPorterFilter("porterstemmer"))
+
 
     default:
         log.Criticalf("Unknown index type: %s", *a.indexType)
         return nil, errors.New("Unknown index type: "+ *a.indexType)
     }
 
+    // Allow anything to use the stopword list (even if it makes
+    // no sense)
+    if file, err := os.Open(*a.stopWordList); err != nil {
+        log.Warnf("Not using stop word list")
+    } else {
+        log.Info("Using stopword list")
+        index.AddFilter(filters.NewStopWordFilterFromReader(file))
+    }
 
     return index, nil
 }
