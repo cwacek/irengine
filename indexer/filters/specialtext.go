@@ -75,6 +75,7 @@ func (f *FilenameFilter) Apply(tok *filereader.Token) []*filereader.Token {
 
   parts := strings.Split(tok.Text, ".")
 
+  if len(parts) > 1 {
   if _, ok := FileExtensions[parts[len(parts)-1]]; ok {
     //This is a filename. return the file extension and the whole thing 
     // together
@@ -83,6 +84,7 @@ func (f *FilenameFilter) Apply(tok *filereader.Token) []*filereader.Token {
     newtok = CloneWithText(tok, strings.Join(parts[:len(parts)-1], ""))
     results = append(results, newtok)
   }
+}
 
   results = append(results, tok)
   return results

@@ -91,7 +91,7 @@ var (
 		},
 		"filenames": TestCase{
 			NewFilenameFilter,
-			`test.jpg test.pdf test.html`,
+			`test.jpg test.pdf test.html map`,
 			[]*filereader.Token{
 				&filereader.Token{Text: "test", Type: filereader.TextToken, Position: 1},
 				&filereader.Token{Text: "test.jpg", Type: filereader.TextToken, Position: 1},
@@ -99,6 +99,7 @@ var (
 				&filereader.Token{Text: "test.pdf", Type: filereader.TextToken, Position: 2},
 				&filereader.Token{Text: "test", Type: filereader.TextToken, Position: 3},
 				&filereader.Token{Text: "test.html", Type: filereader.TextToken, Position: 3},
+				&filereader.Token{Text: "map", Type: filereader.TextToken, Position: 4},
 			},
 		},
 		"email": TestCase{
