@@ -145,7 +145,7 @@ func (fc *FilterPlumbing) NotifyDocComplete() {
 
 }
 
-func (fc *FilterPlumbing) Pull() {
+func (fc *FilterPlumbing) Pull() *FilterPipe {
   log.Debugf("Pulled %v. Have parent %v and input %v", fc, fc.parent, fc.input)
   if !fc.running {
     go fc.apply()
@@ -153,6 +153,15 @@ func (fc *FilterPlumbing) Pull() {
   }
 
   if fc.parent != nil {
-    fc.parent.Pull()
+    return fc.parent.Pull()
+  } else {
+
+    var input *FilterPipe
+
+    if fc.input == nil {
+      input = NewFilterPipe("input")
+      fc.SetInput(input)
+    }
+    return input
   }
 }

@@ -45,7 +45,7 @@ type Filter interface {
   Output() *FilterPipe
 
   Apply(*filereader.Token) ([]*filereader.Token)
-  Pull()
+  Pull() *FilterPipe
   Terminate()
 
   // Notify the filter that the current document is complete.
