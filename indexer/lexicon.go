@@ -16,6 +16,7 @@ type TrieLexicon struct {
 }
 
 func (t *TrieLexicon) FindTerm(key []byte) (LexiconTerm, bool) {
+
   if elem, ok := t.Find(key); elem != nil {
     return elem.(LexiconTerm), ok
   }
@@ -32,6 +33,12 @@ func (t *TrieLexicon) SetPLInitializer(pl_func PostingListInitializer) {
 }
 
 func (t *TrieLexicon) InsertToken(token *filereader.Token) {
+  defer func() {
+    if x := recover(); x != nil {
+      log.Criticalf("Encountered error inserting token %s: %v", token, x)
+      panic(x)
+    }
+  }()
 
     if token.Type == filereader.NullToken {
       // This shouldn't get through, but ignore it if it does

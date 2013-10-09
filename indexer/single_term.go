@@ -95,6 +95,7 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
   if ! t.inserterRunning {
     go t.inserter()
   }
+  log.Infof("Inserting tokens from %s", d.Identifier())
 
   t.insertLock.Lock()
   for token := range d.Tokens() {
@@ -102,7 +103,7 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
     input.Push(token)
   }
 
-  log.Infof("Finished inserting tokens from %s", d.Identifier())
+  log.Infof("Finished inserting tokens from %s. Inserted %d documents", d.Identifier(), t.Len())
 }
 
 // Read tokens from tokenStream and insert it into the 
