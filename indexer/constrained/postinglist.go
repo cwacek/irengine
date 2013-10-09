@@ -52,14 +52,12 @@ func (pls *PostingListSet) Get(term string) index.PostingList {
     pls.sz_needs_refresh = true
 
     if pl, ok := pls.listMap[term]; ok {
-        log.Debugf("Have posting list for %s. Returning %v",
-        term, pl.String())
+        log.Debugf("Have posting list for %s.", term)
         return pl
     } else {
         pl = pls.pl_init()
         pls.listMap[term] = pl
-        log.Debugf("Don't have posting list for %s. " +
-        "Returning a new one %v", term, pl.String())
+        log.Debugf("Don't have posting list for %s. ", term)
         return pl
     }
 }

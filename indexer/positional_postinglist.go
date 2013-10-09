@@ -133,7 +133,7 @@ func NewBasicEntry(docId string) PostingListEntry {
 }
 
 func (p *basic_sk_entry) Serialize() string {
-    return fmt.Sprintf("%s %s", p.docId, p.frequency)
+    return fmt.Sprintf("%s %d", p.docId, p.frequency)
 }
 
 func (p *basic_sk_entry) Deserialize(enc [][]byte) error {
@@ -194,13 +194,19 @@ func (p *positional_sk_entry) Deserialize( input [][]byte) (error) {
     }
 
 func (p *positional_sk_entry) Serialize() string {
+    buf := new(bytes.Buffer)
 
-    posParts := make([]string, len(p.positions))
+    buf.WriteString(p.docId)
+    buf.WriteRune(" ")
+
     for i,position := range p.positions {
-        posParts[i] =  strconv.Itoa(position)
+        if i != 0 {
+            buf.WriteRune(",")
+        }
+        buf.WriteRune(fmt.Sprintf("%d", position))
     }
 
-    return fmt.Sprintf("%s %s", p.docId, strings.Join(posParts,","))
+    return buf.String()
 }
 
 func (p *positional_sk_entry) String() string {
