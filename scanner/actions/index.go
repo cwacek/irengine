@@ -7,6 +7,7 @@ import log "github.com/cihub/seelog"
 import "github.com/cwacek/irengine/indexer"
 import "os"
 import "fmt"
+import "runtime/pprof"
 import "github.com/cwacek/irengine/indexer/filters"
 import "flag"
 
@@ -21,6 +22,8 @@ type run_index_action struct {
     indexRoot *string
     maxMem *int
     indexType *string
+
+    cpuprofile *string
 }
 
 func (a *run_index_action) Name() string {
@@ -46,6 +49,8 @@ func (a *run_index_action) DefineFlags(fs *flag.FlagSet) {
     - phrase
     - stemmed
     `)
+
+    a.cpuprofile = fs.String("profile", "", "write CPU profile to file")
 }
 
 func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
@@ -89,6 +94,7 @@ func (a *run_index_action) Run() {
     var index indexer.Indexer
     var err error
 
+
     SetupLogging(*a.verbosity)
 
     //Setup document walkers
@@ -102,6 +108,15 @@ func (a *run_index_action) Run() {
         return
     }
 
+    if *a.cpuprofile != "" {
+        f, err := os.Create(*a.cpuprofile)
+        if err != nil {
+            log.Critical(err)
+            return
+        }
+        pprof.StartCPUProfile(f)
+        defer pprof.StopCPUProfile()
+    }
 
     /*// For each document.*/
     for doc := range docStream {

@@ -115,6 +115,8 @@ func (pls *PostingListSet) Load(r io.Reader) {
 }
 
 func (pls *PostingListSet) Len() int {
+    return pls.sz
+
     if !pls.sz_needs_refresh {
         return pls.sz
     }

@@ -46,7 +46,7 @@ func (pl *positional_pl) Iterator() PostingListIterator {
 }
 
 func (pl *positional_pl) Len() int {
-    return pl.list.Len()
+    return pl.Length
 }
 
 func (pl *positional_pl) GetEntry(id string) (PostingListEntry,
@@ -84,6 +84,7 @@ position int) bool {
     log.Trace("Inserting entry in posting list")
     pl.list.Set(entry.DocId(), entry)
     log.Trace("Complete")
+    pl.Length++
     return true
 }
 
@@ -122,16 +123,16 @@ func (p *skiplist_entry) Serialize() string {
 func (p *skiplist_entry) String() string {
     log.Tracef("Converting %#v skiplist_entry to string", p)
     parts := make([]string, 0, len(p.positions) + 2)
-    posParts := make([]string, len(p.positions))
+    /*posParts := make([]string, len(p.positions))*/
 
     parts = append(parts, p.docId)
     parts = append(parts, strconv.Itoa(len(p.positions)))
 
-    for i,position := range p.positions {
-        posParts[i] =  strconv.Itoa(position)
-    }
+    /*for i,position := range p.positions {*/
+        /*posParts[i] =  strconv.Itoa(position)*/
+    /*}*/
 
-    parts = append(parts, "{" + strings.Join(posParts,",")+ "}")
+    /*parts = append(parts, "{" + strings.Join(posParts,",")+ "}")*/
 
     log.Tracef("Writing PL entry: %#v", parts)
     return "(" + strings.Join(parts, ", ") + ")"
