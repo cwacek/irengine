@@ -38,13 +38,14 @@ var expected = []*filereader.Token {
   &filereader.Token{Text: "abid", Type: filereader.TextToken},
   &filereader.Token{Text: "abil", Type: filereader.TextToken},
   &filereader.Token{Text: "abil", Type: filereader.TextToken},
+  &filereader.Token{Text: "ions", Type: filereader.TextToken},
 }
 
 var input = `aaron abaissiez abandon abandoned abase abash abate
 abated abatement abatements abates abbess abbey abbeys abbominable
 abbot abbots abbreviated abed abel aberga abergavenny abet abetting
 abhominable abhor abhorr abhorred abhorring abhors abhorson abide
-abides abilities ability`
+abides abilities ability ions`
 
 func init() {
 

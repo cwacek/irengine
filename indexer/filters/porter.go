@@ -19,7 +19,17 @@ func NewPorterFilter(id string) Filter {
 func (f *PorterFilter) Apply(tok *filereader.Token) (result []*filereader.Token) {
   result = make([]*filereader.Token, 1)
 
-  result[0] = CloneWithText(tok, porter.StemString(tok.Text))
+  defer func() {
+    // If porter panics, use the current token
+    if err := recover(); err != nil {
+      result[0] = tok
+      return result
+    }
+  }()
+
+  stemmed := porter.StemString(tok.Text)
+
+  result[0] = CloneWithText(tok, stemmed)
   log.Debugf("Porter changed %s to %s", tok.Text, result[0].Text)
 
   return
