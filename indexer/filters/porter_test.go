@@ -38,7 +38,7 @@ var expected = []*filereader.Token {
   &filereader.Token{Text: "abid", Type: filereader.TextToken},
   &filereader.Token{Text: "abil", Type: filereader.TextToken},
   &filereader.Token{Text: "abil", Type: filereader.TextToken},
-  &filereader.Token{Text: "ions", Type: filereader.TextToken},
+  &filereader.Token{Text: "ion", Type: filereader.TextToken},
 }
 
 var input = `aaron abaissiez abandon abandoned abase abash abate
