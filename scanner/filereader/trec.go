@@ -189,9 +189,9 @@ func (fr *TrecFileReader) ReadAll() <-chan Document {
     }
   }()
 
-  log.Debug("Reading documents")
+  log.Trace("Reading documents")
   fr.scanner.Reset()
-  log.Debug("Reset")
+  log.Trace("Reset")
 	go fr.read_to_chan(-1)
 	return fr.documents
 }

@@ -83,7 +83,7 @@ func (d *DocWalker) read_file( path string, info os.FileInfo, err error) error {
       }()
 
       d.worker_count += 1
-      log.Errorf("Now have %d workers", d.worker_count)
+      /*log.Errorf("Now have %d workers", d.worker_count)*/
     }
   }
   return nil
@@ -92,12 +92,17 @@ func (d *DocWalker) read_file( path string, info os.FileInfo, err error) error {
 var appConfig = `
   <seelog type="sync" minlevel='%s'>
   <outputs formatid="scanner">
-    <console />
+    <filter levels="critical,error,warn,info">
+      <console formatid="scanner" />
+    </filter>
+    <filter levels="debug">
+      <console formatid="debug" />
+    </filter>
   </outputs>
   <formats>
-  <format id="scanner" format="scanner: [%%LEV] %%Msg%%n" />
+  <format id="scanner" format="[%%Time]:%%LEVEL:: %%Msg%%n" />
+  <format id="debug" format="[%%Time]:%%LEVEL:%%Func:: %%Msg%%n" />
   </formats>
-  </seelog>
 `
 
 var config string

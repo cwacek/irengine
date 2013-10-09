@@ -65,7 +65,7 @@ func (t *SingleTermIndex) AddFilter(f filters.Filter) {
   } else {
     t.filterChain = t.filterChain.Connect(f, false)
   }
-  log.Debugf("Added %s to filterchain. Now have %s", f, t.filterChain)
+  log.Infof("Added %s to filterchain. Now have %s", f, t.filterChain)
 
   t.filterChain.Pull()
 }
@@ -105,7 +105,7 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
     input.Push(token)
   }
 
-  log.Debugf("Finished inserting tokens from %s", d.Identifier())
+  log.Infof("Finished inserting tokens from %s", d.Identifier())
 }
 
 // Read tokens from tokenStream and insert it into the 
@@ -132,7 +132,6 @@ func (t *SingleTermIndex) inserter() {
       continue
     }
 
-    log.Debugf("Read %s from the filter chain.", token)
     t.lexicon.InsertToken(token)
   }
 

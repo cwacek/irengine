@@ -192,7 +192,7 @@ func (lex *lexicon) RetrievePLS(term * persistent_term) *PostingListSet {
 	pls, ok := lex.pl_set_cache[term.DataTag]
     switch {
     case !ok:
-        log.Info("Creating a new posting list")
+        log.Debug("Creating a new posting list")
         //We've never seen this one. Make a new one
         newPLS := NewPostingListSet(term.DataTag, index.NewPositionalPostingList)
         lex.evict()
@@ -204,7 +204,6 @@ func (lex *lexicon) RetrievePLS(term * persistent_term) *PostingListSet {
 		// (in the background)
 		go lex.makeRecent(pls)
 
-        log.Info("Retrieving a posting list")
 		return pls
 
     default:

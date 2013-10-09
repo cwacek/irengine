@@ -3,10 +3,16 @@ package filters
 import "fmt"
 import "strings"
 import "github.com/cwacek/irengine/scanner/filereader"
+import log "github.com/cihub/seelog"
 
 var SingleTermFilterSequence Filter
 
 func init() {
+  if logger, err := log.LoggerFromConfigAsBytes(
+    []byte(`<seelog minlevel="info"></seelog>`)); err == nil {
+      log.ReplaceLogger(logger)
+    }
+
   f := NewDigitsFilter("digits")
   f = f.Connect(NewDateFilter("dates"), false)
   f = f.Connect(NewHyphenFilter("hyphens"), false)
