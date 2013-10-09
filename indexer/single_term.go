@@ -103,7 +103,7 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
     input.Push(token)
   }
 
-  log.Infof("Finished inserting tokens from %s. Inserted %d documents", d.Identifier(), t.Len())
+  log.Infof("Finished inserting %d tokens from %s. Inserted %d documents with %d terms", d.Len(), d.Identifier(), t.Len(), t.lexicon.Len())
 }
 
 // Read tokens from tokenStream and insert it into the 

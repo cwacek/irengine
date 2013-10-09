@@ -11,7 +11,7 @@ func SetupTestLogging() {
     <filter levels="critical,error,warn,info">
       <console formatid="scanner" />
     </filter>
-    <filter levels="debug">
+    <filter levels="debug,trace">
       <console formatid="debug" />
     </filter>
   </outputs>
@@ -24,7 +24,7 @@ func SetupTestLogging() {
 
 var config string
 if testing.Verbose() {
-  config =  fmt.Sprintf(appConfig, "debug")
+  config =  fmt.Sprintf(appConfig, "trace")
 } else {
   config =  fmt.Sprintf(appConfig, "info")
 }
