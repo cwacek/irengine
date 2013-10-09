@@ -122,6 +122,8 @@ func (fc *FilterPlumbing) apply() {
     log.Debugf("%s received %s", fc.Id, tok)
 
     switch {
+    case tok.Type == filereader.SymbolToken:
+      // Don't pass it along
 
     case tok.Type == filereader.NullToken:
       fc.self.NotifyDocComplete()

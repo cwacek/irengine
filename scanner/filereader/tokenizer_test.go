@@ -36,7 +36,7 @@ func init() {
 			},
 		},
 		{
-			"welcome; this is jim's house. Not jims' house ``Act.''",
+			"welcome; this is jim's house. Not jims' house ``Act.'' after &hyph; me ",
 			[]Token{
 				Token{Text: "welcome", Type: TextToken, PhraseId: RandInts[0]},
 				Token{Text: "this", Type: TextToken, PhraseId: RandInts[1]},
@@ -47,6 +47,9 @@ func init() {
 				Token{Text: "jims", Type: TextToken, PhraseId: RandInts[2]},
 				Token{Text: "house", Type: TextToken, PhraseId: RandInts[2]},
 				Token{Text: "Act", Type: TextToken, PhraseId: RandInts[4]},
+				Token{Text: "after", Type: TextToken, PhraseId: RandInts[5]},
+				Token{Text: "-", Type: SymbolToken, PhraseId: 0},
+				Token{Text: "me", Type: TextToken, PhraseId: RandInts[6]},
 				Token{Type: NullToken},
 			},
 		},

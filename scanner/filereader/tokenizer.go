@@ -170,6 +170,7 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
         case tok == '&':
             log.Tracef("parsing HTML")
             if token := parseHTMLEntity(tz.scanner); token != nil {
+                tz.current_phrase_id = rand.Intn(1000)
                 return token, nil
             }
 
@@ -299,44 +300,44 @@ func (t *BadXMLTokenizer) parseParenthetical() (string, bool) {
 
 func decodeEntity(entity string) (string, bool) {
 
-    switch entity {
-    case "&hyph;":
-        return "-", true
-    case "&blank;":
-        return "", false
-    case "&lt;":
-        return "<", true
-    case "&gt;":
-        return ">", true
+  switch entity {
+  case "&hyph;":
+    return "-", true
+  case "&blank;":
+    return "", false
+  case "&lt;":
+    return "<", true
+  case "&gt;":
+    return ">", true
 
-      case "&rsquo;":
-        fallthrough
-      case "&lsquo;":
-        return "'", true
+  case "&rsquo;":
+    fallthrough
+  case "&lsquo;":
+    return "'", true
 
-      case "&para;":
-        fallthrough
-      case "&reg;":
-        fallthrough
-      case "&sect;":
-        fallthrough
-      case "&cir;":
-        fallthrough
-      case "&bull;":
-        fallthrough
-      case "&racute;":
-        fallthrough
-      case "&lacute;":
-        fallthrough
-      case "&tilde;":
-        fallthrough
-      case "&amp;":
-        return "", false // no good, but don't warn
+  case "&para;":
+    fallthrough
+  case "&reg;":
+    fallthrough
+  case "&sect;":
+    fallthrough
+  case "&cir;":
+    fallthrough
+  case "&bull;":
+    fallthrough
+  case "&racute;":
+    fallthrough
+  case "&lacute;":
+    fallthrough
+  case "&tilde;":
+    fallthrough
+  case "&amp;":
+    return "", false // no good, but don't warn
 
-    default:
-        log.Warnf("Invalid character escape sequence: %s", entity)
-        return "", false
-    }
+  default:
+    log.Warnf("Invalid character escape sequence: %s", entity)
+    return "", false
+  }
 }
 
 // Return a token representing the HTML entity, or nil if 
@@ -354,7 +355,7 @@ func parseHTMLEntity(sc *scanner.Scanner) (*Token) {
         switch {
         case unicode.IsSpace(tok):
             if entity.Len() > 1 {
-                token := NewToken(entity.String(), TextToken)
+                token := NewToken(entity.String(), SymbolToken)
                 log.Tracef("ParseHTML. Returning non-HTML '%s'",
             token.Text)
                 return token
@@ -366,7 +367,7 @@ func parseHTMLEntity(sc *scanner.Scanner) (*Token) {
             entity.WriteRune(tok)
             log.Tracef("Attempting to decode %s", entity.String())
             if decoded, ok := decodeEntity(entity.String()); ok {
-                token := NewToken(decoded, TextToken)
+                token := NewToken(decoded, SymbolToken)
                 log.Tracef("ParseHTML. Returning HTML '%s'", entity.String())
                 return token
             } else {
