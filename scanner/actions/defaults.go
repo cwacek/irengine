@@ -40,6 +40,7 @@ out chan filereader.Document) {
   d.worker_count = 0
   d.filepattern = pattern
 
+  fmt.Println("Reading document set")
   filepath.Walk(docroot, d.read_file)
 
   go d.signal_when_done()
@@ -52,6 +53,7 @@ func (d *DocWalker) signal_when_done() {
       d.worker_count -= 1
       log.Infof("Worker for %s done. Waiting for %d workers.", file, d.worker_count)
       if d.worker_count <= 0 {
+          fmt.Println("Finished reading documents")
           close(d.output)
         return
       }
@@ -69,7 +71,6 @@ func (d *DocWalker) read_file( path string, info os.FileInfo, err error) error {
     matched, err := regexp.MatchString(d.filepattern, file);
     log.Debugf("File match: %v, error: %v", matched, err)
     if matched && err == nil {
-      fmt.Printf("In file %s: ", path)
 
       fr := new(filereader.TrecFileReader)
       fr.Init(path)

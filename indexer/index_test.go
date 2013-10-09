@@ -89,7 +89,7 @@ func TestSingleTermIndex(t *testing.T) {
     log.Debugf("Finished inserting %s", document)
   }
 
-  log.Debugf("Inserted all documents")
+  log.Infof("Inserted all documents into %s", index.String())
 
   output := new(bytes.Buffer)
   index.PrintLexicon(output)

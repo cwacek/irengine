@@ -15,11 +15,9 @@ type SingleTermIndex struct {
 
 	lexicon Lexicon
 
-  diskStores map[string]string
-  termsPerDiskStore int
 
-	termCount     int
-	documentCount int
+	TermCount     int
+	DocumentCount int
 
   // utility vars
   inserterRunning bool
@@ -29,10 +27,9 @@ type SingleTermIndex struct {
 }
 
 func (t *SingleTermIndex) String() string {
-	return fmt.Sprintf("[SingleTermIndex words:%d docs:%d datadir:%s",
-		t.termCount,
-		t.documentCount,
-		t.dataDir)
+	return fmt.Sprintf("{SingleTermIndex terms:%d docs:%d}",
+		t.lexicon.Len(),
+		t.DocumentCount)
 }
 
 func (t *SingleTermIndex) Init(lexicon Lexicon) error {
@@ -43,8 +40,8 @@ func (t *SingleTermIndex) Init(lexicon Lexicon) error {
 
   t.lexicon = lexicon
 
-  t.termCount = 0
-  t.documentCount = 0
+  t.TermCount = 0
+  t.DocumentCount = 0
 
   t.inserterRunning = false
   t.shutdown = make(chan bool)
@@ -134,6 +131,8 @@ func (t *SingleTermIndex) inserter() {
 
     t.lexicon.InsertToken(token)
   }
+
+  t.DocumentCount += 1
 
   log.Criticalf("Filter chain %s closed")
   t.inserterRunning = false
