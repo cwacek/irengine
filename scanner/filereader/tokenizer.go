@@ -233,12 +233,23 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
         t.scanner.Scan()
         part2, ok := t.parseCompound()
 
+        log.Tracef("Parsing symbol %c. part2 is %s", next, part2)
         switch {
 
         case ok && next == '\'':
           if ok {
              entity.WriteString(part2.Text)
           }
+
+        case ok && next == '(':
+          entity.WriteRune('-')
+          log.Tracef("subparse got %s. appending with '-'", part2.Text)
+          entity.WriteString(part2.Text)
+
+        case ok && next == ')':
+          log.Tracef("Skipping ending paren. After the paren is %s. Entity is %s", part2.Text, entity.String())
+          entity.WriteString(part2.Text)
+          //Don't keep ending parens
 
         case ok:
           entity.WriteRune(next)
@@ -264,6 +275,25 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
         }
       }
     }
+}
+
+func (t *BadXMLTokenizer) parseParenthetical() (string, bool) {
+  buf := new(bytes.Buffer)
+
+  for {
+    next := t.scanner.Next()
+    switch {
+
+    case next == ')':
+      return buf.String(), true
+
+    case unicode.IsSpace(next):
+      return buf.String(), false
+
+    default:
+      buf.WriteRune(next)
+    }
+  }
 }
 
 func decodeEntity(entity string) (string, bool) {

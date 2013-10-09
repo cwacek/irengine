@@ -6,8 +6,8 @@ import "github.com/cwacek/irengine/scanner/filereader"
 import "strings"
 import "unicode"
 
-var alpha_num = regexp.MustCompile(`([A-z]+)-([0-9]+)`)
-var num_alpha = regexp.MustCompile(`([0-9]+)-([A-z]+)`)
+var alpha_num = regexp.MustCompile(`^([A-z]+)-([0-9]+)$`)
+var num_alpha = regexp.MustCompile(`^([0-9]+)-([A-z]+)$`)
 var WordPrefixes = map[string] bool {
   "anti": true,
   "intra": true,

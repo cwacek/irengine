@@ -35,7 +35,7 @@ var (
 		},
 		"hyphens": TestCase{
 			NewHyphenFilter,
-			`CDC-50 F-16 1-hour part-of-speech pre-rebellion 141-19`,
+			`CDC-50 F-16 1-hour part-of-speech pre-rebellion 141-19 8c(15)(A)`,
 			[]*filereader.Token{
 				&filereader.Token{Text: "CDC50", Type: filereader.TextToken, Position: 1},
 				&filereader.Token{Text: "CDC", Type: filereader.TextToken, Position: 1},
@@ -49,6 +49,7 @@ var (
 				&filereader.Token{Text: "prerebellion", Type: filereader.TextToken, Position: 5},
 				&filereader.Token{Text: "rebellion", Type: filereader.TextToken, Position: 5},
 				&filereader.Token{Text: "141-19", Type: filereader.TextToken, Position: 5},
+				&filereader.Token{Text: "8c-15-A", Type: filereader.TextToken, Position: 6},
 			},
 		},
 		"dates": TestCase{
