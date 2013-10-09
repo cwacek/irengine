@@ -251,6 +251,10 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
           entity.WriteString(part2.Text)
           //Don't keep ending parens
 
+        case next == '/':
+          // Slashes separate
+          t.current_phrase_id = rand.Intn(1000)
+
         case ok:
           entity.WriteRune(next)
           entity.WriteString(part2.Text)
@@ -307,6 +311,14 @@ func decodeEntity(entity string) (string, bool) {
         return "<", true
     case "&gt;":
         return ">", true
+
+      case "&amp;":
+        fallthrough
+      case "&cir;":
+        fallthrough
+      case "&sect;":
+        return "", false
+
     default:
         log.Warnf("Invalid character escape sequence: %s", entity)
         return "", false
