@@ -310,6 +310,19 @@ func decodeEntity(entity string) (string, bool) {
   case "&gt;":
     return ">", true
 
+  case "&eacute;":
+    return "\u00E9", true
+  case "&uuml;":
+    return "\u00fc", true
+  case "&ntilde;":
+    return "\u00f1", true
+  case "&aacute;":
+    return "\u00e1", true
+  case "&iacute;":
+    return "\u00ed", true
+  case "&oacute;":
+    return "\u00f3", true
+
   case "&rsquo;":
     fallthrough
   case "&lsquo;":

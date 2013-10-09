@@ -54,6 +54,17 @@ func init() {
 			},
 		},
 		{
+			"Mayag&uuml;ez A&ntilde;asco Gu&aacute;nica D&iacute;az Rinc&oacute;n",
+			[]Token{
+				Token{Text: "Mayag\u00fcez", Type: TextToken, PhraseId: RandInts[0]},
+				Token{Text: "A\u00f1asco", Type: TextToken, PhraseId: RandInts[0]},
+				Token{Text: "Gu\u00e1nica", Type: TextToken, PhraseId: RandInts[0]},
+				Token{Text: "D\u00edaz", Type: TextToken, PhraseId: RandInts[0]},
+				Token{Text: "Rinc\u00f3n", Type: TextToken, PhraseId: RandInts[0]},
+				Token{Type: NullToken},
+			},
+		},
+		{
 			"8:43pm 100.242 100,000,1.10",
 			[]Token{
 				Token{Text: "8:43pm", Type: TextToken, PhraseId: RandInts[0]},
