@@ -146,3 +146,9 @@ func (t *SingleTermIndex) Delete() {
   log.Debugf("sending shutdown signal")
   t.shutdown <- true
 }
+
+//Forces a block until insertion threads are done
+func (t *SingleTermIndex) WaitInsert() {
+  t.insertLock.RLock()
+  t.insertLock.RUnlock()
+}

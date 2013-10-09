@@ -84,6 +84,9 @@ type Indexer interface {
   // Insert a document into the index
   Insert(t filereader.Document)
 
+  // This will block if insertions are occurring
+  WaitInsert()
+
   // Delete the index from disk
   Delete()
 }
