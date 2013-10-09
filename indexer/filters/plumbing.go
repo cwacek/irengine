@@ -128,7 +128,7 @@ func (fc *FilterPlumbing) apply() {
       fc.Send(tok)
 
     case tok.Final && fc.ignoresFinal == false:
-      log.Debugf("Passing Final token %s along", tok)
+      log.Tracef("Passing Final token %s along", tok)
       fc.Send(tok)
 
     default:

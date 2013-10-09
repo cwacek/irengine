@@ -28,7 +28,7 @@ func (f *AcronymFilter) Apply(tok *filereader.Token) (result []*filereader.Token
   result = make([]*filereader.Token, 1)
   var newtok *filereader.Token
 
-  log.Debugf("Received '%s'.", tok)
+  log.Tracef("Received '%s'.", tok)
   if acronymRegex.MatchString(tok.Text) {
     newtok = tok.Clone()
     newtok.Text = strings.Map(func(r rune) rune {

@@ -1,6 +1,7 @@
 package constrained
 
 import index "github.com/cwacek/irengine/indexer"
+import "fmt"
 import "io"
 import "strconv"
 import log "github.com/cihub/seelog"
@@ -35,11 +36,12 @@ func NewPostingListSet(tag DatastoreTag,
 func (pls PostingListSet) String() string {
     buf := new(bytes.Buffer)
     buf.WriteString(pls.Tag.String())
-    buf.WriteString(" [")
-    for term, _ := range pls.listMap {
-        buf.WriteString(term + " ")
-    }
-    buf.WriteByte(']')
+    buf.WriteString(fmt.Sprintf(" [%d entries, %d terms]", pls.Len(),
+    len(pls.listMap)))
+    /*for term, _ := range pls.listMap {*/
+        /*buf.WriteString(term + " ")*/
+    /*}*/
+    /*buf.WriteByte(']')*/
 
     return buf.String()
 }

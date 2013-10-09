@@ -49,13 +49,11 @@ func (f *HyphenFilter) Apply(tok *filereader.Token) (res []*filereader.Token) {
 
 	var newtok *filereader.Token
 
-	log.Debugf("Received '%s'", tok)
-
 	if m := alpha_num.FindStringSubmatch(tok.Text); m != nil {
 		// We have a match. Make a new token. If the alpha part
 		// is longer than 3 characters, make it a separate token too.
 		newtok = tok.Clone()
-		log.Debugf("Split into %v", m)
+		log.Tracef("Split into %v", m)
 		newtok.Text = m[1] + m[2]
 		newtok.Final = true
 		res = append(res, newtok)

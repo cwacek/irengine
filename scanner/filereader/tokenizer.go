@@ -142,7 +142,7 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
 
     for {
         tok := tz.scanner.Peek()
-        log.Debugf("Scanner found: %v", tok)
+        log.Tracef("Scanner found: %v", tok)
 
         if tok == scanner.EOF {
             return nil, io.EOF
@@ -150,25 +150,25 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
 
         switch  {
         case unicode.IsPrint(tok) == false:
-            log.Debug("Skipping unprintable character")
+            log.Tracef("Skipping unprintable character")
             fallthrough
         case unicode.IsSpace(tok):
             tz.scanner.Scan()
             continue
 
         case tok == '<':
-            log.Debugf("parsing XML")
+            log.Tracef("parsing XML")
             token, ok := parseXML(tz.scanner)
             // We actually bump the phrase no matter what. It's
             // either a comment, an xml token, or something weird
             tz.current_phrase_id = rand.Intn(1000)
             if ok {
-                log.Debugf("Returning XML Token: %s", token)
+                log.Tracef("Returning XML Token: %s", token)
                 return token, nil
             }
 
         case tok == '&':
-            log.Debugf("parsing HTML")
+            log.Tracef("parsing HTML")
             if token := parseHTMLEntity(tz.scanner); token != nil {
                 return token, nil
             }
@@ -176,13 +176,13 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
         case tok == '`': // Handle this speciallly - technically it's a 'grave accent'
             fallthrough
         case unicode.Is(unicode.Punct, tok):
-            log.Debugf("Ignoring punctuation: %v", tok)
+            log.Tracef("Ignoring punctuation: %v", tok)
             tz.current_phrase_id = rand.Intn(1000)
             tok = tz.scanner.Scan()
 
         default:
             /* Catch special things in words */
-            log.Debugf("Found '%s' . Parsing Text", string(tok))
+            log.Tracef("Found '%s' . Parsing Text", string(tok))
             token, ok := tz.parseCompound()
             if ok {
               log.Debugf("Returing Text Token: %s", token)
@@ -200,13 +200,13 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
 
     for {
       next := t.scanner.Peek()
-      log.Debugf("Next is '%v'. Text entity is %s",
+      log.Tracef("Next is '%v'. Text entity is %s",
       next, entity.String())
 
       switch {
 
       case next == '&':
-        log.Debugf("parsing HTML")
+        log.Tracef("parsing HTML")
         if token := parseHTMLEntity(t.scanner); token != nil {
           entity.WriteString(token.Text)
         } else {
@@ -345,17 +345,17 @@ func decodeEntity(entity string) (string, bool) {
 func parseHTMLEntity(sc *scanner.Scanner) (*Token) {
 
     var entity = new(bytes.Buffer)
-    log.Debugf("ParseHTML. Starting with '%s'", entity.String())
+    log.Tracef("ParseHTML. Starting with '%s'", entity.String())
 
     for {
         tok := sc.Scan()
-        log.Debugf("Parse HTML. Reading token %c", tok)
+        log.Tracef("Parse HTML. Reading token %c", tok)
 
         switch {
         case unicode.IsSpace(tok):
             if entity.Len() > 1 {
                 token := NewToken(entity.String(), TextToken)
-                log.Debugf("ParseHTML. Returning non-HTML '%s'",
+                log.Tracef("ParseHTML. Returning non-HTML '%s'",
             token.Text)
                 return token
             } else {
@@ -364,10 +364,10 @@ func parseHTMLEntity(sc *scanner.Scanner) (*Token) {
 
         case tok == ';':
             entity.WriteRune(tok)
-            log.Debugf("Attempting to decode %s", entity.String())
+            log.Tracef("Attempting to decode %s", entity.String())
             if decoded, ok := decodeEntity(entity.String()); ok {
                 token := NewToken(decoded, TextToken)
-                log.Debugf("ParseHTML. Returning HTML '%s'", entity.String())
+                log.Tracef("ParseHTML. Returning HTML '%s'", entity.String())
                 return token
             } else {
               return nil
@@ -393,7 +393,7 @@ func parseXML(sc *scanner.Scanner) (*Token, bool) {
         token.Type = XMLEndToken
         sc.Next()
     case '!':
-        log.Debugf("parseXML skipping comment")
+        log.Tracef("parseXML skipping comment")
         next := sc.Next()
         for next != '>' {
             next = sc.Next()
@@ -403,11 +403,11 @@ func parseXML(sc *scanner.Scanner) (*Token, bool) {
         token.Type = XMLStartToken
     }
 
-    log.Debugf("parseXML creating %s element", token.Type )
+    log.Tracef("parseXML creating %s element", token.Type )
 
     for {
         tok := sc.Scan()
-        log.Debugf("parseXML found %s. Token is %v. Entity is: '%s'",
+        log.Tracef("parseXML found %s. Token is %v. Entity is: '%s'",
         sc.TokenText(),
         tok,
         entity.String())
@@ -421,7 +421,7 @@ func parseXML(sc *scanner.Scanner) (*Token, bool) {
             return nil, false
 
         default:
-            log.Debugf("parseXML appending %s to string",
+            log.Tracef("parseXML appending %s to string",
             sc.TokenText())
             entity.WriteString(sc.TokenText())
 
@@ -437,9 +437,9 @@ func (tz *BadXMLTokenizer) Tokens() (<- chan *Token) {
 
     go func(ret chan *Token, tz *BadXMLTokenizer) {
         for {
-            log.Debugf("Scanner calling Next()")
+            log.Tracef("Scanner calling Next()")
             tok, err := tz.Next()
-            log.Debugf("scanner.Next() returned %s, %v", tok, err)
+            log.Tracef("scanner.Next() returned %s, %v", tok, err)
             switch err {
             case nil:
                 log.Debugf("Pushing %s into token channel %v",

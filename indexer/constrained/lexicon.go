@@ -153,7 +153,8 @@ func (lex *lexicon) DSPath(tag DatastoreTag) string {
 }
 
 func (lex *lexicon) makeRecent(pls *PostingListSet) {
-	log.Debugf("Making %v recent in %v", pls, lex.lru_cache)
+	log.Debugf("Making %v recent", pls)
+    log.Tracef("LRU_CACHE: %v", lex.lru_cache)
 	for i, set := range lex.lru_cache {
 		if set == pls {
 			copy(lex.lru_cache[i:], lex.lru_cache[i+1:])
