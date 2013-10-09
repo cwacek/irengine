@@ -30,11 +30,23 @@ func (it *pl_iterator) Key() string {
 
 type positional_pl struct {
     list *skiplist.SkipList
+    Length int
+    entry_init func(docid string) PostingListEntry
+}
+
+func NewBasicPostingList() PostingList {
+    pl := new(positional_pl)
+    pl.Length = 0
+    pl.list = skiplist.NewStringMap()
+    pl.entry_init = NewBasicEntry
+    return pl
 }
 
 func NewPositionalPostingList() PostingList {
     pl := new(positional_pl)
+    pl.Length = 0
     pl.list = skiplist.NewStringMap()
+    pl.entry_init = NewPositionalEntry
     return pl
 }
 
@@ -54,7 +66,7 @@ bool) {
     log.Debugf("Looking for %s in posting list", id)
     if elem, ok := pl.list.Get(id); ok {
         log.Debugf("Found %#v", elem)
-        return elem.(*skiplist_entry), true
+        return elem.(*positional_sk_entry), true
     }
     log.Debugf("Found nothing.")
     return  nil, false
@@ -77,7 +89,7 @@ position int) bool {
     }
 
     log.Debug("Creating new positional entry")
-    entry := NewPositionalEntry(docid)
+    entry := pl.entry_init(docid)
     log.Tracef("Adding position %d to entry", position)
     entry.AddPosition(position)
 
@@ -93,24 +105,44 @@ func (pl positional_pl) String() string {
 
     log.Tracef("Converting PL %#v to string", pl)
     for  i := pl.list.Iterator(); i.Next(); {
-        entries = append(entries,i.Value().(*skiplist_entry).String())
+        entries = append(entries,i.Value().(PostingListEntry).String())
     }
     return strings.Join(entries, " ")
 }
 
-type skiplist_entry struct {
+
+type basic_sk_entry struct {
+    positional_sk_entry
+    frequency int
+}
+
+func NewBasicEntry(docId string) PostingListEntry {
+    entry := new(basic_sk_entry)
+    entry.docId = docId
+    return entry
+}
+
+func (p *basic_sk_entry) Serialize() string {
+    return fmt.Sprintf("%s %s", p.docId, p.frequency)
+}
+
+func (p *basic_sk_entry) String() string {
+    return fmt.Sprintf("(%s, %s)", p.docId, p.frequency)
+}
+
+type positional_sk_entry struct {
     docId string
     positions []int
 }
 
 func NewPositionalEntry(docId string) PostingListEntry {
-    entry := new(skiplist_entry)
+    entry := new(positional_sk_entry)
     entry.docId = docId
     entry.positions = make([]int, 0)
     return entry
 }
 
-func (p *skiplist_entry) Serialize() string {
+func (p *positional_sk_entry) Serialize() string {
 
     posParts := make([]string, len(p.positions))
     for i,position := range p.positions {
@@ -120,8 +152,8 @@ func (p *skiplist_entry) Serialize() string {
     return fmt.Sprintf("%s %s", p.docId, strings.Join(posParts,","))
 }
 
-func (p *skiplist_entry) String() string {
-    log.Tracef("Converting %#v skiplist_entry to string", p)
+func (p *positional_sk_entry) String() string {
+    log.Tracef("Converting %#v positional_sk_entry to string", p)
     parts := make([]string, 0, len(p.positions) + 2)
     /*posParts := make([]string, len(p.positions))*/
 
@@ -138,19 +170,19 @@ func (p *skiplist_entry) String() string {
     return "(" + strings.Join(parts, ", ") + ")"
 }
 
-func (p *skiplist_entry) Frequency() int {
+func (p *positional_sk_entry) Frequency() int {
     return len(p.positions)
 }
 
-func (p *skiplist_entry) Positions() []int {
+func (p *positional_sk_entry) Positions() []int {
     return p.positions
 }
 
-func (p *skiplist_entry) DocId() string {
+func (p *positional_sk_entry) DocId() string {
     return p.docId
 }
 
-func (p *skiplist_entry) AddPosition(pos int) {
+func (p *positional_sk_entry) AddPosition(pos int) {
     p.positions = append(p.positions, pos)
     sort.Ints(p.positions)
 }
