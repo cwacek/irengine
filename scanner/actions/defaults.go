@@ -96,7 +96,7 @@ var appConfig = `
     <filter levels="critical,error,warn,info">
       <console formatid="scanner" />
     </filter>
-    <filter levels="debug">
+    <filter levels="debug,trace">
       <console formatid="debug" />
     </filter>
   </outputs>
@@ -118,7 +118,7 @@ func SetupLogging(verbosity int) {
   case 2:
     config = fmt.Sprintf(appConfig, "info")
   case 3:
-    fallthrough
+    config = fmt.Sprintf(appConfig, "debug")
   default:
     config = fmt.Sprintf(appConfig, "trace")
   }

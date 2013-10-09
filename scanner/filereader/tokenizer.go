@@ -185,6 +185,7 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
             log.Debugf("Found '%s' . Parsing Text", string(tok))
             token, ok := tz.parseCompound()
             if ok {
+              log.Debugf("Returing Text Token: %s", token)
               return token, nil
             } else {
               tz.scanner.Scan()

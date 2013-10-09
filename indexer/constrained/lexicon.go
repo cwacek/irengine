@@ -157,12 +157,12 @@ func (lex *lexicon) makeRecent(pls *PostingListSet) {
 	for i, set := range lex.lru_cache {
 		if set == pls {
 			copy(lex.lru_cache[i:], lex.lru_cache[i+1:])
-			log.Debugf("Rearranged at %d: %v", i, lex.lru_cache)
+			log.Tracef("Rearranged at %d: %v", i, lex.lru_cache)
 			lex.lru_cache[len(lex.lru_cache)-1] = set
 			break
 		}
 	}
-	log.Debugf("Afterwards: %v", lex.lru_cache)
+	log.Tracef("Afterwards: %v", lex.lru_cache)
 }
 
 // Find a PLS that's available
@@ -200,7 +200,8 @@ func (lex *lexicon) AddPLS(newPLS *PostingListSet) {
 // For slightly lower level operation that RetrievePostingList
 func (lex *lexicon) RetrievePLS(term * persistent_term) *PostingListSet {
 
-    log.Debugf("Received %s. PLS_cache: %v", term, lex.pl_set_cache)
+    log.Debugf("Received %s.", term)
+    log.Tracef("PLS_cache: %v", lex.pl_set_cache)
 
 	pls, ok := lex.pl_set_cache[term.DataTag]
     switch {
