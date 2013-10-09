@@ -173,6 +173,8 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
                 return token, nil
             }
 
+        case tok == '`': // Handle this speciallly - technically it's a 'grave accent'
+            fallthrough
         case unicode.Is(unicode.Punct, tok):
             log.Debugf("Ignoring punctuation: %v", tok)
             tz.current_phrase_id = rand.Intn(1000)
