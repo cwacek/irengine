@@ -84,6 +84,9 @@ type Indexer interface {
   // Insert a document into the index
   Insert(t filereader.Document)
 
+  // Give the number of indexed documents
+  Len() int
+
   // This will block if insertions are occurring
   WaitInsert()
 

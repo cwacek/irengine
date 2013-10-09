@@ -125,6 +125,7 @@ func (t *SingleTermIndex) inserter() {
     }
 
     if token.Type == filereader.NullToken {
+      t.DocumentCount += 1
       t.insertLock.Unlock()
       continue
     }
@@ -132,7 +133,6 @@ func (t *SingleTermIndex) inserter() {
     t.lexicon.InsertToken(token)
   }
 
-  t.DocumentCount += 1
 
   log.Criticalf("Filter chain %s closed")
   t.inserterRunning = false
@@ -150,4 +150,8 @@ func (t *SingleTermIndex) Delete() {
 func (t *SingleTermIndex) WaitInsert() {
   t.insertLock.RLock()
   t.insertLock.RUnlock()
+}
+
+func (t *SingleTermIndex) Len() int {
+  return t.DocumentCount
 }
