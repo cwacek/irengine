@@ -76,9 +76,16 @@ var (
 				&filereader.Token{Text: "01_00_2011", Type: filereader.TextToken, Position: 15},
 			},
 		},
+		"specialdigits": TestCase{
+			NewDigitsFilter,
+      `10-2`,
+			[]*filereader.Token{
+				&filereader.Token{Text: "10-2", Type: filereader.TextToken, Position: 7},
+      },
+    },
 		"digits": TestCase{
 			NewDigitsFilter,
-			`10,0002,10 10,000,000 1000 1000000, 1.242 12.00 10-2`,
+			`10,0002,10 10,000,000 1000 1000000, 1.242 12.00`,
 			[]*filereader.Token{
 				&filereader.Token{Text: "10,0002,10", Type: filereader.TextToken, Position: 1},
 				&filereader.Token{Text: "10000000", Type: filereader.TextToken, Position: 2},
@@ -86,7 +93,6 @@ var (
 				&filereader.Token{Text: "1000000", Type: filereader.TextToken, Position: 4},
 				&filereader.Token{Text: "1.242", Type: filereader.TextToken, Position: 5},
 				&filereader.Token{Text: "12", Type: filereader.TextToken, Position: 6},
-				&filereader.Token{Text: "10-2", Type: filereader.TextToken, Position: 7},
 			},
 		},
 		"filenames": TestCase{
