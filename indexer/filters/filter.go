@@ -16,6 +16,7 @@ func init() {
   f := NewDigitsFilter("digits")
   f = f.Connect(NewDateFilter("dates"), false)
   f = f.Connect(NewHyphenFilter("hyphens"), false)
+  f = f.Connect(NewSlashFilter("slashes"), false)
   f = f.Connect(NewAcronymFilter("acronyms"), false)
   f = f.Connect(NewFilenameFilter("filenames"), false)
   f = f.Connect(NewLowerCaseFilter("lower"), false)
