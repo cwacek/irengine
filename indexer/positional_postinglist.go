@@ -71,7 +71,7 @@ bool) {
     log.Debugf("Looking for %s in posting list", id)
     if elem, ok := pl.list.Get(id); ok {
         log.Debugf("Found %#v", elem)
-        return elem.(*positional_sk_entry), true
+        return elem.(PostingListEntry), true
     }
     log.Debugf("Found nothing.")
     return  nil, false
@@ -197,13 +197,13 @@ func (p *positional_sk_entry) Serialize() string {
     buf := new(bytes.Buffer)
 
     buf.WriteString(p.docId)
-    buf.WriteRune(" ")
+    buf.WriteRune(' ')
 
     for i,position := range p.positions {
         if i != 0 {
-            buf.WriteRune(",")
+            buf.WriteRune(',')
         }
-        buf.WriteRune(fmt.Sprintf("%d", position))
+        buf.WriteString(fmt.Sprintf("%d", position))
     }
 
     return buf.String()

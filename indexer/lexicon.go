@@ -11,7 +11,7 @@ import log "github.com/cihub/seelog"
 // Implements a Lexicon
 type TrieLexicon struct {
   radix.Trie
-  pl_init PostingListInitializer
+  PLInit PostingListInitializer
   TermInit TermFromTokenFunc
 }
 
@@ -29,7 +29,7 @@ func (t *TrieLexicon) SetPLInitializer(pl_func PostingListInitializer) {
     panic("Cannot set PL initializer after terms are inserted")
   }
 
-  t.pl_init = pl_func
+  t.PLInit = pl_func
 }
 
 func (t *TrieLexicon) InsertToken(token *filereader.Token) {
@@ -55,7 +55,7 @@ func (t *TrieLexicon) InsertToken(token *filereader.Token) {
     } else {
 
       log.Tracef("Creating new term via %v", t.TermInit)
-      term = t.TermInit(token, t.pl_init)
+      term = t.TermInit(token, t.PLInit)
 
       log.Debugf("Created new term: %s. Inserting into lexicon", term.String())
       // Insert the new term
@@ -80,7 +80,7 @@ func (t *TrieLexicon) Print(w io.Writer) {
 func NewTrieLexicon() Lexicon {
   lex := new(TrieLexicon)
   lex.Init()
-  lex.pl_init = NewPositionalPostingList
+  lex.PLInit = NewPositionalPostingList
   lex.TermInit = NewTermFromToken
   return lex
 }

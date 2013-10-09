@@ -82,7 +82,6 @@ func (t persistent_term) String() string {
 type lexicon struct {
 	index.TrieLexicon
 
-	pl_init                    index.PostingListInitializer
 	maxLoad, currentLoad, perPLSLoad int
 
 	pl_set_cache               map[DatastoreTag]*PostingListSet
@@ -125,7 +124,7 @@ func NewLexicon(maxMem int, dataDir string) index.Lexicon {
                 return term
 		}
 
-	lex.pl_init = index.NewPositionalPostingList
+	lex.PLInit = index.NewPositionalPostingList
 
 	lex.maxLoad = maxMem
 	lex.currentLoad = 0
@@ -209,7 +208,7 @@ func (lex *lexicon) RetrievePLS(term * persistent_term) *PostingListSet {
     case !ok:
         log.Debug("Creating a new posting list")
         //We've never seen this one. Make a new one
-        newPLS := NewPostingListSet(term.DataTag, lex.pl_init)
+        newPLS := NewPostingListSet(term.DataTag, lex.PLInit)
         lex.evict()
         lex.AddPLS(newPLS)
         return newPLS
@@ -228,7 +227,7 @@ func (lex *lexicon) RetrievePLS(term * persistent_term) *PostingListSet {
 
         var newPLS *PostingListSet
         if file, err := os.Open(lex.DSPath(term.DataTag)); err == nil {
-            newPLS = NewPostingListSet(term.DataTag, lex.pl_init)
+            newPLS = NewPostingListSet(term.DataTag, lex.PLInit)
             newPLS.Load(file)
         log.Infof("Read %s from %s", newPLS,
             lex.DSPath(term.DataTag))
