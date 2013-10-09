@@ -308,6 +308,31 @@ func decodeEntity(entity string) (string, bool) {
         return "<", true
     case "&gt;":
         return ">", true
+
+      case "&rsquo;":
+        fallthrough
+      case "&lsquo;":
+        return "'", true
+
+      case "&para;":
+        fallthrough
+      case "&reg;":
+        fallthrough
+      case "&sect;":
+        fallthrough
+      case "&cir;":
+        fallthrough
+      case "&bull;":
+        fallthrough
+      case "&racute;":
+        fallthrough
+      case "&lacute;":
+        fallthrough
+      case "&tilde;":
+        fallthrough
+      case "&amp;":
+        return "", false // no good, but don't warn
+
     default:
         log.Warnf("Invalid character escape sequence: %s", entity)
         return "", false
