@@ -41,6 +41,7 @@ type PostingListEntry interface {
   String() string
   AddPosition(int)
   Serialize() string
+  Deserialize([][]byte) error
 }
 
 type PostingListInitializer func() PostingList
@@ -53,10 +54,12 @@ type PostingList interface {
   // not (and just adds a position or something
   InsertEntry(token *filereader.Token) bool
   InsertRawEntry(text, docid string, pos int) bool
+  InsertCompleteEntry(pl_entry PostingListEntry) bool
 
   String() string
   Len() int
   Iterator() PostingListIterator
+  EntryFactory(docId string) PostingListEntry
 }
 
 type PostingListIterator interface {

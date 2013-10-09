@@ -3,7 +3,6 @@ package constrained
 import index "github.com/cwacek/irengine/indexer"
 import "fmt"
 import "io"
-import "strconv"
 import log "github.com/cihub/seelog"
 import "bufio"
 import "bytes"
@@ -98,17 +97,12 @@ func (pls *PostingListSet) Load(r io.Reader) {
             pls.listMap[string(data[0])] = pl
         }
 
-        log.Debugf("Parsing positions from %s", string(data[2]))
-        for _, position := range bytes.Split(data[2],[]byte{','}) {
-
-            log.Debugf("Found position %v (%s)", position, string(position))
-
-            posInt, err := strconv.Atoi(string(position))
-            if err != nil {
-                panic(err)
-            }
-            pl.InsertRawEntry(string(data[0]), string(data[1]),posInt)
+        pl_entry := pl.EntryFactory(string(data[1]))
+        if e := pl_entry.Deserialize(data[1:]); e != nil {
+            panic(e)
         }
+
+        pl.InsertCompleteEntry(pl_entry)
 
         log.Debugf("After insert, PL was %s", pl.String())
     }

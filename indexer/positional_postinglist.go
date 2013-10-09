@@ -2,6 +2,7 @@ package indexer
 
 import "sort"
 import "fmt"
+import "bytes"
 import "strconv"
 import "strings"
 import "github.com/ryszard/goskiplist/skiplist"
@@ -31,14 +32,18 @@ func (it *pl_iterator) Key() string {
 type positional_pl struct {
     list *skiplist.SkipList
     Length int
-    entry_init func(docid string) PostingListEntry
+    entry_factory func(string) PostingListEntry
+}
+
+func (pl *positional_pl) EntryFactory(docid string) PostingListEntry {
+    return pl.entry_factory(docid)
 }
 
 func NewBasicPostingList() PostingList {
     pl := new(positional_pl)
     pl.Length = 0
     pl.list = skiplist.NewStringMap()
-    pl.entry_init = NewBasicEntry
+    pl.entry_factory = NewBasicEntry
     return pl
 }
 
@@ -46,7 +51,7 @@ func NewPositionalPostingList() PostingList {
     pl := new(positional_pl)
     pl.Length = 0
     pl.list = skiplist.NewStringMap()
-    pl.entry_init = NewPositionalEntry
+    pl.entry_factory = NewPositionalEntry
     return pl
 }
 
@@ -72,6 +77,12 @@ bool) {
     return  nil, false
 }
 
+func (pl *positional_pl) InsertCompleteEntry(entry PostingListEntry) bool {
+    pl.list.Set(entry.DocId(), entry)
+    pl.Length++
+    return true
+}
+
 func (pl *positional_pl) InsertEntry(token *filereader.Token) bool {
     log.Debugf("Inserting %s into posting list.", token)
     return pl.InsertRawEntry(token.Text, token.DocId, token.Position)
@@ -89,14 +100,13 @@ position int) bool {
     }
 
     log.Debug("Creating new positional entry")
-    entry := pl.entry_init(docid)
+    entry := pl.entry_factory(docid)
     log.Tracef("Adding position %d to entry", position)
     entry.AddPosition(position)
 
     log.Trace("Inserting entry in posting list")
-    pl.list.Set(entry.DocId(), entry)
+    pl.InsertCompleteEntry(entry)
     log.Trace("Complete")
-    pl.Length++
     return true
 }
 
@@ -105,9 +115,9 @@ func (pl positional_pl) String() string {
 
     log.Tracef("Converting PL %#v to string", pl)
     for  i := pl.list.Iterator(); i.Next(); {
-        entries = append(entries,i.Value().(PostingListEntry).String())
+        entries = append(entries,i.Value().(PostingListEntry).Serialize())
     }
-    return strings.Join(entries, " ")
+    return strings.Join(entries, " | ")
 }
 
 
@@ -126,6 +136,30 @@ func (p *basic_sk_entry) Serialize() string {
     return fmt.Sprintf("%s %s", p.docId, p.frequency)
 }
 
+func (p *basic_sk_entry) Deserialize(enc [][]byte) error {
+    p.docId = string(enc[0])
+
+    if posInt, err := strconv.Atoi(string(enc[1])); err != nil {
+        return err
+    } else {
+        p.frequency = posInt
+    }
+
+    return nil
+}
+
+func (p *basic_sk_entry) Frequency() int {
+    return p.frequency
+}
+
+func (p *basic_sk_entry) Positions() []int {
+    return make([]int, 0)
+}
+
+func (p *basic_sk_entry) AddPosition(pos int) {
+    p.frequency++
+}
+
 func (p *basic_sk_entry) String() string {
     return fmt.Sprintf("(%s, %s)", p.docId, p.frequency)
 }
@@ -141,6 +175,23 @@ func NewPositionalEntry(docId string) PostingListEntry {
     entry.positions = make([]int, 0)
     return entry
 }
+
+func (p *positional_sk_entry) Deserialize( input [][]byte) (error) {
+
+        log.Debugf("Parsing positions from %s", string(input[1]))
+        for _, position := range bytes.Split(input[1],[]byte{','}) {
+
+            log.Debugf("Found position %v (%s)", position, string(position))
+
+            if posInt, err := strconv.Atoi(string(position)); err != nil {
+                return err
+            } else {
+                p.AddPosition(posInt)
+            }
+        }
+
+        return nil
+    }
 
 func (p *positional_sk_entry) Serialize() string {
 

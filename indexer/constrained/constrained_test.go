@@ -22,9 +22,9 @@ var (
     `
 
 	expected_pl = map[string]string{
-		"that":  "(A01, 1, {17}) (A03, 3, {2,3,4}) (A05, 1, {12})",
-		"there": "(A03, 2, {1,5})",
-		"which": "(A01, 1, {15}) (A05, 2, {12,15})",
+		"that":  "A01 17 | A03 2,3,4 | A05 12",
+		"there": "A03 1,5",
+		"which": "A01 15 | A05 12,15",
 	}
 
     reserialized_pls = []byte(
