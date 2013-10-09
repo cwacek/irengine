@@ -19,8 +19,8 @@ var (
 
 func init() {
 	rand.Seed(0)
-	RandInts = make([]int, 10)
-	for x := 0; x < 10; x++ {
+	RandInts = make([]int, 20)
+	for x := 0; x < 20; x++ {
 		RandInts[x] = rand.Intn(1000)
     log.Infof("RandInt[%d] = %d", x, RandInts[x])
 	}
@@ -93,6 +93,23 @@ func init() {
 				Token{Text: "RINDOCK", Type: XMLStartToken, PhraseId: 0},
 				Token{Text: "CN-94-003", Type: TextToken, PhraseId: RandInts[2]},
 				Token{Text: "RINDOCK", Type: XMLEndToken, PhraseId: 0},
+				Token{Type: NullToken},
+			},
+		},
+		{
+			"&blank;/&blank;Vol. 59, No. 2&blank;/&blank;Tuesday, January 4, 1994&blank;/&blank;Rules and Regulations",
+			[]Token{
+				Token{Text: "Vol", Type: TextToken, PhraseId: RandInts[1]},
+				Token{Text: "59", Type: TextToken, PhraseId: RandInts[2]},
+				Token{Text: "No", Type: TextToken, PhraseId: RandInts[3]},
+				Token{Text: "2", Type: TextToken, PhraseId: RandInts[4]},
+				Token{Text: "Tuesday", Type: TextToken, PhraseId: RandInts[5]},
+				Token{Text: "January", Type: TextToken, PhraseId: RandInts[6]},
+				Token{Text: "4", Type: TextToken, PhraseId: RandInts[6]},
+				Token{Text: "1994", Type: TextToken, PhraseId: RandInts[7]},
+				Token{Text: "Rules", Type: TextToken, PhraseId: RandInts[8]},
+				Token{Text: "and", Type: TextToken, PhraseId: RandInts[8]},
+				Token{Text: "Regulations", Type: TextToken, PhraseId: RandInts[8]},
 				Token{Type: NullToken},
 			},
 		},

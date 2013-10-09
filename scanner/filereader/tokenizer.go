@@ -169,8 +169,7 @@ func (tz *BadXMLTokenizer) Next() (*Token, error) {
 
         case tok == '&':
             log.Debugf("parsing HTML")
-            token, ok := parseHTMLEntity(tz.scanner)
-            if ok {
+            if token := parseHTMLEntity(tz.scanner); token != nil {
                 return token, nil
             }
 
@@ -205,8 +204,15 @@ func (t *BadXMLTokenizer) parseCompound() (*Token, bool) {
 
       case next == '&':
         log.Debugf("parsing HTML")
-        token, _ := parseHTMLEntity(t.scanner)
-        entity.WriteString(token.Text)
+        if token := parseHTMLEntity(t.scanner); token != nil {
+          entity.WriteString(token.Text)
+        } else {
+          if entity.Len() > 0 {
+            tok := NewToken(entity.String(), TextToken)
+            tok.PhraseId = compoundPhraseId
+            return tok, true
+          }
+        }
 
       case next == '<':
         if entity.Len() > 0 {
@@ -270,18 +276,22 @@ func decodeEntity(entity string) (string, bool) {
     case "&gt;":
         return ">", true
     default:
-        log.Debugf("Invalid character escape sequence: %s", entity)
+        log.Warnf("Invalid character escape sequence: %s", entity)
         return "", false
     }
 }
 
-func parseHTMLEntity(sc *scanner.Scanner) (*Token, bool) {
+// Return a token representing the HTML entity, or nil if 
+// this decodes to something that should not be kept (and which
+// breaks words
+func parseHTMLEntity(sc *scanner.Scanner) (*Token) {
 
     var entity = new(bytes.Buffer)
     log.Debugf("ParseHTML. Starting with '%s'", entity.String())
 
     for {
         tok := sc.Scan()
+        log.Debugf("Parse HTML. Reading token %c", tok)
 
         switch {
         case unicode.IsSpace(tok):
@@ -289,19 +299,22 @@ func parseHTMLEntity(sc *scanner.Scanner) (*Token, bool) {
                 token := NewToken(entity.String(), TextToken)
                 log.Debugf("ParseHTML. Returning non-HTML '%s'",
             token.Text)
-                return token, false
+                return token
             } else {
-                return nil, false
+                return nil
             }
 
         case tok == ';':
             entity.WriteRune(tok)
+            log.Debugf("Attempting to decode %s", entity.String())
             if decoded, ok := decodeEntity(entity.String()); ok {
                 token := NewToken(decoded, TextToken)
-                log.Debugf("ParseHTML. Returning HTML '%s'",
-                token.Text)
-                return token, true
+                log.Debugf("ParseHTML. Returning HTML '%s'", entity.String())
+                return token
+            } else {
+              return nil
             }
+
         default:
             entity.WriteString(sc.TokenText())
         }
