@@ -209,7 +209,7 @@ func (lex *lexicon) RetrievePLS(term * persistent_term) *PostingListSet {
     case !ok:
         log.Debug("Creating a new posting list")
         //We've never seen this one. Make a new one
-        newPLS := NewPostingListSet(term.DataTag, index.NewPositionalPostingList)
+        newPLS := NewPostingListSet(term.DataTag, lex.pl_init)
         lex.evict()
         lex.AddPLS(newPLS)
         return newPLS
@@ -228,7 +228,7 @@ func (lex *lexicon) RetrievePLS(term * persistent_term) *PostingListSet {
 
         var newPLS *PostingListSet
         if file, err := os.Open(lex.DSPath(term.DataTag)); err == nil {
-            newPLS = NewPostingListSet(term.DataTag, index.NewPositionalPostingList)
+            newPLS = NewPostingListSet(term.DataTag, lex.pl_init)
             newPLS.Load(file)
         log.Infof("Read %s from %s", newPLS,
             lex.DSPath(term.DataTag))
@@ -271,6 +271,7 @@ func (lex *lexicon) evict() {
     if oldest == nil {
         return
     }
+    log.Warnf("Evicting PLS %s",oldest.Tag)
 
     lex.pls_size_cache[oldest.Tag] = oldest.Len()
     lex.dump_pls(oldest)
