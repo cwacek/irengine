@@ -102,6 +102,10 @@ func (lex *lexicon) update_load() {
 }
 
 func (lex *lexicon) load_factor() float64 {
+    if lex.maxLoad < 0 {
+        return 0.0
+    }
+
     load := float64(lex.currentLoad) / float64(lex.maxLoad)
     log.Infof("Load factor is now %0.2f", load)
     return load
@@ -126,7 +130,16 @@ func NewLexicon(maxMem int, dataDir string) index.Lexicon {
 	lex.maxLoad = maxMem
 	lex.currentLoad = 0
 	lex.DataDirectory = dataDir
-    lex.perPLSLoad = maxMem / 4
+    if lex.maxLoad > 0 {
+        lex.perPLSLoad = maxMem / 4
+    } else {
+        // This is int max
+        lex.perPLSLoad = int(^uint(0) >> 1)
+    }
+
+    if lex.perPLSLoad <= 10 {
+        log.Criticalf("Warning. PLS Load is set very low (< 10) terms per PLS")
+    }
 
 	lex.pl_set_cache = make(map[DatastoreTag]*PostingListSet)
 	lex.pls_size_cache = make(map[DatastoreTag]int)
