@@ -27,13 +27,11 @@ func init() {
 
 	tests = []testcase{
 		{
-			"(7 CFR) 8c(15)(A) USAID/Cairo",
+			"(7 CFR) 8c(15)(A)",
 			[]Token{
 				Token{Text: "7", Type: TextToken, PhraseId: RandInts[1]},
 				Token{Text: "CFR", Type: TextToken, PhraseId: RandInts[1]},
 				Token{Text: "8c-15-A", Type: TextToken, PhraseId: RandInts[2]},
-				Token{Text: "USAID", Type: TextToken, PhraseId: RandInts[3]},
-				Token{Text: "Cairo", Type: TextToken, PhraseId: RandInts[4]},
 				Token{Type: NullToken},
 			},
 		},
