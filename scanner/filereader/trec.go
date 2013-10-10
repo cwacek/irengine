@@ -3,17 +3,28 @@ package filereader
 import log "github.com/cihub/seelog"
 import "fmt"
 import "os"
+import "math/rand"
 import "io"
 import "bytes"
 
+
 type TrecDocument struct {
 	tokens []*Token
-	id   string
+	id   DocumentId
+  origId string
+}
+
+func (T *TrecDocument) OrigIdent() string {
+  return T.origId
 }
 
 func NewTrecDocument(id string) (*TrecDocument) {
   doc := new(TrecDocument)
-  doc.id = id
+  doc.origId = string(id)
+
+  //Make an internal id to work with
+  doc.id = DocumentId(rand.Int63())
+
   doc.tokens = make([]*Token, 0)
   return doc
 }
@@ -47,7 +58,7 @@ func (d *TrecDocument) Tokens() <-chan *Token{
   return c
 }
 
-func (d *TrecDocument) Identifier() string {
+func (d *TrecDocument) Identifier() DocumentId {
 	return d.id
 }
 

@@ -2,6 +2,9 @@ package indexer
 
 import "sort"
 import "fmt"
+import "unicode"
+import "io"
+import "bufio"
 import "bytes"
 import "strconv"
 import "strings"
@@ -25,24 +28,28 @@ func (it *pl_iterator) Next() bool {
 	return cont
 }
 
-func (it *pl_iterator) Key() string {
-	return it.sk_iter.Key().(string)
+func (it *pl_iterator) Key() int {
+	return it.sk_iter.Key().(int)
 }
 
 type positional_pl struct {
 	list          *skiplist.SkipList
 	Length        int
-	entry_factory func(string) PostingListEntry
+	entry_factory func(filereader.DocumentId) PostingListEntry
 }
 
-func (pl *positional_pl) EntryFactory(docid string) PostingListEntry {
+func (pl *positional_pl) EntryFactory(docid filereader.DocumentId) PostingListEntry {
 	return pl.entry_factory(docid)
+}
+
+func DocumentIdLessThan(l, r interface{}) bool {
+  return l.(filereader.DocumentId) < r.(filereader.DocumentId)
 }
 
 func NewBasicPostingList() PostingList {
 	pl := new(positional_pl)
 	pl.Length = 0
-	pl.list = skiplist.NewStringMap()
+	pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
 	pl.entry_factory = NewBasicEntry
 	return pl
 }
@@ -50,7 +57,7 @@ func NewBasicPostingList() PostingList {
 func NewPositionalPostingList() PostingList {
 	pl := new(positional_pl)
 	pl.Length = 0
-	pl.list = skiplist.NewStringMap()
+	pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
 	pl.entry_factory = NewPositionalEntry
 	return pl
 }
@@ -66,9 +73,10 @@ func (pl *positional_pl) Len() int {
 	return pl.Length
 }
 
-func (pl *positional_pl) GetEntry(id string) (PostingListEntry,
+func (pl *positional_pl) GetEntry(id filereader.DocumentId) (PostingListEntry,
 	bool) {
-	log.Debugf("Looking for %s in posting list", id)
+	log.Debugf("Looking for %d in posting list", id)
+
 	if elem, ok := pl.list.Get(id); ok {
 		log.Debugf("Found %#v", elem)
 		return elem.(PostingListEntry), true
@@ -84,12 +92,12 @@ func (pl *positional_pl) InsertCompleteEntry(entry PostingListEntry) bool {
 }
 
 func (pl *positional_pl) InsertEntry(token *filereader.Token) bool {
-	log.Debugf("Inserting %s into posting list.", token)
+	/*log.Debugf("Inserting %s into posting list.", token)*/
 	return pl.InsertRawEntry(token.Text, token.DocId, token.Position)
 }
 
-func (pl *positional_pl) InsertRawEntry(text, docid string,
-	position int) bool {
+func (pl *positional_pl) InsertRawEntry(text string,
+	docid filereader.DocumentId, position int) bool {
 
 	if entry, ok := pl.GetEntry(docid); ok {
 		//We have an entry for this doc, so we're adding a
@@ -125,23 +133,61 @@ type basic_sk_entry struct {
 	frequency int
 }
 
-func NewBasicEntry(docId string) PostingListEntry {
+func NewBasicEntry(docId filereader.DocumentId) PostingListEntry {
 	entry := new(basic_sk_entry)
 	entry.docId = docId
 	return entry
 }
 
 func (p *basic_sk_entry) Serialize() string {
-	return fmt.Sprintf("%s %d", p.docId, p.frequency)
+	return fmt.Sprintf("%d %d", p.docId, p.frequency)
+}
+
+func (p *basic_sk_entry) Scan(state fmt.ScanState, verb rune) error {
+  var token []byte
+  var e error
+  var tmpInt int64
+
+  //Scan the document id
+  token, e = state.Token(true, unicode.IsDigit)
+  if e != nil {
+    return e
+  }
+
+  if tmpInt, e = strconv.ParseInt(string(token),10,64); e != nil {
+    return e
+  } else {
+    p.docId = filereader.DocumentId(tmpInt)
+  }
+
+  state.SkipSpace()
+  token, e = state.Token(true, unicode.IsDigit)
+  if e != nil {
+    return e
+  }
+
+  if tmpInt, e = strconv.ParseInt(string(token),10,32); e != nil {
+    return e
+  } else {
+    p.frequency = int(tmpInt)
+  }
+  return nil
 }
 
 func (p *basic_sk_entry) Deserialize(enc [][]byte) error {
-	p.docId = string(enc[0])
+  var err error
+  var tmp int64
 
-	if posInt, err := strconv.Atoi(string(enc[1])); err != nil {
+	if tmp, err = strconv.ParseInt(string(enc[0]),10,64); err != nil {
 		return err
 	} else {
-		p.frequency = posInt
+    p.docId = filereader.DocumentId(tmp)
+  }
+
+	if tmp, err = strconv.ParseInt(string(enc[1]),10,32); err != nil {
+		return err
+	} else {
+		p.frequency = int(tmp)
 	}
 
 	return nil
@@ -164,25 +210,59 @@ func (p *basic_sk_entry) String() string {
 }
 
 type positional_sk_entry struct {
-	docId     string
+	docId     filereader.DocumentId
 	positions []int
 }
 
-func NewPositionalEntry(docId string) PostingListEntry {
+func NewPositionalEntry(docId filereader.DocumentId) PostingListEntry {
 	entry := new(positional_sk_entry)
 	entry.docId = docId
 	entry.positions = make([]int, 0)
 	return entry
 }
 
+func (p *positional_sk_entry) Scan(state fmt.ScanState, verb rune) error {
+  var token []byte
+  var e error
+  var tmpInt int64
+
+  //Scan the document id
+  token, e = state.Token(true, unicode.IsDigit)
+  if e != nil {
+    return e
+  }
+
+	if tmpInt, e = strconv.ParseInt(string(token),10,64); e != nil {
+		return e
+	} else {
+    p.docId = filereader.DocumentId(tmpInt)
+  }
+
+  state.SkipSpace()
+  for token, e = state.Token(true, unicode.IsDigit); e != io.EOF; {
+
+    if tmpInt, e = strconv.ParseInt(string(token),10,32); e != nil {
+      return e
+    } else {
+      p.positions = append(p.positions, int(tmpInt))
+    }
+  }
+  return nil
+}
+
 func (p *positional_sk_entry) Deserialize(input [][]byte) error {
+  var (
+    position []byte
+    posInt int
+    err error
+  )
 
-	log.Debugf("Parsing positions from %s", string(input[1]))
-	for _, position := range bytes.Split(input[1], []byte{','}) {
+	/*log.Debugf("Parsing positions from %s", string(input[1]))*/
+	for _, position = range bytes.Split(input[1], []byte{','}) {
 
-		log.Debugf("Found position %v (%s)", position, string(position))
+		/*log.Debugf("Found position %v (%s)", position, string(position))*/
 
-		if posInt, err := strconv.Atoi(string(position)); err != nil {
+		if posInt, err = strconv.Atoi(string(position)); err != nil {
 			return err
 		} else {
 			p.AddPosition(posInt)
@@ -192,10 +272,25 @@ func (p *positional_sk_entry) Deserialize(input [][]byte) error {
 	return nil
 }
 
+func (p *positional_sk_entry) SerializeTo(buf io.Writer) {
+  out := bufio.NewWriter(buf)
+  docId := strconv.FormatInt(int64(p.docId), 10)
+
+  out.WriteString(docId)
+  out.WriteByte(' ')
+
+	for i, position := range p.positions {
+		if i != 0 {
+			out.WriteRune(',')
+		}
+		out.WriteString(fmt.Sprintf("%d", position))
+	}
+}
+
 func (p *positional_sk_entry) Serialize() string {
 	buf := new(bytes.Buffer)
 
-	buf.WriteString(p.docId)
+  buf.WriteString(strconv.FormatInt(int64(p.docId), 10))
 	buf.WriteRune(' ')
 
 	for i, position := range p.positions {
@@ -213,7 +308,7 @@ func (p *positional_sk_entry) String() string {
 	parts := make([]string, 0, len(p.positions)+2)
 	/*posParts := make([]string, len(p.positions))*/
 
-	parts = append(parts, p.docId)
+	parts = append(parts, strconv.FormatInt(int64(p.docId), 10))
 	parts = append(parts, strconv.Itoa(len(p.positions)))
 
 	/*for i,position := range p.positions {*/
@@ -234,7 +329,7 @@ func (p *positional_sk_entry) Positions() []int {
 	return p.positions
 }
 
-func (p *positional_sk_entry) DocId() string {
+func (p *positional_sk_entry) DocId() filereader.DocumentId {
 	return p.docId
 }
 

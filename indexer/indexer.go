@@ -3,7 +3,7 @@ package indexer
 import "github.com/cwacek/irengine/indexer/filters"
 import "github.com/cwacek/irengine/scanner/filereader"
 import "io"
-import "encoding/json"
+import "fmt"
 import radix "github.com/cwacek/radix-go"
 
 type LexiconInitializer func(datadir string, memLimit int) PostingList
@@ -31,42 +31,44 @@ type LexiconTerm interface {
 	PostingList() PostingList
 	Register(token *filereader.Token)
 	String() string
-	json.Marshaler
-	/*json.Unmarshaler*/
+	/*json.Marshaler*/
+  /*json.Unmarshaler*/
 }
 
 type PostingListEntry interface {
-	DocId() string
+	DocId() filereader.DocumentId
 	Frequency() int
 	Positions() []int
 	String() string
 	AddPosition(int)
 	Serialize() string
+	SerializeTo(io.Writer)
 	Deserialize([][]byte) error
+  fmt.Scanner
 }
 
 type PostingListInitializer func() PostingList
 
 type PostingList interface {
-	GetEntry(id string) (PostingListEntry, bool)
+	GetEntry(id filereader.DocumentId) (PostingListEntry, bool)
 
 	// Insert an entry into the posting list. Return true
 	// If it creates a new PostingListEntry, false if it does
 	// not (and just adds a position or something
 	InsertEntry(token *filereader.Token) bool
-	InsertRawEntry(text, docid string, pos int) bool
+	InsertRawEntry(text string, docid filereader.DocumentId, pos int) bool
 	InsertCompleteEntry(pl_entry PostingListEntry) bool
 
 	String() string
 	Len() int
 	Iterator() PostingListIterator
-	EntryFactory(docId string) PostingListEntry
+	EntryFactory(docId filereader.DocumentId) PostingListEntry
 }
 
 type PostingListIterator interface {
 	Next() bool
 	Value() PostingListEntry
-	Key() string
+	Key() int
 }
 
 type Indexer interface {

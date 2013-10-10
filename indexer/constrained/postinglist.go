@@ -1,7 +1,9 @@
 package constrained
 
 import index "github.com/cwacek/irengine/indexer"
+import "github.com/cwacek/irengine/scanner/filereader"
 import "fmt"
+/*import "strconv"*/
 import "io"
 import log "github.com/cihub/seelog"
 import "bufio"
@@ -17,6 +19,7 @@ type PostingListSet struct {
     Tag DatastoreTag
     listMap map[string]index.PostingList
     pl_init index.PostingListInitializer
+    pl_entry_init func(id filereader.DocumentId) index.PostingListEntry
 
     Size int
     size_needs_refresh bool
@@ -29,6 +32,7 @@ func NewPostingListSet(tag DatastoreTag,
     pls.listMap = make(map[string]index.PostingList)
     pls.Tag = tag
     pls.pl_init = init
+    pls.pl_entry_init = init().EntryFactory
     return pls
 }
 
@@ -63,11 +67,16 @@ func (pls *PostingListSet) Get(term string) index.PostingList {
 }
 
 func (pls *PostingListSet) Dump(w io.Writer) {
+  var (
+    pl index.PostingList
+    it index.PostingListIterator
+    term string
+  )
     writer := bufio.NewWriter(w)
 
-    for term, pl := range pls.listMap {
+    for term, pl = range pls.listMap {
 
-        for it := pl.Iterator(); it.Next(); {
+        for it = pl.Iterator(); it.Next(); {
         writer.WriteString(term)
         writer.WriteByte(' ')
         writer.WriteString(it.Value().Serialize())
@@ -78,38 +87,50 @@ func (pls *PostingListSet) Dump(w io.Writer) {
 }
 
 func (pls *PostingListSet) Load(r io.Reader) {
-    var pl index.PostingList
-    var ok bool
+  var (
+    pl index.PostingList
+    pl_entry index.PostingListEntry
+    ok bool
+    term, parsed_term string
+    parsed int
+    /*docId int64*/
+    e error
+  )
+
 
     scanner := bufio.NewScanner(r)
-
     for scanner.Scan() {
-        data := bytes.Fields(scanner.Bytes())
-        if len(data) == 0 {
-            continue
-        }
-        log.Debugf("Scanner read %v", data)
+        pl_entry = pls.pl_entry_init(0)
 
-        if pl, ok = pls.listMap[string(data[0])]; !ok {
+        parsed, e = fmt.Sscanln(scanner.Text(), &parsed_term, pl_entry)
+        if e != nil {
+          panic(e)
+        }
+
+        if parsed != 2 {
+          continue
+        }
+
+        // Lookup PL, otherwise save the cost
+        if term != parsed_term {
+
+          term = parsed_term
+          if pl, ok = pls.listMap[term]; !ok {
             pl = pls.pl_init()
-            pls.listMap[string(data[0])] = pl
-        }
-
-        pl_entry := pl.EntryFactory(string(data[1]))
-        if e := pl_entry.Deserialize(data[1:]); e != nil {
-            panic(e)
+            pls.listMap[term] = pl
+          }
         }
 
         pl.InsertCompleteEntry(pl_entry)
         pls.Size++
-
-        log.Debugf("After insert, PL was %s", pl.String())
     }
 }
 
 func (pls *PostingListSet) RecalculateLen() {
+  var pl index.PostingList
+
     entries := 0
-    for _, pl := range pls.listMap {
+    for _, pl = range pls.listMap {
         entries += pl.Len()
     }
     pls.Size = entries

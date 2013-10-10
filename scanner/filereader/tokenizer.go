@@ -21,7 +21,7 @@ const (
 type Token struct {
     Text string
     Type TokenType
-    DocId string
+    DocId DocumentId
     Position int
     Final bool
     // An unique identifier to denote phrases which do not cross

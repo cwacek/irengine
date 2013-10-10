@@ -16,7 +16,7 @@ func TestTrecFileReader(t *testing.T) {
 
   log.Debugf("Reading file")
   doc := fr.Read()
-  if id := doc.Identifier(); id != "DEADBEEF" {
+  if id := doc.OrigIdent(); id != "12345" {
     t.Error("Failed to parse document id")
   }
 

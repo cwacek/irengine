@@ -8,10 +8,10 @@ import "github.com/cwacek/irengine/logging"
 import "strings"
 
 
-func LoadTestDocument(id, teststring string) filereader.Document {
+func LoadTestDocument(teststring string) filereader.Document {
   logging.SetupTestLogging()
 
-  testDoc := filereader.NewTrecDocument(id)
+  testDoc := filereader.NewTrecDocument(teststring)
   tokenizer := filereader.BadXMLTokenizer_FromReader(
                   strings.NewReader(teststring))
 

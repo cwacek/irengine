@@ -24,6 +24,18 @@ type SingleTermIndex struct {
 	shutdown        chan bool
 }
 
+func (t*SingleTermIndex) Save() {
+
+  switch t.lexicon.(type) {
+  case PersistentLexicon:
+    t.lexicon.(PersistentLexicon).SaveToDisk()
+
+  default:
+    log.Critical("Save to disk not supported")
+  }
+
+}
+
 func (t *SingleTermIndex) String() string {
 	return fmt.Sprintf("{SingleTermIndex terms:%d docs:%d}",
 		t.lexicon.Len(),
@@ -99,7 +111,7 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
 	//Print this if things go south
 	defer func() {
 		if x := recover(); x != nil {
-			log.Warnf("Inserting tokens from %s", d.Identifier())
+			log.Warnf("Inserting tokens from %s", d.OrigIdent())
 		}
 	}()
 
@@ -110,7 +122,8 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
 	}
 
 	t.lexicon.(PersistentLexicon).PrintDiskStats(os.Stdout)
-	log.Infof("Inserted %d tokens from %s. Have %d documents with %d terms", d.Len(), d.Identifier(), t.Len(), t.lexicon.Len())
+	log.Infof("Inserted %d tokens from %s. Have %d documents with %d terms",
+  d.Len(), d.OrigIdent(), t.Len(), t.lexicon.Len())
 }
 
 // Read tokens from tokenStream and insert it into the
