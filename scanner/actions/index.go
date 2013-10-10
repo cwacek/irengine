@@ -54,7 +54,7 @@ func (a *run_index_action) DefineFlags(fs *flag.FlagSet) {
     - stemmed
     `)
 
-    a.phraseStop = fs.Float64("phrase.limit", 0.4,
+    a.phraseStop = fs.Float64("phrase.limit", 0.2,
     "The relative term frequency required for a term to be considered a stop word")
 
     a.phraseLen = fs.Int("phrase.len", 2, "Maximum phrase length")

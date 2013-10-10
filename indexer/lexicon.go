@@ -6,7 +6,7 @@ import "sort"
 import "fmt"
 import "bytes"
 import "github.com/cwacek/irengine/scanner/filereader"
-import radix "github.com/cwacek/radix_go"
+import radix "github.com/cwacek/radix-go"
 import log "github.com/cihub/seelog"
 
 // Implements a Lexicon
