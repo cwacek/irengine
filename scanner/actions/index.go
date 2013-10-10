@@ -28,6 +28,7 @@ type run_index_action struct {
 
 
     cpuprofile *string
+    memprofile *string
 }
 
 func (a *run_index_action) Name() string {
@@ -59,7 +60,8 @@ func (a *run_index_action) DefineFlags(fs *flag.FlagSet) {
 
     a.phraseLen = fs.Int("phrase.len", 2, "Maximum phrase length")
 
-    a.cpuprofile = fs.String("profile", "", "write CPU profile to file")
+    a.cpuprofile = fs.String("cprofile", "", "write CPU profile to file")
+    a.memprofile  = fs.String("mprofile", "", "write memory profile to file")
 }
 
 func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
@@ -126,26 +128,51 @@ func (a *run_index_action) Run() {
         return
     }
 
-    if *a.cpuprofile != "" {
-        f, err := os.Create(*a.cpuprofile)
-        if err != nil {
-            log.Critical(err)
-            return
+    /*// For each document.*/
+    ctr := 0
+    for doc := range docStream {
+      ctr++
+        index.Insert(doc)
+
+        if ctr > 1000 {
+
+          if *a.cpuprofile != "" {
+            f, err := os.Create(*a.cpuprofile)
+            if err != nil {
+              log.Critical(err)
+              return
+            }
+            pprof.StartCPUProfile(f)
+            defer pprof.StopCPUProfile()
+
+            if ctr > 1100 {
+              break
+            }
+          }
+
+
+
+          if *a.memprofile != "" {
+            f, err := os.Create(*a.memprofile)
+            if err != nil {
+              log.Critical(err)
+              return
+            }
+            pprof.WriteHeapProfile(f)
+            f.Close()
+            *a.memprofile = ""
+            break
+          }
         }
-        pprof.StartCPUProfile(f)
-        defer pprof.StopCPUProfile()
     }
 
-    /*// For each document.*/
-    for doc := range docStream {
-        index.Insert(doc)
-    }
 
     index.WaitInsert()
 
     log.Flush()
     fmt.Println(index.String())
     index.PrintLexicon(os.Stdout)
+    index.(*indexer.SingleTermIndex).Save()
 }
 
 
