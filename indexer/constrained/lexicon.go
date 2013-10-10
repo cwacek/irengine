@@ -85,7 +85,7 @@ func (t *persistent_term) Register(token *filereader.Token) {
   pls := t.lex.RetrievePLS(t)
   log.Tracef("LRU_CACHE after RetrievePLS: %v", t.lex.lru_cache)
   pl := pls.Get(t.Text_)
-  log.Debugf("Registering %s in posting list %v",token, pl.String())
+  log.Debugf("Registering %s in posting list for %s",token, t.Text_)
   if pl.InsertEntry(token) {
       pls.Size++
       t.lex.pls_size_cache[pls.Tag]++
@@ -105,6 +105,10 @@ func (t *persistent_term) PostingList() index.PostingList {
 
 func (t persistent_term) String() string {
     return fmt.Sprintf("[%s %d @%s]", t.Text_, t.Tf_, t.DataTag)
+}
+
+func (t *persistent_term) Df() int {
+	return t.PostingList().Len()
 }
 
 // Implements a Lexicon

@@ -95,7 +95,6 @@ func (fr *TrecFileReader) read_next_doc() (Document, error) {
     if ok != nil {
       return nil, ok
     }
-    log.Debugf("Read token '%s'", token)
 
     switch {
     case token.Type == XMLStartToken && token.Text == "DOC":

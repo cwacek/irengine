@@ -70,19 +70,31 @@ func (t *TrieLexicon) Print(w io.Writer) {
   dfSum := 0
 
 	for i, entry := range t.Walk() {
-		term := entry.(LexiconTerm)
+    var term LexiconTerm
+
+    defer func() {
+      if x := recover(); x != nil {
+        log.Criticalf("Error printing term %#v with posting list %#v: %v",
+        term, term.PostingList(), x)
+        log.Flush()
+        panic(x)
+      }
+    }()
+
+		term = entry.(LexiconTerm)
 		log.Tracef("Walking found term %s", term.String())
 		_, err := io.WriteString(w,
 			fmt.Sprintf("%d. '%s' [%d]: %s\n",
 				i+1, term.Text(),
 				term.Tf(), term.PostingList()))
 
-    dfSum += term.Df()
-    df_array = append(df_array, term.Df())
-
 		if err != nil {
 			panic(err)
 		}
+
+    dfSum += term.Df()
+    df_array = append(df_array, term.Df())
+
 	}
 
   sort.Ints(df_array)
@@ -91,14 +103,14 @@ func (t *TrieLexicon) Print(w io.Writer) {
   Term Count: %d
   Max DF:     %d
   Min DF:     %d
-  Mean DF:    %d
+  Mean DF:    %0.2f
   Median DF:  %d
   `
 
   io.WriteString(w, fmt.Sprintf(statsFmt,
   t.Len(),
-  df_array[0],
   df_array[len(df_array)-1],
+  df_array[0],
   float64(dfSum) / float64(len(df_array)),
   df_array[len(df_array)/2]))
 
