@@ -179,7 +179,7 @@ func TestChained(t *testing.T) {
 
 	go CompareFiltered(t, expected, postFilter, done, true)
 
-	for tok := range LoadTestDocument(1, strings.Join(inputs, " ")).Tokens() {
+	for tok := range LoadTestDocument("1", strings.Join(inputs, " ")).Tokens() {
 		log.Debugf("Inserting %v into input", tok)
 		input.Push(tok)
 	}
@@ -207,7 +207,7 @@ func RunTestCase(testname string, t *testing.T) {
 
 	go CompareFiltered(t, testcase.Expected, postFilter, done, false)
 
-	testDoc := LoadTestDocument(1, testcase.Input)
+	testDoc := LoadTestDocument("1", testcase.Input)
 	for tok := range testDoc.Tokens() {
 		log.Debugf("Inserting %v into input", tok)
 		input.Push(tok)

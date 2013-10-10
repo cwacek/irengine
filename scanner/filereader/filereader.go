@@ -1,6 +1,6 @@
 package filereader
 
-type DocumentId int64
+type DocumentId uint32
 
 type Document interface {
   OrigIdent() string

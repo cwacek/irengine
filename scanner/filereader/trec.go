@@ -23,7 +23,7 @@ func NewTrecDocument(id string) (*TrecDocument) {
   doc.origId = string(id)
 
   //Make an internal id to work with
-  doc.id = DocumentId(rand.Int63())
+  doc.id = DocumentId(rand.Uint32())
 
   doc.tokens = make([]*Token, 0)
   return doc

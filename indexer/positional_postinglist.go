@@ -238,8 +238,11 @@ func (p *positional_sk_entry) Scan(state fmt.ScanState, verb rune) error {
     p.docId = filereader.DocumentId(tmpInt)
   }
 
-  state.SkipSpace()
-  for token, e = state.Token(true, unicode.IsDigit); e != io.EOF; {
+  for  {
+    token, e = state.Token(true, unicode.IsDigit)
+    if len(token) == 0 || e == io.EOF {
+      break
+    }
 
     if tmpInt, e = strconv.ParseInt(string(token),10,32); e != nil {
       return e
@@ -281,7 +284,7 @@ func (p *positional_sk_entry) SerializeTo(buf io.Writer) {
 
 	for i, position := range p.positions {
 		if i != 0 {
-			out.WriteRune(',')
+			out.WriteRune(' ')
 		}
 		out.WriteString(fmt.Sprintf("%d", position))
 	}
@@ -295,7 +298,7 @@ func (p *positional_sk_entry) Serialize() string {
 
 	for i, position := range p.positions {
 		if i != 0 {
-			buf.WriteRune(',')
+			buf.WriteRune(' ')
 		}
 		buf.WriteString(fmt.Sprintf("%d", position))
 	}

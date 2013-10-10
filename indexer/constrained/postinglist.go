@@ -99,7 +99,11 @@ func (pls *PostingListSet) Load(r io.Reader) {
 
 
     scanner := bufio.NewScanner(r)
+    scanner.Split(bufio.ScanLines)
     for scanner.Scan() {
+        if len(scanner.Text()) == 0 {
+          continue
+        }
         pl_entry = pls.pl_entry_init(0)
 
         parsed, e = fmt.Sscanln(scanner.Text(), &parsed_term, pl_entry)
@@ -108,6 +112,7 @@ func (pls *PostingListSet) Load(r io.Reader) {
         }
 
         if parsed != 2 {
+          pl_entry = nil
           continue
         }
 
