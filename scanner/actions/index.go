@@ -23,6 +23,10 @@ type run_index_action struct {
     maxMem *int
     indexType *string
 
+    phraseStop *float64
+    phraseLen *int
+
+
     cpuprofile *string
 }
 
@@ -49,6 +53,11 @@ func (a *run_index_action) DefineFlags(fs *flag.FlagSet) {
     - phrase
     - stemmed
     `)
+
+    a.phraseStop = fs.Float64("phrase.limit", 0.4,
+    "The relative term frequency required for a term to be considered a stop word")
+
+    a.phraseLen = fs.Int("phrase.len", 2, "Maximum phrase length")
 
     a.cpuprofile = fs.String("profile", "", "write CPU profile to file")
 }
@@ -81,6 +90,11 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
         lexicon.SetPLInitializer(indexer.NewBasicPostingList)
         index.AddFilter(filters.SingleTermFilterSequence)
         index.AddFilter(filters.NewPorterFilter("porterstemmer"))
+
+    case "phrase":
+        lexicon.SetPLInitializer(indexer.NewBasicPostingList)
+        index.AddFilter(
+            filters.NewPhraseFilter(*a.phraseLen, *a.phraseStop))
 
     default:
         log.Criticalf("Unknown index type: %s", *a.indexType)
