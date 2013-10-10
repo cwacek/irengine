@@ -64,11 +64,6 @@ func (a *run_index_action) DefineFlags(fs *flag.FlagSet) {
 
 func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 
-    //Setup the lexicon
-    if err := os.MkdirAll(*a.indexRoot, 0775); err != nil {
-        return nil, err
-    }
-
     lexicon := constrained.NewLexicon(*a.maxMem, *a.indexRoot)
     index := new(indexer.SingleTermIndex)
     index.Init(lexicon)
