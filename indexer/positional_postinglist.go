@@ -10,236 +10,235 @@ import "github.com/cwacek/irengine/scanner/filereader"
 import log "github.com/cihub/seelog"
 
 type pl_iterator struct {
-    sk_iter skiplist.Iterator
+	sk_iter skiplist.Iterator
 }
 
 func (it *pl_iterator) Value() PostingListEntry {
-    return it.sk_iter.Value().(PostingListEntry)
+	return it.sk_iter.Value().(PostingListEntry)
 }
 
 func (it *pl_iterator) Next() bool {
-    log.Trace("Calling Next()")
-    cont := it.sk_iter.Next()
-    log.Tracef("returned %v", cont)
+	log.Trace("Calling Next()")
+	cont := it.sk_iter.Next()
+	log.Tracef("returned %v", cont)
 
-    return cont
+	return cont
 }
 
 func (it *pl_iterator) Key() string {
-    return it.sk_iter.Key().(string)
+	return it.sk_iter.Key().(string)
 }
 
 type positional_pl struct {
-    list *skiplist.SkipList
-    Length int
-    entry_factory func(string) PostingListEntry
+	list          *skiplist.SkipList
+	Length        int
+	entry_factory func(string) PostingListEntry
 }
 
 func (pl *positional_pl) EntryFactory(docid string) PostingListEntry {
-    return pl.entry_factory(docid)
+	return pl.entry_factory(docid)
 }
 
 func NewBasicPostingList() PostingList {
-    pl := new(positional_pl)
-    pl.Length = 0
-    pl.list = skiplist.NewStringMap()
-    pl.entry_factory = NewBasicEntry
-    return pl
+	pl := new(positional_pl)
+	pl.Length = 0
+	pl.list = skiplist.NewStringMap()
+	pl.entry_factory = NewBasicEntry
+	return pl
 }
 
 func NewPositionalPostingList() PostingList {
-    pl := new(positional_pl)
-    pl.Length = 0
-    pl.list = skiplist.NewStringMap()
-    pl.entry_factory = NewPositionalEntry
-    return pl
+	pl := new(positional_pl)
+	pl.Length = 0
+	pl.list = skiplist.NewStringMap()
+	pl.entry_factory = NewPositionalEntry
+	return pl
 }
 
 func (pl *positional_pl) Iterator() PostingListIterator {
-    iter := new(pl_iterator)
-    log.Trace("Creating new iterator")
-    iter.sk_iter = pl.list.Iterator()
-    return iter
+	iter := new(pl_iterator)
+	log.Trace("Creating new iterator")
+	iter.sk_iter = pl.list.Iterator()
+	return iter
 }
 
 func (pl *positional_pl) Len() int {
-    return pl.Length
+	return pl.Length
 }
 
 func (pl *positional_pl) GetEntry(id string) (PostingListEntry,
-bool) {
-    log.Debugf("Looking for %s in posting list", id)
-    if elem, ok := pl.list.Get(id); ok {
-        log.Debugf("Found %#v", elem)
-        return elem.(PostingListEntry), true
-    }
-    log.Debugf("Found nothing.")
-    return  nil, false
+	bool) {
+	log.Debugf("Looking for %s in posting list", id)
+	if elem, ok := pl.list.Get(id); ok {
+		log.Debugf("Found %#v", elem)
+		return elem.(PostingListEntry), true
+	}
+	log.Debugf("Found nothing.")
+	return nil, false
 }
 
 func (pl *positional_pl) InsertCompleteEntry(entry PostingListEntry) bool {
-    pl.list.Set(entry.DocId(), entry)
-    pl.Length++
-    return true
+	pl.list.Set(entry.DocId(), entry)
+	pl.Length++
+	return true
 }
 
 func (pl *positional_pl) InsertEntry(token *filereader.Token) bool {
-    log.Debugf("Inserting %s into posting list.", token)
-    return pl.InsertRawEntry(token.Text, token.DocId, token.Position)
+	log.Debugf("Inserting %s into posting list.", token)
+	return pl.InsertRawEntry(token.Text, token.DocId, token.Position)
 }
 
 func (pl *positional_pl) InsertRawEntry(text, docid string,
-position int) bool {
+	position int) bool {
 
-    if entry, ok := pl.GetEntry(docid); ok {
-        //We have an entry for this doc, so we're adding a
-        //position
-        log.Debugf("%s exists. Adding position %d", docid, position)
-        entry.AddPosition(position)
-        return false
-    }
+	if entry, ok := pl.GetEntry(docid); ok {
+		//We have an entry for this doc, so we're adding a
+		//position
+		log.Debugf("%s exists. Adding position %d", docid, position)
+		entry.AddPosition(position)
+		return false
+	}
 
-    log.Debug("Creating new positional entry")
-    entry := pl.entry_factory(docid)
-    log.Tracef("Adding position %d to entry", position)
-    entry.AddPosition(position)
+	log.Debug("Creating new positional entry")
+	entry := pl.entry_factory(docid)
+	log.Tracef("Adding position %d to entry", position)
+	entry.AddPosition(position)
 
-    log.Trace("Inserting entry in posting list")
-    pl.InsertCompleteEntry(entry)
-    log.Trace("Complete")
-    return true
+	log.Trace("Inserting entry in posting list")
+	pl.InsertCompleteEntry(entry)
+	log.Trace("Complete")
+	return true
 }
 
 func (pl positional_pl) String() string {
-    entries := make([]string,0)
+	entries := make([]string, 0)
 
-    log.Tracef("Converting PL %#v to string", pl)
-    for  i := pl.list.Iterator(); i.Next(); {
-        entries = append(entries,i.Value().(PostingListEntry).Serialize())
-    }
-    return strings.Join(entries, " | ")
+	log.Tracef("Converting PL %#v to string", pl)
+	for i := pl.list.Iterator(); i.Next(); {
+		entries = append(entries, i.Value().(PostingListEntry).Serialize())
+	}
+	return strings.Join(entries, " | ")
 }
 
-
 type basic_sk_entry struct {
-    positional_sk_entry
-    frequency int
+	positional_sk_entry
+	frequency int
 }
 
 func NewBasicEntry(docId string) PostingListEntry {
-    entry := new(basic_sk_entry)
-    entry.docId = docId
-    return entry
+	entry := new(basic_sk_entry)
+	entry.docId = docId
+	return entry
 }
 
 func (p *basic_sk_entry) Serialize() string {
-    return fmt.Sprintf("%s %d", p.docId, p.frequency)
+	return fmt.Sprintf("%s %d", p.docId, p.frequency)
 }
 
 func (p *basic_sk_entry) Deserialize(enc [][]byte) error {
-    p.docId = string(enc[0])
+	p.docId = string(enc[0])
 
-    if posInt, err := strconv.Atoi(string(enc[1])); err != nil {
-        return err
-    } else {
-        p.frequency = posInt
-    }
+	if posInt, err := strconv.Atoi(string(enc[1])); err != nil {
+		return err
+	} else {
+		p.frequency = posInt
+	}
 
-    return nil
+	return nil
 }
 
 func (p *basic_sk_entry) Frequency() int {
-    return p.frequency
+	return p.frequency
 }
 
 func (p *basic_sk_entry) Positions() []int {
-    return make([]int, 0)
+	return make([]int, 0)
 }
 
 func (p *basic_sk_entry) AddPosition(pos int) {
-    p.frequency++
+	p.frequency++
 }
 
 func (p *basic_sk_entry) String() string {
-    return fmt.Sprintf("(%s, %s)", p.docId, p.frequency)
+	return fmt.Sprintf("(%s, %s)", p.docId, p.frequency)
 }
 
 type positional_sk_entry struct {
-    docId string
-    positions []int
+	docId     string
+	positions []int
 }
 
 func NewPositionalEntry(docId string) PostingListEntry {
-    entry := new(positional_sk_entry)
-    entry.docId = docId
-    entry.positions = make([]int, 0)
-    return entry
+	entry := new(positional_sk_entry)
+	entry.docId = docId
+	entry.positions = make([]int, 0)
+	return entry
 }
 
-func (p *positional_sk_entry) Deserialize( input [][]byte) (error) {
+func (p *positional_sk_entry) Deserialize(input [][]byte) error {
 
-        log.Debugf("Parsing positions from %s", string(input[1]))
-        for _, position := range bytes.Split(input[1],[]byte{','}) {
+	log.Debugf("Parsing positions from %s", string(input[1]))
+	for _, position := range bytes.Split(input[1], []byte{','}) {
 
-            log.Debugf("Found position %v (%s)", position, string(position))
+		log.Debugf("Found position %v (%s)", position, string(position))
 
-            if posInt, err := strconv.Atoi(string(position)); err != nil {
-                return err
-            } else {
-                p.AddPosition(posInt)
-            }
-        }
+		if posInt, err := strconv.Atoi(string(position)); err != nil {
+			return err
+		} else {
+			p.AddPosition(posInt)
+		}
+	}
 
-        return nil
-    }
+	return nil
+}
 
 func (p *positional_sk_entry) Serialize() string {
-    buf := new(bytes.Buffer)
+	buf := new(bytes.Buffer)
 
-    buf.WriteString(p.docId)
-    buf.WriteRune(' ')
+	buf.WriteString(p.docId)
+	buf.WriteRune(' ')
 
-    for i,position := range p.positions {
-        if i != 0 {
-            buf.WriteRune(',')
-        }
-        buf.WriteString(fmt.Sprintf("%d", position))
-    }
+	for i, position := range p.positions {
+		if i != 0 {
+			buf.WriteRune(',')
+		}
+		buf.WriteString(fmt.Sprintf("%d", position))
+	}
 
-    return buf.String()
+	return buf.String()
 }
 
 func (p *positional_sk_entry) String() string {
-    log.Tracef("Converting %#v positional_sk_entry to string", p)
-    parts := make([]string, 0, len(p.positions) + 2)
-    /*posParts := make([]string, len(p.positions))*/
+	log.Tracef("Converting %#v positional_sk_entry to string", p)
+	parts := make([]string, 0, len(p.positions)+2)
+	/*posParts := make([]string, len(p.positions))*/
 
-    parts = append(parts, p.docId)
-    parts = append(parts, strconv.Itoa(len(p.positions)))
+	parts = append(parts, p.docId)
+	parts = append(parts, strconv.Itoa(len(p.positions)))
 
-    /*for i,position := range p.positions {*/
-        /*posParts[i] =  strconv.Itoa(position)*/
-    /*}*/
+	/*for i,position := range p.positions {*/
+	/*posParts[i] =  strconv.Itoa(position)*/
+	/*}*/
 
-    /*parts = append(parts, "{" + strings.Join(posParts,",")+ "}")*/
+	/*parts = append(parts, "{" + strings.Join(posParts,",")+ "}")*/
 
-    log.Tracef("Writing PL entry: %#v", parts)
-    return "(" + strings.Join(parts, ", ") + ")"
+	log.Tracef("Writing PL entry: %#v", parts)
+	return "(" + strings.Join(parts, ", ") + ")"
 }
 
 func (p *positional_sk_entry) Frequency() int {
-    return len(p.positions)
+	return len(p.positions)
 }
 
 func (p *positional_sk_entry) Positions() []int {
-    return p.positions
+	return p.positions
 }
 
 func (p *positional_sk_entry) DocId() string {
-    return p.docId
+	return p.docId
 }
 
 func (p *positional_sk_entry) AddPosition(pos int) {
-    p.positions = append(p.positions, pos)
-    sort.Ints(p.positions)
+	p.positions = append(p.positions, pos)
+	sort.Ints(p.positions)
 }

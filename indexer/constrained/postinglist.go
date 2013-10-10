@@ -18,8 +18,8 @@ type PostingListSet struct {
     listMap map[string]index.PostingList
     pl_init index.PostingListInitializer
 
-    sz int
-    sz_needs_refresh bool
+    Size int
+    size_needs_refresh bool
 }
 
 
@@ -35,7 +35,7 @@ func NewPostingListSet(tag DatastoreTag,
 func (pls PostingListSet) String() string {
     buf := new(bytes.Buffer)
     buf.WriteString(pls.Tag.String())
-    buf.WriteString(fmt.Sprintf(" [%d entries, %d terms]", pls.Len(),
+    buf.WriteString(fmt.Sprintf(" [%d entries, %d terms]", pls.Size,
     len(pls.listMap)))
     /*for term, _ := range pls.listMap {*/
         /*buf.WriteString(term + " ")*/
@@ -49,7 +49,7 @@ func (pls PostingListSet) String() string {
 
 //Get and return the PostingList for a particular term
 func (pls *PostingListSet) Get(term string) index.PostingList {
-    pls.sz_needs_refresh = true
+    pls.size_needs_refresh = true
 
     if pl, ok := pls.listMap[term]; ok {
         log.Debugf("Have posting list for %s.", term)
@@ -101,23 +101,16 @@ func (pls *PostingListSet) Load(r io.Reader) {
         }
 
         pl.InsertCompleteEntry(pl_entry)
+        pls.Size++
 
         log.Debugf("After insert, PL was %s", pl.String())
     }
 }
 
-func (pls *PostingListSet) Len() int {
-    return pls.sz
-
-    if !pls.sz_needs_refresh {
-        return pls.sz
-    }
-
+func (pls *PostingListSet) RecalculateLen() {
     entries := 0
     for _, pl := range pls.listMap {
         entries += pl.Len()
     }
-    pls.sz = entries
-    pls.sz_needs_refresh = false
-    return entries
+    pls.Size = entries
 }

@@ -151,18 +151,18 @@ func (fr *TrecFileReader) read_to_chan(count int) (i int) {
   }()
 
   for i := 0; i < count || count == -1; i++ {
-    log.Infof("Reading document %d from %s", i, fr.filename)
+    log.Debugf("Reading document %d from %s", i, fr.filename)
 		doc, err := fr.read_next_doc()
 
     switch err {
 
     case io.EOF:
-      log.Infof("Got EOF for file %s", fr.filename)
+      log.Debugf("Got EOF for file %s", fr.filename)
       close(fr.documents)
       return i
 
     case nil:
-      log.Infof("Successfully read document %s", doc.Identifier())
+      log.Debugf("Successfully read document %s", doc.Identifier())
       fr.documents <- doc
 
     default:

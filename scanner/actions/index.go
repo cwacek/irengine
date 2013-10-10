@@ -82,7 +82,6 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
         index.AddFilter(filters.SingleTermFilterSequence)
         index.AddFilter(filters.NewPorterFilter("porterstemmer"))
 
-
     default:
         log.Criticalf("Unknown index type: %s", *a.indexType)
         return nil, errors.New("Unknown index type: "+ *a.indexType)

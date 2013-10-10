@@ -8,107 +8,104 @@ import "github.com/cwacek/irengine/logging"
 import "github.com/cwacek/irengine/indexer/filters"
 import log "github.com/cihub/seelog"
 
-var  (
+var (
+	TestDocuments = []filereader.Document{
+		filters.LoadTestDocument("A02", "Since I was a young boy; I played the silver ball."),
+		filters.LoadTestDocument("A03", "Since Ph.D's don't fly F-16 jets, but they might work for the CDC on the CDC-50 project"),
+	}
 
-  TestDocuments = []filereader.Document{
-    filters.LoadTestDocument("A02","Since I was a young boy; I played the silver ball."),
-    filters.LoadTestDocument("A03","Since Ph.D's don't fly F-16 jets, but they might work for the CDC on the CDC-50 project"),
-  }
-
-  basicOutput = [][]byte{
-    []byte("1. 'a' [1]: A02 4"),
-    []byte("2. 'ball' [1]: A02 11"),
-    []byte("3. 'boy' [1]: A02 6"),
-    []byte("4. 'but' [1]: A03 7"),
-    []byte("5. 'cdc' [2]: A03 13,16"),
-    []byte("6. 'cdc50' [1]: A03 16"),
-    []byte("7. 'dont' [1]: A03 3"),
-    []byte("8. 'f16' [1]: A03 5"),
-    []byte("9. 'fly' [1]: A03 4"),
-    []byte("10. 'for' [1]: A03 11"),
-    []byte("11. 'i' [2]: A02 2,7"),
-    []byte("12. 'jets' [1]: A03 6"),
-    []byte("13. 'might' [1]: A03 9"),
-    []byte("14. 'on' [1]: A03 14"),
-    []byte("15. 'phds' [1]: A03 2"),
-    []byte("16. 'played' [1]: A02 8"),
-    []byte("17. 'project' [1]: A03 17"),
-    []byte("18. 'silver' [1]: A02 10"),
-    []byte("19. 'since' [2]: A02 1 | A03 1"),
-    []byte("20. 'the' [3]: A02 9 | A03 12,15"),
-    []byte("21. 'they' [1]: A03 8"),
-    []byte("22. 'was' [1]: A02 3"),
-    []byte("23. 'work' [1]: A03 10"),
-    []byte("24. 'young' [1]: A02 5"),
-  }
-
+	basicOutput = [][]byte{
+		[]byte("1. 'a' [1]: A02 4"),
+		[]byte("2. 'ball' [1]: A02 11"),
+		[]byte("3. 'boy' [1]: A02 6"),
+		[]byte("4. 'but' [1]: A03 7"),
+		[]byte("5. 'cdc' [2]: A03 13,16"),
+		[]byte("6. 'cdc50' [1]: A03 16"),
+		[]byte("7. 'dont' [1]: A03 3"),
+		[]byte("8. 'f16' [1]: A03 5"),
+		[]byte("9. 'fly' [1]: A03 4"),
+		[]byte("10. 'for' [1]: A03 11"),
+		[]byte("11. 'i' [2]: A02 2,7"),
+		[]byte("12. 'jets' [1]: A03 6"),
+		[]byte("13. 'might' [1]: A03 9"),
+		[]byte("14. 'on' [1]: A03 14"),
+		[]byte("15. 'phds' [1]: A03 2"),
+		[]byte("16. 'played' [1]: A02 8"),
+		[]byte("17. 'project' [1]: A03 17"),
+		[]byte("18. 'silver' [1]: A02 10"),
+		[]byte("19. 'since' [2]: A02 1 | A03 1"),
+		[]byte("20. 'the' [3]: A02 9 | A03 12,15"),
+		[]byte("21. 'they' [1]: A03 8"),
+		[]byte("22. 'was' [1]: A02 3"),
+		[]byte("23. 'work' [1]: A03 10"),
+		[]byte("24. 'young' [1]: A02 5"),
+	}
 )
 
 func TestMarshalTerm(t *testing.T) {
-  logging.SetupTestLogging()
-  token := filereader.NewToken("james", filereader.TextToken)
-  token.Position = 10
-  token.DocId = "TestDocument"
+	logging.SetupTestLogging()
+	token := filereader.NewToken("james", filereader.TextToken)
+	token.Position = 10
+	token.DocId = "TestDocument"
 
-  term := NewTermFromToken(token, NewPositionalPostingList)
+	term := NewTermFromToken(token, NewPositionalPostingList)
 
-  if bytes, err := json.Marshal(term); err != nil {
-    log.Infof("Failed")
-    t.Errorf("Error marshalling term %v: %v", term.String(), err)
-  } else {
-    log.Infof("Marshaled %v to %s", term.String(), bytes)
-  }
+	if bytes, err := json.Marshal(term); err != nil {
+		log.Infof("Failed")
+		t.Errorf("Error marshalling term %v: %v", term.String(), err)
+	} else {
+		log.Infof("Marshaled %v to %s", term.String(), bytes)
+	}
 }
 
 func TestSingleTermIndex(t *testing.T) {
-  logging.SetupTestLogging()
+	logging.SetupTestLogging()
 
-  defer func () {
-    if x := recover(); x != nil {
-      log.Criticalf("Error: %v",  x)
-      log.Flush()
-    }
-  }()
+	defer func() {
+		if x := recover(); x != nil {
+			log.Criticalf("Error: %v", x)
+			log.Flush()
+		}
+	}()
 
-  var index Indexer
-  var lexicon Lexicon
+	var index Indexer
+	var lexicon Lexicon
 
-  lexicon = NewTrieLexicon()
+	lexicon = NewTrieLexicon()
 
-  index = new(SingleTermIndex)
-  index.Init(lexicon)
+	index = new(SingleTermIndex)
+	index.Init(lexicon)
 
-  filterChain := filters.NewAcronymFilter("acronyms")
-  filterChain = filterChain.Connect(filters.NewHyphenFilter("hyphens"), false)
-  filterChain = filterChain.Connect(filters.NewLowerCaseFilter("lower"), false)
-  index.AddFilter(filterChain)
+	filterChain := filters.NewAcronymFilter("acronyms")
+	filterChain = filterChain.Connect(filters.NewHyphenFilter("hyphens"), false)
+	filterChain = filterChain.Connect(filters.NewLowerCaseFilter("lower"), false)
+	index.AddFilter(filterChain)
 
-  for _, document := range TestDocuments {
-    log.Debugf("Inserting %s", document)
-    index.Insert(document)
-    log.Debugf("Finished inserting %s", document)
-  }
+	for _, document := range TestDocuments {
+		log.Debugf("Inserting %s", document)
+		index.Insert(document)
+		log.Debugf("Finished inserting %s", document)
+	}
 
-  log.Infof("Inserted all documents into %s", index.String())
+	log.Infof("Inserted all documents into %s", index.String())
 
-  output := new(bytes.Buffer)
-  index.PrintLexicon(output)
+	output := new(bytes.Buffer)
+	index.PrintLexicon(output)
 
-  for i, expected := range basicOutput {
-    if line, err := output.ReadBytes('\n'); err != nil {
-      t.Errorf("Error reading lexicon output at line %d. Expected '%s'", i+1, expected)
-      break
-    } else {
+	for i, expected := range basicOutput {
+		if line, err := output.ReadBytes('\n'); err != nil {
+			t.Errorf("Error reading lexicon output at line %d. Expected '%s'", i+1, expected)
+			break
+		} else {
 
-      trimmed := bytes.TrimSpace(line)
+			trimmed := bytes.TrimSpace(line)
 
-      if ! bytes.Equal(trimmed, expected) {
-        t.Errorf("Mismatched lexicon output at line %d: Expected '%s' (len: %d). Got '%s' (len: %d)",
-        i+1, expected, len(expected), line, len(line))
-      }
-    }
-  }
+			if !bytes.Equal(trimmed, expected) {
+				t.Errorf("Mismatched lexicon output at line %d: Expected '%s' (len: %d). Got '%s' (len: %d)",
+					i+1, expected, len(expected), line, len(line))
+			}
+		}
+	}
 
-  index.Delete()
+	index.Delete()
 }
-
