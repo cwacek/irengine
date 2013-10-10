@@ -274,21 +274,21 @@ func (lex *lexicon) RetrievePLS(term * persistent_term) *PostingListSet {
         log.Debugf("Retrieving PLS for %s from cache", term)
 		//Reorder the LRU entries to put this one first
 		// (in the background)
-		go lex.makeRecent(pls)
+    go lex.makeRecent(pls)
 
 		return pls
 
     default:
         //PLS is nil, which means we have it, but we swapped it
         //to disk at som point
-        log.Debugf("Retrieving PLS for %s from disk", term)
+        log.Debugf("Retrieving PLS for %s from disk", term.Text_)
 
         var newPLS *PostingListSet
         if file, err := os.Open(lex.DSPath(term.DataTag)); err == nil {
             newPLS = NewPostingListSet(term.DataTag, lex.PLInit)
             newPLS.Load(file)
             lex.stats[PLSLoadCount]++
-        log.Debugf("Read %s from %s", newPLS,
+        log.Debugf("Read %s from %s", newPLS.Tag,
             lex.DSPath(term.DataTag))
         } else {
             panic(err)
@@ -311,9 +311,20 @@ func (lex *lexicon) RetrievePostingList(term *persistent_term) index.PostingList
 }
 
 func(lex *lexicon) SaveToDisk() {
+  log.Critical("Saving to disk. May take some time with %d PLSes", len(lex.pl_set_cache))
+    var pls *PostingListSet
+    var tag DatastoreTag
 
-    for _, pls := range lex.lru_cache {
-        lex.dump_pls(pls)
+    for tag, pls = range lex.pl_set_cache {
+      if pls == nil {
+        pls = NewPostingListSet(tag, lex.PLInit)
+        if file, err := os.Open(lex.DSPath(tag)); err == nil {
+          pls.Load(file)
+        }
+        lex.evict()
+        lex.AddPLS(pls)
+      }
+      lex.dump_pls(pls)
     }
 }
 
