@@ -2,6 +2,7 @@ package indexer
 
 import "io"
 import "encoding/json"
+import "sort"
 import "fmt"
 import "bytes"
 import "github.com/cwacek/irengine/scanner/filereader"
@@ -65,16 +66,42 @@ func (t *TrieLexicon) InsertToken(token *filereader.Token) {
 
 func (t *TrieLexicon) Print(w io.Writer) {
 
+	df_array := make([]int, 0, t.Len())
+  dfSum := 0
+
 	for i, entry := range t.Walk() {
 		term := entry.(LexiconTerm)
 		log.Tracef("Walking found term %s", term.String())
-		_, err := io.WriteString(w, fmt.Sprintf("%d. '%s' [%d]: %s\n", i+1, term.Text(),
-			term.Tf(), term.PostingList()))
+		_, err := io.WriteString(w,
+			fmt.Sprintf("%d. '%s' [%d]: %s\n",
+				i+1, term.Text(),
+				term.Tf(), term.PostingList()))
+
+    dfSum += term.Df()
+    df_array = append(df_array, term.Df())
 
 		if err != nil {
 			panic(err)
 		}
 	}
+
+  sort.Ints(df_array)
+
+  statsFmt := `
+  Term Count: %d
+  Max DF:     %d
+  Min DF:     %d
+  Mean DF:    %d
+  Median DF:  %d
+  `
+
+  io.WriteString(w, fmt.Sprintf(statsFmt,
+  t.Len(),
+  df_array[0],
+  df_array[len(df_array)-1],
+  float64(dfSum) / float64(len(df_array)),
+  df_array[len(df_array)/2]))
+
 }
 
 func NewTrieLexicon() Lexicon {
