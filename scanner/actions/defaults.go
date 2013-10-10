@@ -91,7 +91,7 @@ func (d *DocWalker) read_file( path string, info os.FileInfo, err error) error {
 }
 
 var appConfig = `
-  <seelog type="sync" minlevel='%s'>
+  <seelog minlevel='%s'>
   <outputs formatid="scanner">
     <filter levels="critical,error,warn,info">
       <console formatid="scanner" />

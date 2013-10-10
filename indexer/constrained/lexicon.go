@@ -199,17 +199,17 @@ func (lex *lexicon) DSPath(tag DatastoreTag) string {
 }
 
 func (lex *lexicon) makeRecent(pls *PostingListSet) {
-	log.Debugf("Making %v recent", pls)
-    log.Tracef("LRU_CACHE: %v", lex.lru_cache)
-	for i, set := range lex.lru_cache {
-		if set == pls {
-			copy(lex.lru_cache[i:], lex.lru_cache[i+1:])
-			log.Tracef("Rearranged at %d: %v", i, lex.lru_cache)
-			lex.lru_cache[len(lex.lru_cache)-1] = set
-			break
-		}
-	}
-	log.Tracef("Afterwards: %v", lex.lru_cache)
+  log.Debugf("Making %s recent", pls.Tag)
+  /*log.Tracef("LRU_CACHE: %v", lex.lru_cache)*/
+  for i, set := range lex.lru_cache {
+    if set == pls {
+      copy(lex.lru_cache[i:], lex.lru_cache[i+1:])
+      log.Tracef("Rearranged at %d: %v", i, lex.lru_cache)
+      lex.lru_cache[len(lex.lru_cache)-1] = set
+      break
+    }
+  }
+  /*log.Tracef("Afterwards: %v", lex.lru_cache)*/
 }
 
 // Find a PLS that's available

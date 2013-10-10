@@ -140,7 +140,7 @@ ParseAgain:
     newtok, ok = f.TryMatchDay(tok)
     if ok {
       //Don't include the day
-      log.Debugf("State DateMonth: %s matched day", tok)
+      /*log.Debugf("State DateMonth: %s matched day", tok)*/
       f.state = DateDayMonth
       break
     }
@@ -157,7 +157,7 @@ ParseAgain:
       break
     }
 
-    log.Debugf("State DateMonth: %s matched nothing", tok)
+    /*log.Debugf("State DateMonth: %s matched nothing", tok)*/
     // If we didn't match either, this is probably just a Month, 
     // so let's just push the token along and reset.
     result = append(result, tok)
@@ -231,9 +231,9 @@ func (f *DateFilter) TryMatchYear(tok *filereader.Token) (*filereader.Token, boo
 }
 
 func (f *DateFilter) TryMatchDay(tok *filereader.Token) (*filereader.Token, bool) {
-  log.Debugf("Trying to match day on %s", tok)
+  /*log.Debugf("Trying to match day on %s", tok)*/
   daystr := strings.TrimRight(tok.Text, "thstrd")
-  log.Debugf("After trimming, have %s", daystr)
+  /*log.Debugf("After trimming, have %s", daystr)*/
   if num, err  := strconv.Atoi(daystr); err == nil {
 
     if num > 0 && num < 31 {
@@ -247,37 +247,37 @@ func (f *DateFilter) TryMatchDay(tok *filereader.Token) (*filereader.Token, bool
 
 func (f *DateFilter) TryMatchDate(tok *filereader.Token) (*filereader.Token, bool) {
 
-  log.Debugf("Trying to match date on %s", tok)
+  /*log.Debugf("Trying to match date on %s", tok)*/
 
   if m := DateRegex.FindStringSubmatch(tok.Text); m != nil {
     // m is a slice with [full, month, day, year]
-    log.Debugf("Matched with month %s, day %s, year %s", m[1], m[2], m[3])
+    /*log.Debugf("Matched with month %s, day %s, year %s", m[1], m[2], m[3])*/
     if monthIdx, err := strconv.Atoi(m[1]); err == nil {
       if monthIdx > 0 && monthIdx <= 12 {
         f.matches[DateMonth] = fmt.Sprintf("%02d", monthIdx)
       } else {
-        log.Debugf("Month index %d wasn't in the right range", monthIdx)
+        /*log.Debugf("Month index %d wasn't in the right range", monthIdx)*/
         return nil, false
       }
     } else {
-      log.Debugf("Failed to convert %s to month: %s", m[1], err)
+      /*log.Debugf("Failed to convert %s to month: %s", m[1], err)*/
     }
 
     if num, err := strconv.Atoi(m[2]); err == nil {
       if num > 0 && num <= 31 {
         f.matches[DateDayMonth] = fmt.Sprintf("%02d", num)
       } else {
-        log.Debugf("Day index %d wasn't in the right range", num)
+        /*log.Debugf("Day index %d wasn't in the right range", num)*/
         return nil, false
       }
     } else {
-      log.Debugf("Failed to convert %s to day: %s", m[2], err)
+      /*log.Debugf("Failed to convert %s to day: %s", m[2], err)*/
     }
 
     if year, err := strconv.Atoi(m[3]); err == nil {
       nowYear := time.Now().Year()
 
-      log.Debugf("Comparing %d to nowyear %d", year, nowYear)
+      /*log.Debugf("Comparing %d to nowyear %d", year, nowYear)*/
       switch {
       case year < 100 && year <= (nowYear / 100):
         // This is a 20XX number
@@ -291,11 +291,11 @@ func (f *DateFilter) TryMatchDate(tok *filereader.Token) (*filereader.Token, boo
         f.matches[DateYear] = fmt.Sprintf("%04d", year)
 
       default:
-        log.Debugf("Couldn't intepret year %d", year)
+        /*log.Debugf("Couldn't intepret year %d", year)*/
 
       }
     } else {
-      log.Debugf("Failed to convert %s to year: %s", m[3], err)
+      /*log.Debugf("Failed to convert %s to year: %s", m[3], err)*/
     }
 
     newtok := CloneWithText(tok,
@@ -304,6 +304,6 @@ func (f *DateFilter) TryMatchDate(tok *filereader.Token) (*filereader.Token, boo
     newtok.Final = true
     return newtok, true
   }
-  log.Debugf("Failed to match %s as date", tok)
+  /*log.Debugf("Failed to match %s as date", tok)*/
   return nil, false
 }

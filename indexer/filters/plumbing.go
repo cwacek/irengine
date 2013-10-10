@@ -91,7 +91,7 @@ func (fc *FilterPlumbing) Serialize() string {
 }
 
 func (fc *FilterPlumbing) Send(tok *filereader.Token) {
-  log.Debugf("Sending '%s' to %d output pipes: %v", tok, len(fc.output), fc.output)
+  /*log.Debugf("Sending '%s' to %d output pipes: %v", tok, len(fc.output), fc.output)*/
   for _, out := range fc.output {
     out.Pipe <- tok
   }
@@ -99,8 +99,8 @@ func (fc *FilterPlumbing) Send(tok *filereader.Token) {
 
 func (fc *FilterPlumbing) SendAll(tokens []*filereader.Token) {
 
-  log.Debugf("%s Sending '%s' to %d output pipes: %v",
-             fc.Id, tokens, len(fc.output), fc.output)
+  /*log.Debugf("%s Sending '%s' to %d output pipes: %v",*/
+             /*fc.Id, tokens, len(fc.output), fc.output)*/
 
   for _, out := range fc.output {
     for _, tok := range tokens {
@@ -119,7 +119,7 @@ func (fc *FilterPlumbing) Terminate() {
 func (fc *FilterPlumbing) apply() {
   log.Debugf("Applying %v. Reading %v", fc, fc.Input())
   for tok := range fc.Input().Pipe {
-    log.Debugf("%s received %s", fc.Id, tok)
+    /*log.Debugf("%s received %s", fc.Id, tok)*/
 
     switch {
     case tok.Type == filereader.SymbolToken:
@@ -130,7 +130,7 @@ func (fc *FilterPlumbing) apply() {
       fc.Send(tok)
 
     case tok.Final && fc.ignoresFinal == false:
-      log.Tracef("Passing Final token %s along", tok)
+      /*log.Tracef("Passing Final token %s along", tok)*/
       fc.Send(tok)
 
     default:
