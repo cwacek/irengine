@@ -150,10 +150,15 @@ func NewLexicon(maxMem int, dataDir string) index.Lexicon {
 	lex = new(lexicon)
 	lex.Init()
 
-      if err := os.RemoveAll(dataDir); err != nil {
+    if err := os.RemoveAll(dataDir); err != nil {
         panic(err)
-      }
-	lex.DataDirectory = dataDir
+    }
+
+    if err := os.MkdirAll(dataDir, 0755); err != nil {
+        panic(err)
+    }
+
+    lex.DataDirectory = dataDir
 
 
 	// Wrap args
