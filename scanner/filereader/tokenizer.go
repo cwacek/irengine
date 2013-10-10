@@ -328,6 +328,8 @@ func decodeEntity(entity string) (string, bool) {
   case "&lsquo;":
     return "'", true
 
+  case "&mu;":
+    fallthrough
   case "&para;":
     fallthrough
   case "&reg;":
