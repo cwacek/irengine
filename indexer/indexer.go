@@ -4,7 +4,7 @@ import "github.com/cwacek/irengine/indexer/filters"
 import "github.com/cwacek/irengine/scanner/filereader"
 import "io"
 import "encoding/json"
-import radix "github.com/cwacek/radix_go"
+import radix "github.com/cwacek/radix-go"
 
 type LexiconInitializer func(datadir string, memLimit int) PostingList
 
