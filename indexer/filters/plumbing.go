@@ -147,23 +147,22 @@ func (fc *FilterPlumbing) NotifyDocComplete() {
 
 }
 
-func (fc *FilterPlumbing) Pull() *FilterPipe {
+func (fc *FilterPlumbing) Pull() (input *FilterPipe) {
   log.Debugf("Pulled %v. Have parent %v and input %v", fc, fc.parent, fc.input)
+
+  if fc.parent != nil {
+    input = fc.parent.Pull()
+  } else {
+    if fc.input == nil {
+      input = NewFilterPipe("input")
+      fc.SetInput(input)
+    }
+  }
+
   if !fc.running {
     go fc.apply()
     fc.running = true
   }
 
-  if fc.parent != nil {
-    return fc.parent.Pull()
-  } else {
-
-    var input *FilterPipe
-
-    if fc.input == nil {
-      input = NewFilterPipe("input")
-      fc.SetInput(input)
-    }
-    return input
-  }
+  return
 }
