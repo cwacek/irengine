@@ -1,6 +1,0 @@
-<seelog minlevel="info">
-    <exceptions>
-        <exception filepattern="*trec_test.go" minlevel="debug"/>
-        <exception filepattern="*tokenizer*" minlevel="debug"/>
-    </exceptions>
-</seelog>
