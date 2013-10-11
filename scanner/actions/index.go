@@ -101,6 +101,7 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
     } else {
         log.Info("Using stopword list")
         index.AddFilter(filters.NewStopWordFilterFromReader(file))
+        file.Close()
     }
 
     return index, nil
