@@ -72,15 +72,11 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 
     switch *a.indexType {
     case "single-term":
-        //Set the initializer, then fall through
         index.AddFilter(filters.SingleTermFilterSequence)
         lexicon.SetPLInitializer(indexer.NewBasicPostingList)
 
     case "single-term-positional":
-        //This is the default PL Initializer, so we won't set it
-        // However, all the single-terms use the same filters, so
-        // set them up.
-        lexicon.SetPLInitializer(indexer.NewBasicPostingList)
+        lexicon.SetPLInitializer(indexer.NewPositionalPostingList)
         index.AddFilter(filters.SingleTermFilterSequence)
 
     case "stemmed":
