@@ -177,11 +177,11 @@ func (lex *lexicon) load_factor() float64 {
 
     load := float64(lex.currentLoad) / float64(lex.maxLoad)
 
-    if load > 1.0 {
-    log.Criticalf("Load factor is high at %f", load)
-    panic("Whoa")
-  }
+    previous_val := int(lex.stats[AvgLoadOnEvict])
+    lex.stats[AvgLoadOnEvict] = ((previous_val * int(load_factor_called)) +
+    int(load * 100)) / (int(load_factor_called) + 1)
 
+    load_factor_called++
 
     /*log.Infof("Load factor is now %0.2f with %d PLS in memory", load, len(lex.lru_cache))*/
     /*if len(lex.lru_cache) < 5 {*/
