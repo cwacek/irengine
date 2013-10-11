@@ -3,7 +3,7 @@ package constrained
 import index "github.com/cwacek/irengine/indexer"
 import "github.com/cwacek/irengine/scanner/filereader"
 import "fmt"
-/*import "strconv"*/
+import "strings"
 import "io"
 import log "github.com/cihub/seelog"
 import "bufio"
@@ -49,6 +49,24 @@ func (pls PostingListSet) String() string {
     return buf.String()
 }
 
+func TransferPL(src, dst *PostingListSet, term string) (sz int ){
+
+  var pl index.PostingList
+  var ok bool
+
+  if pl, ok = src.listMap[term]; ok {
+    dst.listMap[term] = pl
+    sz = pl.Len()
+    dst.Size += sz
+    src.Size -= sz
+    delete(src.listMap,term)
+  } else {
+    panic("Asked to transfer non-existent posting list")
+  }
+
+  return
+}
+
 
 
 //Get and return the PostingList for a particular term
@@ -76,17 +94,18 @@ func (pls *PostingListSet) Dump(w io.Writer) {
 
     for term, pl = range pls.listMap {
 
-        for it = pl.Iterator(); it.Next(); {
+      for it = pl.Iterator(); it.Next(); {
         writer.WriteString(term)
-        writer.WriteByte(' ')
+        writer.WriteString(" # ")
         writer.WriteString(it.Value().Serialize())
+        /*it.Value().SerializeTo(writer)*/
         writer.WriteByte('\n')
-        }
+      }
     }
     writer.Flush()
 }
 
-func (pls *PostingListSet) Load(r io.Reader) {
+func (pls *PostingListSet) Load(r io.Reader) int {
   var (
     pl index.PostingList
     pl_entry index.PostingListEntry
@@ -94,24 +113,33 @@ func (pls *PostingListSet) Load(r io.Reader) {
     term, parsed_term string
     parsed int
     /*docId int64*/
+    parts []string
     e error
   )
-
+  term =  "#" // Just make sure it's not a term
 
     scanner := bufio.NewScanner(r)
     scanner.Split(bufio.ScanLines)
     for scanner.Scan() {
-        if len(scanner.Text()) == 0 {
+
+        parts = strings.Split(scanner.Text(), "#")
+        parsed_term = strings.TrimSpace(parts[0])
+        /*log.Debugf("Parsed term as %s", parsed_term)*/
+        if len(parsed_term) == 0 {
           continue
         }
+
         pl_entry = pls.pl_entry_init(0)
 
-        parsed, e = fmt.Sscanln(scanner.Text(), &parsed_term, pl_entry)
+        parsed, e = fmt.Sscanln(parts[1], pl_entry)
         if e != nil {
-          panic(e)
+          if e == io.EOF {
+            continue
+          }
+          panic(fmt.Sprintf("Error reading %s: %v", scanner.Text(), e))
         }
 
-        if parsed != 2 {
+        if parsed != 1 {
           pl_entry = nil
           continue
         }
@@ -129,6 +157,11 @@ func (pls *PostingListSet) Load(r io.Reader) {
         pl.InsertCompleteEntry(pl_entry)
         pls.Size++
     }
+    return pls.Size
+}
+
+func (pls *PostingListSet) DocCount() int {
+  return len(pls.listMap)
 }
 
 func (pls *PostingListSet) RecalculateLen() {

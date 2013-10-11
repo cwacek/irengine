@@ -4,7 +4,6 @@ import "sort"
 import "fmt"
 import "unicode"
 import "io"
-import "bufio"
 import "bytes"
 import "strconv"
 import "strings"
@@ -92,7 +91,7 @@ func (pl *positional_pl) InsertCompleteEntry(entry PostingListEntry) bool {
 }
 
 func (pl *positional_pl) InsertEntry(token *filereader.Token) bool {
-	/*log.Debugf("Inserting %s into posting list.", token)*/
+  log.Debugf("Inserting %s into posting list.", token)
 	return pl.InsertRawEntry(token.Text, token.DocId, token.Position)
 }
 
@@ -209,6 +208,16 @@ func (p *basic_sk_entry) String() string {
 	return fmt.Sprintf("(%s, %s)", p.docId, p.frequency)
 }
 
+var Space []byte = []byte{' '}
+
+func (p *basic_sk_entry) SerializeTo(buf io.Writer) {
+  docId := strconv.FormatInt(int64(p.docId), 10)
+
+  io.WriteString(buf ,docId)
+  buf.Write(Space)
+  docId = strconv.FormatInt(int64(p.frequency), 10)
+}
+
 type positional_sk_entry struct {
 	docId     filereader.DocumentId
 	positions []int
@@ -247,7 +256,7 @@ func (p *positional_sk_entry) Scan(state fmt.ScanState, verb rune) error {
     if tmpInt, e = strconv.ParseInt(string(token),10,32); e != nil {
       return e
     } else {
-      p.positions = append(p.positions, int(tmpInt))
+      p.AddPosition(int(tmpInt))
     }
   }
   return nil
@@ -276,24 +285,26 @@ func (p *positional_sk_entry) Deserialize(input [][]byte) error {
 }
 
 func (p *positional_sk_entry) SerializeTo(buf io.Writer) {
-  out := bufio.NewWriter(buf)
-  docId := strconv.FormatInt(int64(p.docId), 10)
 
-  out.WriteString(docId)
-  out.WriteByte(' ')
+  fmt.Fprintf(buf, "%d ", p.docId)
+
+  if len(p.positions) == 0 {
+    panic("positional entry has no positions")
+  }
 
 	for i, position := range p.positions {
 		if i != 0 {
-			out.WriteRune(' ')
-		}
-		out.WriteString(fmt.Sprintf("%d", position))
+      fmt.Fprintf(buf, " %d", position)
+		} else {
+      fmt.Fprintf(buf, "%d", position)
+    }
 	}
 }
 
 func (p *positional_sk_entry) Serialize() string {
 	buf := new(bytes.Buffer)
 
-  buf.WriteString(strconv.FormatInt(int64(p.docId), 10))
+  buf.WriteString(fmt.Sprintf("%d", p.docId))
 	buf.WriteRune(' ')
 
 	for i, position := range p.positions {

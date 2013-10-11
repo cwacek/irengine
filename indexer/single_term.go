@@ -31,6 +31,7 @@ func (t*SingleTermIndex) Save() {
     t.lexicon.(PersistentLexicon).SaveToDisk()
 
   default:
+    panic("Save to disk not supported")
     log.Critical("Save to disk not supported")
   }
 
