@@ -18,7 +18,6 @@ const (
     PLSHits
     PLSCreates
     PLSFetches
-    AvgLoadOnEvict
 )
 
 func (T PLSStat) String() string {
@@ -33,8 +32,6 @@ func (T PLSStat) String() string {
         return "PLS Fetches"
     case PLSCreates:
         return "PLS Creates"
-    case AvgLoadOnEvict:
-        return "Avg Load"
     default:
         panic("Unknown stat type")
     }
@@ -177,11 +174,9 @@ func (lex *lexicon) load_factor() float64 {
 
     load := float64(lex.currentLoad) / float64(lex.maxLoad)
 
-    previous_val := int(lex.stats[AvgLoadOnEvict])
-    lex.stats[AvgLoadOnEvict] = ((previous_val * int(load_factor_called)) +
-    int(load * 100)) / (int(load_factor_called) + 1)
-
-    load_factor_called++
+    if load > 10.0 {
+      log.Criticalf("Exceeded max allowed load")
+    }
 
     /*log.Infof("Load factor is now %0.2f with %d PLS in memory", load, len(lex.lru_cache))*/
     /*if len(lex.lru_cache) < 5 {*/
