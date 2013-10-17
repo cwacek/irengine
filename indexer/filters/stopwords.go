@@ -38,11 +38,9 @@ func NewStopWordFilterFromReader(r io.Reader) Filter {
 func (f*StopWordFilter) Apply(tok *filereader.Token) []*filereader.Token {
 
     if _, ok := f.stopwords[tok.Text]; ok {
-        f.removed += 1
         return nil
     }
 
-    tok.Position -= f.removed
 
     return []*filereader.Token{tok}
 }
