@@ -246,6 +246,10 @@ func NewLexicon(maxMem int, dataDir string) index.Lexicon {
 	return lex
 }
 
+func (lex *lexicon) Location() string {
+  return lex.DataDirectory + "/"
+}
+
 func (lex *lexicon) DSPath(tag DatastoreTag) string {
 	return lex.DataDirectory + "/" + string(tag)
 }

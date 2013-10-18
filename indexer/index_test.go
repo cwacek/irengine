@@ -2,6 +2,7 @@ package indexer
 
 import "bytes"
 import "bufio"
+import "encoding/json"
 import "strings"
 import "fmt"
 import "testing"
@@ -26,25 +27,22 @@ func init() {
 		filters.LoadTestDocument("A03", "Since Ph.D's don't fly F-16 jets, but they might work for the CDC on the CDC-50 project"),
 	}
 
-	rand.Seed(0)
-	RandInts = make([]filereader.DocumentId, 20)
-	for x := 0; x < 20; x++ {
-		RandInts[x] = filereader.DocumentId(rand.Int63())
-    log.Infof("RandInt[%d] = %d", x, RandInts[x])
-	}
+	RandInts = make([]filereader.DocumentId, 2)
+  RandInts[0] = TestDocuments[0].Identifier()
+  RandInts[1] = TestDocuments[1].Identifier()
 
   basicOutput = [][]byte{
 		[]byte(fmt.Sprintf("1. 'a' [1]: %d 4", RandInts[0])),
 		[]byte(fmt.Sprintf("2. 'ball' [1]: %d 11", RandInts[0])),
 		[]byte(fmt.Sprintf("3. 'boy' [1]: %d 6", RandInts[0])),
 		[]byte(fmt.Sprintf("4. 'but' [1]: %d 7", RandInts[1])),
-		[]byte(fmt.Sprintf("5. 'cdc' [2]: %d 13,16", RandInts[1])),
+		[]byte(fmt.Sprintf("5. 'cdc' [2]: %d 13 16", RandInts[1])),
 		[]byte(fmt.Sprintf("6. 'cdc50' [1]: %d 16", RandInts[1])),
 		[]byte(fmt.Sprintf("7. 'dont' [1]: %d 3", RandInts[1])),
 		[]byte(fmt.Sprintf("8. 'f16' [1]: %d 5", RandInts[1])),
 		[]byte(fmt.Sprintf("9. 'fly' [1]: %d 4",RandInts[1])),
 		[]byte(fmt.Sprintf("10. 'for' [1]: %d 11",RandInts[1])),
-		[]byte(fmt.Sprintf("11. 'i' [2]: %d 2,7",RandInts[0])),
+		[]byte(fmt.Sprintf("11. 'i' [2]: %d 2 7",RandInts[0])),
 		[]byte(fmt.Sprintf("12. 'jets' [1]: %d 6",RandInts[1])),
 		[]byte(fmt.Sprintf("13. 'might' [1]: %d 9",RandInts[1])),
 		[]byte(fmt.Sprintf("14. 'on' [1]: %d 14",RandInts[1])),
@@ -52,8 +50,8 @@ func init() {
 		[]byte(fmt.Sprintf("16. 'played' [1]: %d 8",RandInts[0])),
 		[]byte(fmt.Sprintf("17. 'project' [1]: %d 17",RandInts[1])),
 		[]byte(fmt.Sprintf("18. 'silver' [1]: %d 10",RandInts[0])),
-		[]byte(fmt.Sprintf("19. 'since' [2]: %d 1 | %d 1",RandInts[0],RandInts[1])),
-		[]byte(fmt.Sprintf("20. 'the' [3]: %d 9 | %d 12,15",RandInts[0],RandInts[1])),
+		[]byte(fmt.Sprintf("19. 'since' [2]: %d 1 | %d 1",RandInts[1],RandInts[0])),
+		[]byte(fmt.Sprintf("20. 'the' [3]: %d 12 15 | %d 9",RandInts[1],RandInts[0])),
 		[]byte(fmt.Sprintf("21. 'they' [1]: %d 8",RandInts[1])),
 		[]byte(fmt.Sprintf("22. 'was' [1]: %d 3",RandInts[0])),
 		[]byte(fmt.Sprintf("23. 'work' [1]: %d 10",RandInts[1])),
@@ -112,6 +110,41 @@ func TestSingleTermIndex(t *testing.T) {
 	}
 
 	index.Delete()
+}
+
+func TestDocMapSerialize(t *testing.T) {
+  logging.SetupTestLogging()
+
+  var info1 = &StoredDocInfo{
+    filereader.DocumentId(10),
+    "Fred",
+    64,
+  }
+  var expected1 = `{"Id":10,"HumanId":"Fred","TermCount":64}`
+
+  var info2 = &StoredDocInfo{
+    filereader.DocumentId(11),
+    "James",
+    64,
+  }
+
+  var buf = new(bytes.Buffer)
+  enc := json.NewEncoder(buf)
+  if enc.Encode(info1); strings.TrimSpace(buf.String()) != expected1 {
+    t.Errorf("Expected '%s'. Got '%s'", expected1, buf.String())
+  }
+
+  var docmap = make(DocInfoMap)
+  docmap[info1.Id] = info1
+  docmap[info2.Id] = info2
+  expectedmap := `[{"Id":10,"HumanId":"Fred","TermCount":64},{"Id":11,"HumanId":"James","TermCount":64}]`
+
+  if bytes, err := json.Marshal(docmap); err != nil {
+    t.Errorf("error marshalling: %v", err)
+  } else if string(bytes) != expectedmap {
+
+    t.Errorf("Expected:\n%s\n Got:\n%s", expectedmap, string(bytes))
+  }
 }
 
 func TestCanLoad(t *testing.T) {

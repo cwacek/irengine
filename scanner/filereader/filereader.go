@@ -1,12 +1,22 @@
 package filereader
 
+import "strconv"
+
 type DocumentId uint32
 
-type Document interface {
+func (id DocumentId) MarshalJSON() ([]byte, error) {
+  return []byte(strconv.Itoa(int(id))), nil
+}
+
+type DocInfo interface {
   OrigIdent() string
   Identifier() DocumentId
-  Tokens() <-chan *Token
   Len() int /* The number of tokens in this document */
+}
+
+type Document interface {
+  DocInfo
+  Tokens() <-chan *Token
   Add(*Token) /* Add a token, setting the DocId and position if necessary */
 }
 

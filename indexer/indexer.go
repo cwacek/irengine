@@ -19,6 +19,7 @@ type Lexicon interface {
 type PersistentLexicon interface {
 	SaveToDisk()
 	PrintDiskStats(io.Writer)
+  Location() string // Obtain the on disk location
 }
 
 type TermFromTokenFunc func(*filereader.Token, PostingListInitializer) LexiconTerm

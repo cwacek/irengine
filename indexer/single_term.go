@@ -3,10 +3,56 @@ package indexer
 import "fmt"
 import "io"
 import "os"
+import "bytes"
+import "encoding/json"
 import "github.com/cwacek/irengine/indexer/filters"
 import "github.com/cwacek/irengine/scanner/filereader"
 import log "github.com/cihub/seelog"
 import "sync"
+
+type StoredDocInfo struct {
+  Id filereader.DocumentId
+  HumanId string
+  TermCount int
+}
+
+func (info *StoredDocInfo) MarshalJSON() ([]byte, error) {
+  return json.Marshal(*info)
+}
+
+func (info *StoredDocInfo) OrigIdent() string {
+  return info.HumanId
+}
+
+func (info *StoredDocInfo) Identifier() filereader.DocumentId {
+  return info.Id
+}
+
+func (info *StoredDocInfo) Len() int {
+  return info.TermCount
+}
+
+type DocInfoMap map[filereader.DocumentId]*StoredDocInfo
+
+func (m DocInfoMap) MarshalJSON() ([]byte, error) {
+  var buf = new(bytes.Buffer)
+  var bytes []byte
+  var err error
+
+  buf.WriteRune('[')
+
+  for _, elem := range m {
+    if bytes, err = json.Marshal(elem); err != nil {
+      return nil, err
+    }
+    buf.Write(bytes)
+
+    buf.WriteRune(',')
+  }
+  buf.Truncate(buf.Len()-1)
+  buf.WriteRune(']')
+  return buf.Bytes(), nil
+}
 
 type SingleTermIndex struct {
 	dataDir string
@@ -18,6 +64,8 @@ type SingleTermIndex struct {
 	TermCount     int
 	DocumentCount int
 
+  DocumentMap DocInfoMap
+
 	// utility vars
 	inserterRunning bool
 	insertLock      *sync.RWMutex
@@ -25,10 +73,25 @@ type SingleTermIndex struct {
 }
 
 func (t*SingleTermIndex) Save() {
+  var persist PersistentLexicon
 
   switch t.lexicon.(type) {
   case PersistentLexicon:
-    t.lexicon.(PersistentLexicon).SaveToDisk()
+    persist = t.lexicon.(PersistentLexicon)
+    persist.SaveToDisk()
+
+    if file, err := os.Create(persist.Location() + "docmap.txt"); err != nil {
+      log.Critical("Error opening document map file: %v", err)
+      panic(err)
+    } else {
+      if bytes, err := json.MarshalIndent(t.DocumentMap, "", "  "); err != nil {
+        panic(err)
+      } else {
+        file.Write(bytes)
+      }
+      file.Close()
+    }
+
 
   default:
     panic("Save to disk not supported")
@@ -52,6 +115,8 @@ func (t *SingleTermIndex) Init(lexicon Lexicon) error {
 
 	t.TermCount = 0
 	t.DocumentCount = 0
+
+  t.DocumentMap = make(DocInfoMap)
 
 	t.inserterRunning = false
 	t.shutdown = make(chan bool)
@@ -116,6 +181,11 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
 		}
 	}()
 
+  info := new(StoredDocInfo)
+  info.HumanId = d.OrigIdent()
+  info.Id = d.Identifier()
+  t.DocumentMap[info.Id] = info
+
 	t.insertLock.Lock()
 	for token := range d.Tokens() {
 		log.Debugf("Inserting %s into index input", token)
@@ -136,6 +206,9 @@ func (t *SingleTermIndex) inserter() {
 	filterChainOut := t.filterChain.Output()
 	log.Debugf("inserter process started listening on %v", filterChainOut)
 
+  var termcounter = 0
+  var info *StoredDocInfo
+
 	for {
 		var token *filereader.Token
 		select {
@@ -148,11 +221,15 @@ func (t *SingleTermIndex) inserter() {
 
 		if token.Type == filereader.NullToken {
 			t.DocumentCount += 1
+      info = t.DocumentMap[token.DocId]
+      info.TermCount = termcounter
+      termcounter = 0
 			t.insertLock.Unlock()
 			continue
 		}
 
 		t.lexicon.InsertToken(token)
+    termcounter++
 	}
 
 	log.Criticalf("Filter chain %s closed")
