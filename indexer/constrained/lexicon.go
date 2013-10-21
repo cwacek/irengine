@@ -212,7 +212,7 @@ func NewLexicon(maxMem int, dataDir string) index.Lexicon {
                 return term
 		}
 
-	lex.PLInit = index.NewPositionalPostingList
+	lex.PLInit = index.BasicPostingListInitializer
 
 	lex.maxLoad = maxMem
 	lex.currentLoad = 0

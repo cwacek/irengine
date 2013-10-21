@@ -25,12 +25,12 @@ func (t *TrieLexicon) FindTerm(key []byte) (LexiconTerm, bool) {
 	return nil, false
 }
 
-func (t *TrieLexicon) SetPLInitializer(pl_func PostingListInitializer) {
+func (t *TrieLexicon) SetPLInitializer(pl_init PostingListInitializer) {
 	if t.Len() > 0 {
 		panic("Cannot set PL initializer after terms are inserted")
 	}
 
-	t.PLInit = pl_func
+	t.PLInit = pl_init
 }
 
 func (t *TrieLexicon) InsertToken(token *filereader.Token) {
@@ -119,7 +119,7 @@ func (t *TrieLexicon) Print(w io.Writer) {
 func NewTrieLexicon() Lexicon {
 	lex := new(TrieLexicon)
 	lex.Init()
-	lex.PLInit = NewPositionalPostingList
+	lex.PLInit = PositionalPostingListInitializer
 	lex.TermInit = NewTermFromToken
 	return lex
 }
@@ -135,7 +135,7 @@ func NewTermFromToken(t *filereader.Token, p PostingListInitializer) LexiconTerm
 	term := new(Term)
 	term.Text_ = t.Text
 	term.Tf_ = 0  // because we increment with Register
-	term.Pl = p() // THis allows passing differnt types of posting lists.
+	term.Pl = p.Create() // THis allows passing differnt types of posting lists.
 
 	term.Register(t)
 	log.Tracef("Created term: %#v", term)

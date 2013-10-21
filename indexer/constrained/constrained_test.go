@@ -67,7 +67,7 @@ which # 5 2
 )
 
 func init() {
-  basic_pl = index.NewPositionalPostingList()
+  basic_pl = index.PositionalPostingListInitializer.Create()
 
   for i := 0; i < 500; i++ {
     switch {
@@ -86,7 +86,7 @@ func TestPostingListSetSerialization(t *testing.T) {
     logging.SetupTestLogging()
 
     log.Info("Starting PLS Serialization test")
-	pls := NewPostingListSet("testStore", index.NewPositionalPostingList)
+	pls := NewPostingListSet("testStore", index.PositionalPostingListInitializer)
 
 	pls.Load(strings.NewReader(serialized_pls))
 
@@ -120,7 +120,7 @@ func TestPostingListSetBasicSerialize(t *testing.T) {
     logging.SetupTestLogging()
 
     log.Info("Starting PLS Serialization test")
-	pls := NewPostingListSet("testStore", index.NewBasicPostingList)
+	pls := NewPostingListSet("testStore", index.BasicPostingListInitializer)
 
 	pls.Load(strings.NewReader(serialized_basic_pls))
 
@@ -158,10 +158,10 @@ func TestLRU(t *testing.T) {
     lex := new(lexicon)
 
     lex.lru_cache = LRUSet{
-        NewPLSContainer(NewPostingListSet("1", index.NewPositionalPostingList)),
-        NewPLSContainer(NewPostingListSet("2", index.NewPositionalPostingList)),
-        NewPLSContainer(NewPostingListSet("3", index.NewPositionalPostingList)),
-        NewPLSContainer(NewPostingListSet("4", index.NewPositionalPostingList)),
+        NewPLSContainer(NewPostingListSet("1", index.PositionalPostingListInitializer)),
+        NewPLSContainer(NewPostingListSet("2", index.PositionalPostingListInitializer)),
+        NewPLSContainer(NewPostingListSet("3", index.PositionalPostingListInitializer)),
+        NewPLSContainer(NewPostingListSet("4", index.PositionalPostingListInitializer)),
     }
 
     if lrutag := lex.lru_cache.LeastRecent().Tag; lrutag != "1" {
@@ -272,14 +272,14 @@ func BenchmarkLoadDump(b *testing.B) {
     defer os.Remove(tmpInfo.Name())
     /*log.Infof("Benching using %s as temp file", tmpInfo.Name())*/
 
-    pls = NewPostingListSet("testStore", index.NewPositionalPostingList)
+    pls = NewPostingListSet("testStore", index.PositionalPostingListInitializer)
     file, _ := os.Open("testpls.txt")
     pls.Load(file)
 
     for i:= 0; i < b.N; i++ {
       pls.Dump(tmp)
       pls = nil
-      pls = NewPostingListSet("testStore", index.NewPositionalPostingList)
+      pls = NewPostingListSet("testStore", index.PositionalPostingListInitializer)
       pls.Load(tmp)
     }
 

@@ -32,7 +32,7 @@ func NewPostingListSet(tag DatastoreTag,
     pls.listMap = make(map[string]index.PostingList)
     pls.Tag = tag
     pls.pl_init = init
-    pls.pl_entry_init = init().EntryFactory
+    pls.pl_entry_init = init.Create().EntryFactory
     return pls
 }
 
@@ -77,7 +77,7 @@ func (pls *PostingListSet) Get(term string) index.PostingList {
         log.Debugf("Have posting list for %s.", term)
         return pl
     } else {
-        pl = pls.pl_init()
+        pl = pls.pl_init.Create()
         pls.listMap[term] = pl
         log.Debugf("Don't have posting list for %s. ", term)
         return pl
@@ -149,7 +149,7 @@ func (pls *PostingListSet) Load(r io.Reader) int {
 
           term = parsed_term
           if pl, ok = pls.listMap[term]; !ok {
-            pl = pls.pl_init()
+            pl = pls.pl_init.Create()
             pls.listMap[term] = pl
           }
         }

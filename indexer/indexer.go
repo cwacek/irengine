@@ -48,7 +48,10 @@ type PostingListEntry interface {
   fmt.Scanner
 }
 
-type PostingListInitializer func() PostingList
+type PostingListInitializer struct {
+  Create func() PostingList
+  Name string
+}
 
 type PostingList interface {
 	GetEntry(id filereader.DocumentId) (PostingListEntry, bool)

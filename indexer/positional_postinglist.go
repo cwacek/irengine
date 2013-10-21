@@ -11,6 +11,30 @@ import "github.com/ryszard/goskiplist/skiplist"
 import "github.com/cwacek/irengine/scanner/filereader"
 import log "github.com/cihub/seelog"
 
+var (
+  BasicPostingListInitializer = PostingListInitializer{
+    Name: "basic",
+    Create: func() PostingList {
+      pl := new(positional_pl)
+      pl.Length = 0
+      pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
+      pl.entry_factory = NewBasicEntry
+      return pl
+    },
+  }
+
+  PositionalPostingListInitializer = PostingListInitializer{
+    Name: "positional",
+    Create: func() PostingList {
+      pl := new(positional_pl)
+      pl.Length = 0
+      pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
+      pl.entry_factory = NewPositionalEntry
+      return pl
+    },
+  }
+)
+
 type pl_iterator struct {
 	sk_iter skiplist.Iterator
 }
@@ -45,21 +69,6 @@ func DocumentIdLessThan(l, r interface{}) bool {
   return l.(filereader.DocumentId) < r.(filereader.DocumentId)
 }
 
-func NewBasicPostingList() PostingList {
-	pl := new(positional_pl)
-	pl.Length = 0
-	pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
-	pl.entry_factory = NewBasicEntry
-	return pl
-}
-
-func NewPositionalPostingList() PostingList {
-	pl := new(positional_pl)
-	pl.Length = 0
-	pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
-	pl.entry_factory = NewPositionalEntry
-	return pl
-}
 
 func (pl *positional_pl) Iterator() PostingListIterator {
 	iter := new(pl_iterator)
