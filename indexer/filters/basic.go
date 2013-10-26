@@ -8,7 +8,7 @@ import "regexp"
 import "github.com/cwacek/irengine/scanner/filereader"
 
 func CombineTokens(
-  tokens []*filereader.Token,
+	tokens []*filereader.Token,
 	resultType filereader.TokenType) *filereader.Token {
 
 	log.Debugf("Combining tokens %v", tokens)
@@ -21,7 +21,7 @@ func CombineTokens(
 	newtok.Text = combinedText.String()
 	newtok.Position = tokens[0].Position
 	newtok.Final = false
-  newtok.Type = resultType
+	newtok.Type = resultType
 	newtok.DocId = tokens[0].DocId
 
 	return newtok
@@ -35,58 +35,58 @@ func NewLowerCaseFilter(id string) Filter {
 	f := new(LowerCaseFilter)
 	f.Id = id
 	f.self = f
-  f.ignoresFinal = true
+	f.ignoresFinal = true
 	return f
 }
 
 type DigitsFilter struct {
-  FilterPlumbing
+	FilterPlumbing
 }
 
 var DigitsRegex = regexp.MustCompile(`^((?:\d+,)*\d+)(?:\.(\d+))?$`)
 
 func NewDigitsFilter(id string) Filter {
-  f := new(DigitsFilter)
-  f.Id = id
-  f.self = f
-  return f
+	f := new(DigitsFilter)
+	f.Id = id
+	f.self = f
+	return f
 }
 
-func (f *DigitsFilter) Apply(tok *filereader.Token) ([]*filereader.Token) {
-  results := make([]*filereader.Token, 0, 1)
+func (f *DigitsFilter) Apply(tok *filereader.Token) []*filereader.Token {
+	results := make([]*filereader.Token, 0, 1)
 
-  if m := DigitsRegex.FindStringSubmatch(tok.Text); m != nil {
+	if m := DigitsRegex.FindStringSubmatch(tok.Text); m != nil {
 
-    var repr = new(bytes.Buffer)
+		var repr = new(bytes.Buffer)
 
-    thousands := strings.Split(m[1], ",")
-    for i, entry := range thousands {
-      if i > 0 && len(entry) != 3 {
-        //This isn't a number.
-        goto NoDigit
-      }
-      repr.WriteString(entry)
-    }
+		thousands := strings.Split(m[1], ",")
+		for i, entry := range thousands {
+			if i > 0 && len(entry) != 3 {
+				//This isn't a number.
+				goto NoDigit
+			}
+			repr.WriteString(entry)
+		}
 
-    if len(m) > 2 {
-      if decimal, err := strconv.Atoi(m[2]); err == nil {
-        if decimal > 0 {
-          repr.WriteString("." + m[2])
-        }
-      }
-    }
+		if len(m) > 2 {
+			if decimal, err := strconv.Atoi(m[2]); err == nil {
+				if decimal > 0 {
+					repr.WriteString("." + m[2])
+				}
+			}
+		}
 
-    if repr.String() != tok.Text {
-      // Only create a new one if we changed something
-      results = append(results, CloneWithText(tok, repr.String()))
-      return results
-    }
-  }
+		if repr.String() != tok.Text {
+			// Only create a new one if we changed something
+			results = append(results, CloneWithText(tok, repr.String()))
+			return results
+		}
+	}
 
 NoDigit:
-  results = append(results,tok)
+	results = append(results, tok)
 
-  return results
+	return results
 }
 
 type NullFilter struct {
@@ -104,20 +104,20 @@ func (f *LowerCaseFilter) IsDestructive() bool {
 	return true
 }
 
-func (f *LowerCaseFilter) Apply(tok *filereader.Token) ([]*filereader.Token){
-  res := make([]*filereader.Token, 1)
+func (f *LowerCaseFilter) Apply(tok *filereader.Token) []*filereader.Token {
+	res := make([]*filereader.Token, 1)
 
-  converted := tok.Clone()
-  converted.Text = strings.ToLower(tok.Text)
+	converted := tok.Clone()
+	converted.Text = strings.ToLower(tok.Text)
 
-  res[0] = converted
-  log.Tracef("LowerCaseFilter converted %s to %s", tok.Text, converted.Text)
-  return res
+	res[0] = converted
+	log.Tracef("LowerCaseFilter converted %s to %s", tok.Text, converted.Text)
+	return res
 }
 
-func (f *NullFilter)  Apply(tok *filereader.Token) ([]*filereader.Token){
-  res := make([]*filereader.Token, 1, 1)
-  res[0] = tok
+func (f *NullFilter) Apply(tok *filereader.Token) []*filereader.Token {
+	res := make([]*filereader.Token, 1, 1)
+	res[0] = tok
 
-  return res
+	return res
 }

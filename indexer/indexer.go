@@ -16,12 +16,11 @@ type Lexicon interface {
 	SetPLInitializer(PostingListInitializer)
 }
 
-
 type PersistentLexicon interface {
 	SaveToDisk()
-  LoadFromDisk(datadir string)
+	LoadFromDisk(datadir string)
 	PrintDiskStats(io.Writer)
-  Location() string // Obtain the on disk location
+	Location() string // Obtain the on disk location
 }
 
 type TermFromTokenFunc func(*filereader.Token, PostingListInitializer) LexiconTerm
@@ -34,8 +33,6 @@ type LexiconTerm interface {
 	PostingList() PostingList
 	Register(token *filereader.Token)
 	String() string
-	/*json.Marshaler*/
-  /*json.Unmarshaler*/
 }
 
 type PostingListEntry interface {
@@ -47,12 +44,12 @@ type PostingListEntry interface {
 	Serialize() string
 	SerializeTo(io.Writer)
 	Deserialize([][]byte) error
-  fmt.Scanner
+	fmt.Scanner
 }
 
 type PostingListInitializer struct {
-  Create func() PostingList
-  Name string
+	Create func() PostingList
+	Name   string
 }
 
 type PostingList interface {

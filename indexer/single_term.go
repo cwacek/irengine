@@ -11,47 +11,47 @@ import log "github.com/cihub/seelog"
 import "sync"
 
 type StoredDocInfo struct {
-  Id filereader.DocumentId
-  HumanId string
-  TermCount int
+	Id        filereader.DocumentId
+	HumanId   string
+	TermCount int
 }
 
 func (info *StoredDocInfo) MarshalJSON() ([]byte, error) {
-  return json.Marshal(*info)
+	return json.Marshal(*info)
 }
 
 func (info *StoredDocInfo) OrigIdent() string {
-  return info.HumanId
+	return info.HumanId
 }
 
 func (info *StoredDocInfo) Identifier() filereader.DocumentId {
-  return info.Id
+	return info.Id
 }
 
 func (info *StoredDocInfo) Len() int {
-  return info.TermCount
+	return info.TermCount
 }
 
 type DocInfoMap map[filereader.DocumentId]*StoredDocInfo
 
 func (m DocInfoMap) MarshalJSON() ([]byte, error) {
-  var buf = new(bytes.Buffer)
-  var bytes []byte
-  var err error
+	var buf = new(bytes.Buffer)
+	var bytes []byte
+	var err error
 
-  buf.WriteRune('[')
+	buf.WriteRune('[')
 
-  for _, elem := range m {
-    if bytes, err = json.Marshal(elem); err != nil {
-      return nil, err
-    }
-    buf.Write(bytes)
+	for _, elem := range m {
+		if bytes, err = json.Marshal(elem); err != nil {
+			return nil, err
+		}
+		buf.Write(bytes)
 
-    buf.WriteRune(',')
-  }
-  buf.Truncate(buf.Len()-1)
-  buf.WriteRune(']')
-  return buf.Bytes(), nil
+		buf.WriteRune(',')
+	}
+	buf.Truncate(buf.Len() - 1)
+	buf.WriteRune(']')
+	return buf.Bytes(), nil
 }
 
 type SingleTermIndex struct {
@@ -64,7 +64,7 @@ type SingleTermIndex struct {
 	TermCount     int
 	DocumentCount int
 
-  DocumentMap DocInfoMap
+	DocumentMap DocInfoMap
 
 	// utility vars
 	inserterRunning bool
@@ -72,31 +72,30 @@ type SingleTermIndex struct {
 	shutdown        chan bool
 }
 
-func (t*SingleTermIndex) Save() {
-  var persist PersistentLexicon
+func (t *SingleTermIndex) Save() {
+	var persist PersistentLexicon
 
-  switch t.lexicon.(type) {
-  case PersistentLexicon:
-    persist = t.lexicon.(PersistentLexicon)
-    persist.SaveToDisk()
+	switch t.lexicon.(type) {
+	case PersistentLexicon:
+		persist = t.lexicon.(PersistentLexicon)
+		persist.SaveToDisk()
 
-    if file, err := os.Create(persist.Location() + "docmap.txt"); err != nil {
-      log.Critical("Error opening document map file: %v", err)
-      panic(err)
-    } else {
-      if bytes, err := json.MarshalIndent(t.DocumentMap, "", "  "); err != nil {
-        panic(err)
-      } else {
-        file.Write(bytes)
-      }
-      file.Close()
-    }
+		if file, err := os.Create(persist.Location() + "docmap.txt"); err != nil {
+			log.Critical("Error opening document map file: %v", err)
+			panic(err)
+		} else {
+			if bytes, err := json.MarshalIndent(t.DocumentMap, "", "  "); err != nil {
+				panic(err)
+			} else {
+				file.Write(bytes)
+			}
+			file.Close()
+		}
 
-
-  default:
-    panic("Save to disk not supported")
-    log.Critical("Save to disk not supported")
-  }
+	default:
+		panic("Save to disk not supported")
+		log.Critical("Save to disk not supported")
+	}
 
 }
 
@@ -116,7 +115,7 @@ func (t *SingleTermIndex) Init(lexicon Lexicon) error {
 	t.TermCount = 0
 	t.DocumentCount = 0
 
-  t.DocumentMap = make(DocInfoMap)
+	t.DocumentMap = make(DocInfoMap)
 
 	t.inserterRunning = false
 	t.shutdown = make(chan bool)
@@ -181,10 +180,10 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
 		}
 	}()
 
-  info := new(StoredDocInfo)
-  info.HumanId = d.OrigIdent()
-  info.Id = d.Identifier()
-  t.DocumentMap[info.Id] = info
+	info := new(StoredDocInfo)
+	info.HumanId = d.OrigIdent()
+	info.Id = d.Identifier()
+	t.DocumentMap[info.Id] = info
 
 	t.insertLock.Lock()
 	for token := range d.Tokens() {
@@ -194,7 +193,7 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
 
 	t.lexicon.(PersistentLexicon).PrintDiskStats(os.Stdout)
 	log.Infof("Inserted %d tokens from %s. Have %d documents with %d terms",
-  d.Len(), d.OrigIdent(), t.Len(), t.lexicon.Len())
+		d.Len(), d.OrigIdent(), t.Len(), t.lexicon.Len())
 }
 
 // Read tokens from tokenStream and insert it into the
@@ -206,8 +205,8 @@ func (t *SingleTermIndex) inserter() {
 	filterChainOut := t.filterChain.Output()
 	log.Debugf("inserter process started listening on %v", filterChainOut)
 
-  var termcounter = 0
-  var info *StoredDocInfo
+	var termcounter = 0
+	var info *StoredDocInfo
 
 	for {
 		var token *filereader.Token
@@ -221,15 +220,15 @@ func (t *SingleTermIndex) inserter() {
 
 		if token.Type == filereader.NullToken {
 			t.DocumentCount += 1
-      info = t.DocumentMap[token.DocId]
-      info.TermCount = termcounter
-      termcounter = 0
+			info = t.DocumentMap[token.DocId]
+			info.TermCount = termcounter
+			termcounter = 0
 			t.insertLock.Unlock()
 			continue
 		}
 
 		t.lexicon.InsertToken(token)
-    termcounter++
+		termcounter++
 	}
 
 	log.Criticalf("Filter chain %s closed")

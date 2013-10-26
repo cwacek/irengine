@@ -6,53 +6,53 @@ import log "github.com/cihub/seelog"
 import "github.com/cwacek/irengine/logging"
 
 func TestTrecFileReader(t *testing.T) {
-  logging.SetupTestLogging()
+	logging.SetupTestLogging()
 
-  log.Debugf("Creating FileReader")
-  fr := new(TrecFileReader)
+	log.Debugf("Creating FileReader")
+	fr := new(TrecFileReader)
 
-  log.Debugf("Opening file")
-  fr.Init("test/testfile1.txt")
+	log.Debugf("Opening file")
+	fr.Init("test/testfile1.txt")
 
-  log.Debugf("Reading file")
-  doc := fr.Read()
-  if id := doc.OrigIdent(); id != "12345" {
-    t.Error("Failed to parse document id")
-  }
+	log.Debugf("Reading file")
+	doc := fr.Read()
+	if id := doc.OrigIdent(); id != "12345" {
+		t.Error("Failed to parse document id")
+	}
 
-  tokens := doc.Tokens()
-  exp_tokens :=  expected()
-  i := 0
-  for tok := range tokens {
-    exp, ok := <- exp_tokens
-    if ! ok {
-      if tok.Type != NullToken {
-        t.Error("Read all of 'expected' before reaching end of tokens")
-      } else {
-      
-      }
-    }
-    i += 1
+	tokens := doc.Tokens()
+	exp_tokens := expected()
+	i := 0
+	for tok := range tokens {
+		exp, ok := <-exp_tokens
+		if !ok {
+			if tok.Type != NullToken {
+				t.Error("Read all of 'expected' before reaching end of tokens")
+			} else {
 
-    if pos := tok.Position; pos != i {
-      t.Errorf("'%s' was not at position %d as expected", tok, i)
-    }
+			}
+		}
+		i += 1
 
-    if id := tok.DocId; id != doc.Identifier() {
-      t.Errorf("Token '%s' did not have DocId matching '%s'",tok, id)
-    }
+		if pos := tok.Position; pos != i {
+			t.Errorf("'%s' was not at position %d as expected", tok, i)
+		}
 
-    if tok.Text != exp {
-      t.Errorf("%s did not match %s in position %d", tok, exp, i )
-      break
-    } else {
-    }
-  }
+		if id := tok.DocId; id != doc.Identifier() {
+			t.Errorf("Token '%s' did not have DocId matching '%s'", tok, id)
+		}
+
+		if tok.Text != exp {
+			t.Errorf("%s did not match %s in position %d", tok, exp, i)
+			break
+		} else {
+		}
+	}
 }
 
 func expected() <-chan string {
 
-  expected := `
+	expected := `
 DEPARTMENT OF AGRICULTURE
 Agricultural Marketing Service
 7 CFR Part 28
@@ -133,15 +133,15 @@ FR Doc 94-8028 Filed 4-4-94 8:45 am
 BILLING CODE 3410-02-P
 `
 
-  c := make(chan string)
+	c := make(chan string)
 
-  // Load the channel
-  go func (c chan string, arr []string ){
-    for _, s := range arr {
-      c <- s
-    }
-    close(c)
-  }(c, strings.Fields(expected))
+	// Load the channel
+	go func(c chan string, arr []string) {
+		for _, s := range arr {
+			c <- s
+		}
+		close(c)
+	}(c, strings.Fields(expected))
 
-  return c
+	return c
 }

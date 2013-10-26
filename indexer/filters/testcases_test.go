@@ -52,14 +52,14 @@ var (
 				&filereader.Token{Text: "8c-15-A", Type: filereader.TextToken, Position: 6},
 			},
 		},
-    "slashes": TestCase{
-      NewSlashFilter,
-      `USAID/Cairo`,
+		"slashes": TestCase{
+			NewSlashFilter,
+			`USAID/Cairo`,
 			[]*filereader.Token{
 				&filereader.Token{Text: "USAID", Type: filereader.TextToken, Position: 1},
 				&filereader.Token{Text: "Cairo", Type: filereader.TextToken, Position: 2},
-      },
-    },
+			},
+		},
 		"dates": TestCase{
 			NewDateFilter,
 			`10/3/2013 10-3-2013 10-03-2013 9-3-2013 9-31-13
@@ -86,11 +86,11 @@ var (
 		},
 		"specialdigits": TestCase{
 			NewDigitsFilter,
-      `10-2`,
+			`10-2`,
 			[]*filereader.Token{
 				&filereader.Token{Text: "10-2", Type: filereader.TextToken, Position: 7},
-      },
-    },
+			},
+		},
 		"digits": TestCase{
 			NewDigitsFilter,
 			`10,0002,10 10,000,000 1000 1000000, 1.242 12.00`,
@@ -131,7 +131,7 @@ var (
 		"digits",
 		"dates",
 		"hyphens",
-    "slashes",
+		"slashes",
 		"acronyms",
 		"filenames",
 		"email",

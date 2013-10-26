@@ -12,27 +12,27 @@ import "github.com/cwacek/irengine/scanner/filereader"
 import log "github.com/cihub/seelog"
 
 var (
-  BasicPostingListInitializer = PostingListInitializer{
-    Name: "basic",
-    Create: func() PostingList {
-      pl := new(positional_pl)
-      pl.Length = 0
-      pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
-      pl.entry_factory = NewBasicEntry
-      return pl
-    },
-  }
+	BasicPostingListInitializer = PostingListInitializer{
+		Name: "basic",
+		Create: func() PostingList {
+			pl := new(positional_pl)
+			pl.Length = 0
+			pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
+			pl.entry_factory = NewBasicEntry
+			return pl
+		},
+	}
 
-  PositionalPostingListInitializer = PostingListInitializer{
-    Name: "positional",
-    Create: func() PostingList {
-      pl := new(positional_pl)
-      pl.Length = 0
-      pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
-      pl.entry_factory = NewPositionalEntry
-      return pl
-    },
-  }
+	PositionalPostingListInitializer = PostingListInitializer{
+		Name: "positional",
+		Create: func() PostingList {
+			pl := new(positional_pl)
+			pl.Length = 0
+			pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
+			pl.entry_factory = NewPositionalEntry
+			return pl
+		},
+	}
 )
 
 type pl_iterator struct {
@@ -66,9 +66,8 @@ func (pl *positional_pl) EntryFactory(docid filereader.DocumentId) PostingListEn
 }
 
 func DocumentIdLessThan(l, r interface{}) bool {
-  return l.(filereader.DocumentId) < r.(filereader.DocumentId)
+	return l.(filereader.DocumentId) < r.(filereader.DocumentId)
 }
-
 
 func (pl *positional_pl) Iterator() PostingListIterator {
 	iter := new(pl_iterator)
@@ -100,7 +99,7 @@ func (pl *positional_pl) InsertCompleteEntry(entry PostingListEntry) bool {
 }
 
 func (pl *positional_pl) InsertEntry(token *filereader.Token) bool {
-  log.Debugf("Inserting %s into posting list.", token)
+	log.Debugf("Inserting %s into posting list.", token)
 	return pl.InsertRawEntry(token.Text, token.DocId, token.Position)
 }
 
@@ -152,47 +151,47 @@ func (p *basic_sk_entry) Serialize() string {
 }
 
 func (p *basic_sk_entry) Scan(state fmt.ScanState, verb rune) error {
-  var token []byte
-  var e error
-  var tmpInt int64
+	var token []byte
+	var e error
+	var tmpInt int64
 
-  //Scan the document id
-  token, e = state.Token(true, unicode.IsDigit)
-  if e != nil {
-    return e
-  }
+	//Scan the document id
+	token, e = state.Token(true, unicode.IsDigit)
+	if e != nil {
+		return e
+	}
 
-  if tmpInt, e = strconv.ParseInt(string(token),10,64); e != nil {
-    return e
-  } else {
-    p.docId = filereader.DocumentId(tmpInt)
-  }
+	if tmpInt, e = strconv.ParseInt(string(token), 10, 64); e != nil {
+		return e
+	} else {
+		p.docId = filereader.DocumentId(tmpInt)
+	}
 
-  state.SkipSpace()
-  token, e = state.Token(true, unicode.IsDigit)
-  if e != nil {
-    return e
-  }
+	state.SkipSpace()
+	token, e = state.Token(true, unicode.IsDigit)
+	if e != nil {
+		return e
+	}
 
-  if tmpInt, e = strconv.ParseInt(string(token),10,32); e != nil {
-    return e
-  } else {
-    p.frequency = int(tmpInt)
-  }
-  return nil
+	if tmpInt, e = strconv.ParseInt(string(token), 10, 32); e != nil {
+		return e
+	} else {
+		p.frequency = int(tmpInt)
+	}
+	return nil
 }
 
 func (p *basic_sk_entry) Deserialize(enc [][]byte) error {
-  var err error
-  var tmp int64
+	var err error
+	var tmp int64
 
-	if tmp, err = strconv.ParseInt(string(enc[0]),10,64); err != nil {
+	if tmp, err = strconv.ParseInt(string(enc[0]), 10, 64); err != nil {
 		return err
 	} else {
-    p.docId = filereader.DocumentId(tmp)
-  }
+		p.docId = filereader.DocumentId(tmp)
+	}
 
-	if tmp, err = strconv.ParseInt(string(enc[1]),10,32); err != nil {
+	if tmp, err = strconv.ParseInt(string(enc[1]), 10, 32); err != nil {
 		return err
 	} else {
 		p.frequency = int(tmp)
@@ -220,11 +219,11 @@ func (p *basic_sk_entry) String() string {
 var Space []byte = []byte{' '}
 
 func (p *basic_sk_entry) SerializeTo(buf io.Writer) {
-  docId := strconv.FormatInt(int64(p.docId), 10)
+	docId := strconv.FormatInt(int64(p.docId), 10)
 
-  io.WriteString(buf ,docId)
-  buf.Write(Space)
-  docId = strconv.FormatInt(int64(p.frequency), 10)
+	io.WriteString(buf, docId)
+	buf.Write(Space)
+	docId = strconv.FormatInt(int64(p.frequency), 10)
 }
 
 type positional_sk_entry struct {
@@ -240,43 +239,43 @@ func NewPositionalEntry(docId filereader.DocumentId) PostingListEntry {
 }
 
 func (p *positional_sk_entry) Scan(state fmt.ScanState, verb rune) error {
-  var token []byte
-  var e error
-  var tmpInt int64
+	var token []byte
+	var e error
+	var tmpInt int64
 
-  //Scan the document id
-  token, e = state.Token(true, unicode.IsDigit)
-  if e != nil {
-    return e
-  }
+	//Scan the document id
+	token, e = state.Token(true, unicode.IsDigit)
+	if e != nil {
+		return e
+	}
 
-	if tmpInt, e = strconv.ParseInt(string(token),10,64); e != nil {
+	if tmpInt, e = strconv.ParseInt(string(token), 10, 64); e != nil {
 		return e
 	} else {
-    p.docId = filereader.DocumentId(tmpInt)
-  }
+		p.docId = filereader.DocumentId(tmpInt)
+	}
 
-  for  {
-    token, e = state.Token(true, unicode.IsDigit)
-    if len(token) == 0 || e == io.EOF {
-      break
-    }
+	for {
+		token, e = state.Token(true, unicode.IsDigit)
+		if len(token) == 0 || e == io.EOF {
+			break
+		}
 
-    if tmpInt, e = strconv.ParseInt(string(token),10,32); e != nil {
-      return e
-    } else {
-      p.AddPosition(int(tmpInt))
-    }
-  }
-  return nil
+		if tmpInt, e = strconv.ParseInt(string(token), 10, 32); e != nil {
+			return e
+		} else {
+			p.AddPosition(int(tmpInt))
+		}
+	}
+	return nil
 }
 
 func (p *positional_sk_entry) Deserialize(input [][]byte) error {
-  var (
-    position []byte
-    posInt int
-    err error
-  )
+	var (
+		position []byte
+		posInt   int
+		err      error
+	)
 
 	/*log.Debugf("Parsing positions from %s", string(input[1]))*/
 	for _, position = range bytes.Split(input[1], []byte{','}) {
@@ -295,25 +294,25 @@ func (p *positional_sk_entry) Deserialize(input [][]byte) error {
 
 func (p *positional_sk_entry) SerializeTo(buf io.Writer) {
 
-  fmt.Fprintf(buf, "%d ", p.docId)
+	fmt.Fprintf(buf, "%d ", p.docId)
 
-  if len(p.positions) == 0 {
-    panic("positional entry has no positions")
-  }
+	if len(p.positions) == 0 {
+		panic("positional entry has no positions")
+	}
 
 	for i, position := range p.positions {
 		if i != 0 {
-      fmt.Fprintf(buf, " %d", position)
+			fmt.Fprintf(buf, " %d", position)
 		} else {
-      fmt.Fprintf(buf, "%d", position)
-    }
+			fmt.Fprintf(buf, "%d", position)
+		}
 	}
 }
 
 func (p *positional_sk_entry) Serialize() string {
 	buf := new(bytes.Buffer)
 
-  buf.WriteString(fmt.Sprintf("%d", p.docId))
+	buf.WriteString(fmt.Sprintf("%d", p.docId))
 	buf.WriteRune(' ')
 
 	for i, position := range p.positions {

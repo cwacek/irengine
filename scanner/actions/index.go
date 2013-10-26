@@ -12,165 +12,157 @@ import "github.com/cwacek/irengine/indexer/filters"
 import "flag"
 
 func RunIndexer() *run_index_action {
-    return new(run_index_action)
+	return new(run_index_action)
 }
 
 type run_index_action struct {
-    Args
+	Args
 
-    stopWordList *string
-    indexRoot *string
-    maxMem *int
-    indexType *string
+	stopWordList *string
+	indexRoot    *string
+	maxMem       *int
+	indexType    *string
 
-    phraseStop *float64
-    phraseLen *int
+	phraseStop *float64
+	phraseLen  *int
 
-
-    cpuprofile *string
-    memprofile *string
+	cpuprofile *string
+	memprofile *string
 }
 
 func (a *run_index_action) Name() string {
-    return "index"
+	return "index"
 }
 
 func (a *run_index_action) DefineFlags(fs *flag.FlagSet) {
-    a.AddDefaultArgs(fs)
+	a.AddDefaultArgs(fs)
 
-    a.indexRoot = fs.String("index.store", "/tmp/irengine",
-        "The directory in which to store the index")
+	a.indexRoot = fs.String("index.store", "/tmp/irengine",
+		"The directory in which to store the index")
 
-    a.maxMem = fs.Int("index.memlimit", -1,
-    "The maximum number of triples that can be loaded in to memory.")
+	a.maxMem = fs.Int("index.memlimit", -1,
+		"The maximum number of triples that can be loaded in to memory.")
 
-    a.stopWordList = fs.String("index.stopwords", "",
-    "A file containing stopwords to use.")
+	a.stopWordList = fs.String("index.stopwords", "",
+		"A file containing stopwords to use.")
 
-    a.indexType = fs.String("index.type", "single-term",
-    `The type of index to build. Options:
+	a.indexType = fs.String("index.type", "single-term",
+		`The type of index to build. Options:
     - single-term
     - single-term-positional
     - phrase
     - stemmed
     `)
 
-    a.phraseStop = fs.Float64("phrase.limit", 0.2,
-    "The relative term frequency required for a term to be considered a stop word")
+	a.phraseStop = fs.Float64("phrase.limit", 0.2,
+		"The relative term frequency required for a term to be considered a stop word")
 
-    a.phraseLen = fs.Int("phrase.len", 2, "Maximum phrase length")
+	a.phraseLen = fs.Int("phrase.len", 2, "Maximum phrase length")
 
-    a.cpuprofile = fs.String("cprofile", "", "write CPU profile to file")
-    a.memprofile  = fs.String("mprofile", "", "write memory profile to file")
+	a.cpuprofile = fs.String("cprofile", "", "write CPU profile to file")
+	a.memprofile = fs.String("mprofile", "", "write memory profile to file")
 }
 
 func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 
-    lexicon := constrained.NewLexicon(*a.maxMem, *a.indexRoot)
-    index := new(indexer.SingleTermIndex)
-    index.Init(lexicon)
+	lexicon := constrained.NewLexicon(*a.maxMem, *a.indexRoot)
+	index := new(indexer.SingleTermIndex)
+	index.Init(lexicon)
 
-    switch *a.indexType {
-    case "single-term":
-        index.AddFilter(filters.SingleTermFilterSequence)
-        lexicon.SetPLInitializer(indexer.NewBasicPostingList)
+	switch *a.indexType {
+	case "single-term":
+		index.AddFilter(filters.SingleTermFilterSequence)
+		lexicon.SetPLInitializer(indexer.NewBasicPostingList)
 
-    case "single-term-positional":
-        lexicon.SetPLInitializer(indexer.NewPositionalPostingList)
-        index.AddFilter(filters.SingleTermFilterSequence)
+	case "single-term-positional":
+		lexicon.SetPLInitializer(indexer.NewPositionalPostingList)
+		index.AddFilter(filters.SingleTermFilterSequence)
 
-    case "stemmed":
-        lexicon.SetPLInitializer(indexer.NewBasicPostingList)
-        index.AddFilter(filters.SingleTermFilterSequence)
-        index.AddFilter(filters.NewPorterFilter("porterstemmer"))
+	case "stemmed":
+		lexicon.SetPLInitializer(indexer.NewBasicPostingList)
+		index.AddFilter(filters.SingleTermFilterSequence)
+		index.AddFilter(filters.NewPorterFilter("porterstemmer"))
 
-    case "phrase":
-        lexicon.SetPLInitializer(indexer.NewBasicPostingList)
-        index.AddFilter(
-            filters.NewPhraseFilter(*a.phraseLen, *a.phraseStop))
+	case "phrase":
+		lexicon.SetPLInitializer(indexer.NewBasicPostingList)
+		index.AddFilter(
+			filters.NewPhraseFilter(*a.phraseLen, *a.phraseStop))
 
-    default:
-        log.Criticalf("Unknown index type: %s", *a.indexType)
-        return nil, errors.New("Unknown index type: "+ *a.indexType)
-    }
+	default:
+		log.Criticalf("Unknown index type: %s", *a.indexType)
+		return nil, errors.New("Unknown index type: " + *a.indexType)
+	}
 
-    // Allow anything to use the stopword list (even if it makes
-    // no sense)
-    if file, err := os.Open(*a.stopWordList); err != nil {
-        log.Warnf("Not using stop word list")
-    } else {
-        log.Info("Using stopword list")
-        index.AddFilter(filters.NewStopWordFilterFromReader(file))
-        file.Close()
-    }
+	// Allow anything to use the stopword list (even if it makes
+	// no sense)
+	if file, err := os.Open(*a.stopWordList); err != nil {
+		log.Warnf("Not using stop word list")
+	} else {
+		log.Info("Using stopword list")
+		index.AddFilter(filters.NewStopWordFilterFromReader(file))
+		file.Close()
+	}
 
-    return index, nil
+	return index, nil
 }
 
 func (a *run_index_action) Run() {
-    var index indexer.Indexer
-    var err error
+	var index indexer.Indexer
+	var err error
 
+	SetupLogging(*a.verbosity)
 
-    SetupLogging(*a.verbosity)
+	//Setup document walkers
+	docStream := make(chan filereader.Document)
 
-    //Setup document walkers
-    docStream := make(chan filereader.Document)
+	walker := new(DocWalker)
+	walker.WalkDocuments(*a.docroot, *a.docpattern, docStream)
 
-    walker := new(DocWalker)
-    walker.WalkDocuments(*a.docroot, *a.docpattern, docStream)
+	if index, err = a.SetupIndex(); err != nil {
+		log.Criticalf("Error creating index: %v", err)
+		return
+	}
 
-    if index, err = a.SetupIndex(); err != nil {
-        log.Criticalf("Error creating index: %v", err)
-        return
-    }
+	/*// For each document.*/
+	ctr := 0
+	for doc := range docStream {
+		ctr++
+		index.Insert(doc)
 
-    /*// For each document.*/
-    ctr := 0
-    for doc := range docStream {
-      ctr++
-        index.Insert(doc)
+		if ctr > 1000 {
 
-        if ctr > 1000 {
+			if *a.cpuprofile != "" {
+				f, err := os.Create(*a.cpuprofile)
+				if err != nil {
+					log.Critical(err)
+					return
+				}
+				pprof.StartCPUProfile(f)
+				defer pprof.StopCPUProfile()
 
-          if *a.cpuprofile != "" {
-            f, err := os.Create(*a.cpuprofile)
-            if err != nil {
-              log.Critical(err)
-              return
-            }
-            pprof.StartCPUProfile(f)
-            defer pprof.StopCPUProfile()
+				if ctr > 1100 {
+					break
+				}
+			}
 
-            if ctr > 1100 {
-              break
-            }
-          }
+			if *a.memprofile != "" {
+				f, err := os.Create(*a.memprofile)
+				if err != nil {
+					log.Critical(err)
+					return
+				}
+				pprof.WriteHeapProfile(f)
+				f.Close()
+				*a.memprofile = ""
+				break
+			}
+		}
+	}
 
+	index.WaitInsert()
 
-
-          if *a.memprofile != "" {
-            f, err := os.Create(*a.memprofile)
-            if err != nil {
-              log.Critical(err)
-              return
-            }
-            pprof.WriteHeapProfile(f)
-            f.Close()
-            *a.memprofile = ""
-            break
-          }
-        }
-    }
-
-
-    index.WaitInsert()
-
-    log.Flush()
-    fmt.Println(index.String())
-    index.PrintLexicon(os.Stdout)
-    index.(*indexer.SingleTermIndex).Save()
+	log.Flush()
+	fmt.Println(index.String())
+	index.PrintLexicon(os.Stdout)
+	index.(*indexer.SingleTermIndex).Save()
 }
-
-
-

@@ -8,25 +8,25 @@ import "unicode"
 
 var alpha_num = regexp.MustCompile(`^([A-z]+)-([0-9]+)$`)
 var num_alpha = regexp.MustCompile(`^([0-9]+)-([A-z]+)$`)
-var WordPrefixes = map[string] bool {
-  "anti": true,
-  "intra": true,
-  "re": true,
-  "co": true,
-  "macro": true,
-  "semi": true,
-  "de": true,
-  "micro": true,
-  "sub": true,
-  "hyper": true,
-  "non": true,
-  "supra": true,
-  "hypo": true,
-  "pre": true,
-  "trans": true,
-  "infra": true,
-  "pseudo": true,
-  "un": true,
+var WordPrefixes = map[string]bool{
+	"anti":   true,
+	"intra":  true,
+	"re":     true,
+	"co":     true,
+	"macro":  true,
+	"semi":   true,
+	"de":     true,
+	"micro":  true,
+	"sub":    true,
+	"hyper":  true,
+	"non":    true,
+	"supra":  true,
+	"hypo":   true,
+	"pre":    true,
+	"trans":  true,
+	"infra":  true,
+	"pseudo": true,
+	"un":     true,
 }
 
 type HyphenFilter struct {
@@ -79,64 +79,62 @@ func (f *HyphenFilter) Apply(tok *filereader.Token) (res []*filereader.Token) {
 			res = append(res, newtok)
 		}
 
-  } else {
-      justDigits := func(r rune) rune {
-      switch {
-      case unicode.IsDigit(r):
-        return r
-      default:
-        return -1
-      }
-    }
+	} else {
+		justDigits := func(r rune) rune {
+			switch {
+			case unicode.IsDigit(r):
+				return r
+			default:
+				return -1
+			}
+		}
 
-    if len(strings.Map(justDigits, tok.Text)) > 0 {
-      //There are digits in there
-      res = append(res, tok)
-      goto Exit
-    }
+		if len(strings.Map(justDigits, tok.Text)) > 0 {
+			//There are digits in there
+			res = append(res, tok)
+			goto Exit
+		}
 
-    hyphenated := strings.FieldsFunc(tok.Text,
-      func(r rune) bool { return unicode.Is(unicode.Hyphen, r) })
+		hyphenated := strings.FieldsFunc(tok.Text,
+			func(r rune) bool { return unicode.Is(unicode.Hyphen, r) })
 
+		switch len(hyphenated) {
 
-    switch len(hyphenated) {
+		case 1:
+			//No hyphens
+			res = append(res, tok)
 
-    case 1:
-      //No hyphens
-      res = append(res, tok)
+		case 2:
+			if _, ok := WordPrefixes[hyphenated[0]]; ok {
+				// include just prefixed and unprefixed
+				res = append(res, CloneWithText(tok, hyphenated...))
+				res = append(res, CloneWithText(tok, hyphenated[1]))
 
-    case 2:
-      if _, ok := WordPrefixes[hyphenated[0]]; ok {
-        // include just prefixed and unprefixed
-        res = append(res, CloneWithText(tok, hyphenated...))
-        res = append(res, CloneWithText(tok, hyphenated[1]))
+			} else {
+				// Include both separatedly
+				res = append(res, CloneWithText(tok, hyphenated[0]))
+				res = append(res, CloneWithText(tok, hyphenated[1]))
+			}
 
-      } else {
-        // Include both separatedly
-        res = append(res, CloneWithText(tok, hyphenated[0]))
-        res = append(res, CloneWithText(tok, hyphenated[1]))
-      }
+		default:
+			for _, hyph_term := range hyphenated {
+				res = append(res, CloneWithText(tok, hyph_term))
+			}
+			res = append(res, CloneWithText(tok, hyphenated...))
+		}
 
-    default:
-      for _, hyph_term := range hyphenated {
-        res = append(res, CloneWithText(tok, hyph_term))
-      }
-      res = append(res, CloneWithText(tok, hyphenated...))
-    }
-
-  }
+	}
 
 Exit:
 	return
 }
 
+func isPrefix(chars string) bool {
 
-func isPrefix(chars string) bool{
+	switch chars {
 
-  switch chars {
+	default:
+		return false
 
-  default:
-    return false
-
-  }
+	}
 }

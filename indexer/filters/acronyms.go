@@ -6,46 +6,46 @@ import "strings"
 import "unicode"
 import "github.com/cwacek/irengine/scanner/filereader"
 
-var acronymRegex=regexp.MustCompile(`[A-Z][a-z]*(?:\.[A-Z][a-z]*)+`)
+var acronymRegex = regexp.MustCompile(`[A-Z][a-z]*(?:\.[A-Z][a-z]*)+`)
 
 type AcronymFilter struct {
-  FilterPlumbing
+	FilterPlumbing
 }
 
 func NewAcronymFilter(id string) Filter {
-  f := new(AcronymFilter)
-  f.Id = id
-  f.self = f
-  return f
+	f := new(AcronymFilter)
+	f.Id = id
+	f.self = f
+	return f
 }
 
 func (f *AcronymFilter) IsDestructive() bool {
-  return true
+	return true
 }
 
 func (f *AcronymFilter) Apply(tok *filereader.Token) (result []*filereader.Token) {
 
-  result = make([]*filereader.Token, 1)
-  var newtok *filereader.Token
+	result = make([]*filereader.Token, 1)
+	var newtok *filereader.Token
 
-  log.Tracef("Received '%s'.", tok)
-  if acronymRegex.MatchString(tok.Text) {
-    newtok = tok.Clone()
-    newtok.Text = strings.Map(func(r rune) rune {
-      switch r {
-      case '.':
-        return -1
-      default:
-        return unicode.ToLower(r)
-      }
-    }, tok.Text)
+	log.Tracef("Received '%s'.", tok)
+	if acronymRegex.MatchString(tok.Text) {
+		newtok = tok.Clone()
+		newtok.Text = strings.Map(func(r rune) rune {
+			switch r {
+			case '.':
+				return -1
+			default:
+				return unicode.ToLower(r)
+			}
+		}, tok.Text)
 
-    newtok.Final = true
-    result[0] = newtok
+		newtok.Final = true
+		result[0] = newtok
 
-  } else {
-    result[0] = tok
-  }
+	} else {
+		result[0] = tok
+	}
 
-  return
+	return
 }

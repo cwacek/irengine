@@ -32,7 +32,7 @@ var (
 )
 
 func TestLowerCase(t *testing.T) {
-  logging.SetupTestLogging()
+	logging.SetupTestLogging()
 
 	toLower := NewLowerCaseFilter("lowercase")
 
@@ -44,40 +44,40 @@ func TestLowerCase(t *testing.T) {
 
 	done := make(chan int)
 
-  go CompareFiltered(t, lower_output, postFilter, done, false)
+	go CompareFiltered(t, lower_output, postFilter, done, false)
 
 	for _, tok := range test_input {
 		log.Debugf("Inserting %v into input", tok)
-    input.Push(tok)
+		input.Push(tok)
 	}
 
 	close(input.Pipe)
 	<-done
-  log.Infof("TestLowerCase Complete")
+	log.Infof("TestLowerCase Complete")
 }
 
 /* Check and see if each value pulled from actual is equivalent
 to the ones in expected */
 
 func TestChainedFilters(t *testing.T) {
-  logging.SetupTestLogging()
+	logging.SetupTestLogging()
 
 	input := NewFilterPipe("test")
 
-  f_lower := NewLowerCaseFilter("lowercase")
-  f_lower.SetInput(input)
+	f_lower := NewLowerCaseFilter("lowercase")
+	f_lower.SetInput(input)
 
-  f_null := NewNullFilter("null1")
-  f_null.Follow(f_lower, false)
+	f_null := NewNullFilter("null1")
+	f_null.Follow(f_lower, false)
 
 	f_null.Pull()
 
-  if head := f_null.Head(); head != f_lower {
-    t.Errorf("Head of %v was %v. Expected %v", f_null, head, f_lower)
-  }
+	if head := f_null.Head(); head != f_lower {
+		t.Errorf("Head of %v was %v. Expected %v", f_null, head, f_lower)
+	}
 
 	done := make(chan int)
-  go CompareFiltered(t, lower_output, f_null.Output(), done, false)
+	go CompareFiltered(t, lower_output, f_null.Output(), done, false)
 
 	for _, tok := range test_input {
 		log.Debugf("Inserting %v into input", tok)
@@ -86,29 +86,29 @@ func TestChainedFilters(t *testing.T) {
 
 	close(input.Pipe)
 	<-done
-  log.Infof("TestChainedFilters Complete")
+	log.Infof("TestChainedFilters Complete")
 }
 
 func TestMultipleOutputs(t *testing.T) {
-  logging.SetupTestLogging()
+	logging.SetupTestLogging()
 
 	input := NewFilterPipe("test")
 
-  f_lower := NewLowerCaseFilter("lowercase")
-  f_lower.SetInput(input)
+	f_lower := NewLowerCaseFilter("lowercase")
+	f_lower.SetInput(input)
 
-  f_null := NewNullFilter("null1")
-  f_null2 := NewNullFilter("null2")
+	f_null := NewNullFilter("null1")
+	f_null2 := NewNullFilter("null2")
 
-  f_null.Follow(f_lower, false)
-  f_null2.Follow(f_lower, false)
+	f_null.Follow(f_lower, false)
+	f_null2.Follow(f_lower, false)
 
-  f_null.Pull()
-  f_null2.Pull()
+	f_null.Pull()
+	f_null2.Pull()
 
 	done := make(chan int)
-  go CompareFiltered(t, lower_output, f_null.Output(), done, false)
-  go CompareFiltered(t, lower_output, f_null2.Output(), done, false)
+	go CompareFiltered(t, lower_output, f_null.Output(), done, false)
+	go CompareFiltered(t, lower_output, f_null2.Output(), done, false)
 
 	for _, tok := range test_input {
 		log.Debugf("Inserting %v into input", tok)
@@ -118,6 +118,5 @@ func TestMultipleOutputs(t *testing.T) {
 	close(input.Pipe)
 	<-done
 	<-done
-  log.Infof("TestMultipleOutputs Complete")
+	log.Infof("TestMultipleOutputs Complete")
 }
-

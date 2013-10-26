@@ -34,12 +34,6 @@ func (t *TrieLexicon) SetPLInitializer(pl_init PostingListInitializer) {
 }
 
 func (t *TrieLexicon) InsertToken(token *filereader.Token) {
-	/*defer func() {*/
-	/*if x := recover(); x != nil {*/
-	/*log.Criticalf("Encountered error inserting token %s: %v", token, x)*/
-	/*panic(x)*/
-	/*}*/
-	/*}()*/
 
 	if token.Type == filereader.NullToken {
 		// This shouldn't get through, but ignore it if it does
@@ -67,19 +61,19 @@ func (t *TrieLexicon) InsertToken(token *filereader.Token) {
 func (t *TrieLexicon) Print(w io.Writer) {
 
 	df_array := make([]int, 0, t.Len())
-  dfSum := 0
+	dfSum := 0
 
 	for i, entry := range t.Walk() {
-    var term LexiconTerm
+		var term LexiconTerm
 
-    defer func() {
-      if x := recover(); x != nil {
-        log.Criticalf("Error printing term %#v with posting list %#v: %v",
-        term, term.PostingList(), x)
-        log.Flush()
-        panic(x)
-      }
-    }()
+		defer func() {
+			if x := recover(); x != nil {
+				log.Criticalf("Error printing term %#v with posting list %#v: %v",
+					term, term.PostingList(), x)
+				log.Flush()
+				panic(x)
+			}
+		}()
 
 		term = entry.(LexiconTerm)
 		log.Tracef("Walking found term %s", term.String())
@@ -92,14 +86,15 @@ func (t *TrieLexicon) Print(w io.Writer) {
 			panic(err)
 		}
 
-    dfSum += term.Df()
-    df_array = append(df_array, term.Df())
+		dfSum += term.Df()
+		df_array = append(df_array, term.Df())
 
 	}
 
-  sort.Ints(df_array)
+	sort.Ints(df_array)
+	log.Debugf("Have %d term frequencies", len(df_array))
 
-  statsFmt := `
+	statsFmt := `
   Term Count: %d
   Max DF:     %d
   Min DF:     %d
@@ -107,12 +102,12 @@ func (t *TrieLexicon) Print(w io.Writer) {
   Median DF:  %d
   `
 
-  io.WriteString(w, fmt.Sprintf(statsFmt,
-  t.Len(),
-  df_array[len(df_array)-1],
-  df_array[0],
-  float64(dfSum) / float64(len(df_array)),
-  df_array[len(df_array)/2]))
+	io.WriteString(w, fmt.Sprintf(statsFmt,
+		t.Len(),
+		df_array[len(df_array)-1],
+		df_array[0],
+		float64(dfSum)/float64(len(df_array)),
+		df_array[len(df_array)/2]))
 
 }
 
@@ -134,7 +129,7 @@ type Term struct {
 func NewTermFromToken(t *filereader.Token, p PostingListInitializer) LexiconTerm {
 	term := new(Term)
 	term.Text_ = t.Text
-	term.Tf_ = 0  // because we increment with Register
+	term.Tf_ = 0         // because we increment with Register
 	term.Pl = p.Create() // THis allows passing differnt types of posting lists.
 
 	term.Register(t)

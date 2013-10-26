@@ -22,7 +22,7 @@ func init() {
 	RandInts = make([]int, 20)
 	for x := 0; x < 20; x++ {
 		RandInts[x] = rand.Intn(1000)
-    log.Infof("RandInt[%d] = %d", x, RandInts[x])
+		log.Infof("RandInt[%d] = %d", x, RandInts[x])
 	}
 
 	tests = []testcase{
@@ -152,7 +152,7 @@ func run_testcase(test testcase, t *testing.T) {
 
 		log.Debugf("TEST %d: '%s' == '%s'\n", i, tok, expected)
 
-		if ! tok.Eql(&expected) {
+		if !tok.Eql(&expected) {
 			t.Error(fmt.Sprintf("%s != %s at %d\n", tok, expected, i))
 		}
 		if tok.PhraseId != expected.PhraseId {
