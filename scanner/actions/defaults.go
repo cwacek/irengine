@@ -9,18 +9,10 @@ import log "github.com/cihub/seelog"
 import filereader "github.com/cwacek/irengine/scanner/filereader"
 
 type Args struct {
-	docroot    *string
-	docpattern *string
-	verbosity  *int
+	verbosity *int
 }
 
 func (a *Args) AddDefaultArgs(fs *flag.FlagSet) {
-
-	a.docroot = fs.String("doc.root", "",
-		`The root directory under which to find document`)
-
-	a.docpattern = fs.String("doc.pattern", `^[^\.].+`,
-		`A regular expression to match document names`)
 
 	a.verbosity = fs.Int("v", 0, "Be verbose [1, 2, 3]")
 }
@@ -40,7 +32,7 @@ func (d *DocWalker) WalkDocuments(docroot, pattern string,
 	d.worker_count = 0
 	d.filepattern = pattern
 
-	fmt.Println("Reading document set")
+	log.Infof("Reading documents matching %s from: %s", pattern, docroot)
 	filepath.Walk(docroot, d.read_file)
 
 	go d.signal_when_done()
@@ -62,6 +54,11 @@ func (d *DocWalker) signal_when_done() {
 }
 
 func (d *DocWalker) read_file(path string, info os.FileInfo, err error) error {
+
+	if err != nil {
+		log.Criticalf("Error walking documents at %s: %v", path, err)
+		return nil
+	}
 
 	if info.Mode().IsRegular() {
 		file := filepath.Base(path)
@@ -115,12 +112,16 @@ func SetupLogging(verbosity int) {
 		fallthrough
 	case 1:
 		config = fmt.Sprintf(appConfig, "warn")
+		fmt.Printf("Configured logging at 'warn'\n")
 	case 2:
 		config = fmt.Sprintf(appConfig, "info")
+		fmt.Printf("Configured logging at 'info'\n")
 	case 3:
 		config = fmt.Sprintf(appConfig, "debug")
+		fmt.Printf("Configured logging at 'debug'\n")
 	default:
 		config = fmt.Sprintf(appConfig, "trace")
+		fmt.Printf("Configured logging at 'trace'\n")
 	}
 
 	logger, err := log.LoggerFromConfigAsBytes([]byte(config))

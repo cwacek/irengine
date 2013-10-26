@@ -1,10 +1,10 @@
 package actions
 
 import filereader "github.com/cwacek/irengine/scanner/filereader"
-import "github.com/cwacek/irengine/indexer/constrained"
 import "errors"
 import log "github.com/cihub/seelog"
 import "github.com/cwacek/irengine/indexer"
+import "github.com/cwacek/irengine/indexer/constrained"
 import "os"
 import "fmt"
 import "runtime/pprof"
@@ -17,6 +17,9 @@ func RunIndexer() *run_index_action {
 
 type run_index_action struct {
 	Args
+
+	docroot    *string
+	docpattern *string
 
 	stopWordList *string
 	indexRoot    *string
@@ -36,6 +39,12 @@ func (a *run_index_action) Name() string {
 
 func (a *run_index_action) DefineFlags(fs *flag.FlagSet) {
 	a.AddDefaultArgs(fs)
+
+	a.docroot = fs.String("doc.root", "",
+		`The root directory under which to find document`)
+
+	a.docpattern = fs.String("doc.pattern", `^[^\.].+`,
+		`A regular expression to match document names`)
 
 	a.indexRoot = fs.String("index.store", "/tmp/irengine",
 		"The directory in which to store the index")
@@ -72,19 +81,19 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 	switch *a.indexType {
 	case "single-term":
 		index.AddFilter(filters.SingleTermFilterSequence)
-		lexicon.SetPLInitializer(indexer.NewBasicPostingList)
+		lexicon.SetPLInitializer(indexer.BasicPostingListInitializer)
 
 	case "single-term-positional":
-		lexicon.SetPLInitializer(indexer.NewPositionalPostingList)
+		lexicon.SetPLInitializer(indexer.PositionalPostingListInitializer)
 		index.AddFilter(filters.SingleTermFilterSequence)
 
 	case "stemmed":
-		lexicon.SetPLInitializer(indexer.NewBasicPostingList)
+		lexicon.SetPLInitializer(indexer.BasicPostingListInitializer)
 		index.AddFilter(filters.SingleTermFilterSequence)
 		index.AddFilter(filters.NewPorterFilter("porterstemmer"))
 
 	case "phrase":
-		lexicon.SetPLInitializer(indexer.NewBasicPostingList)
+		lexicon.SetPLInitializer(indexer.BasicPostingListInitializer)
 		index.AddFilter(
 			filters.NewPhraseFilter(*a.phraseLen, *a.phraseStop))
 
@@ -109,11 +118,21 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 func (a *run_index_action) Run() {
 	var index indexer.Indexer
 	var err error
+	defer func() {
+		log.Flush()
+	}()
 
 	SetupLogging(*a.verbosity)
+	log.Info("Configured logging")
 
 	//Setup document walkers
 	docStream := make(chan filereader.Document)
+
+	log.Info("Setting up document walker")
+	if *a.docroot == "" {
+		log.Criticalf("doc.root is required")
+		os.Exit(1)
+	}
 
 	walker := new(DocWalker)
 	walker.WalkDocuments(*a.docroot, *a.docpattern, docStream)
