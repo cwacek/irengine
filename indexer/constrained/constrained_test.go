@@ -205,6 +205,11 @@ func TestConstrainedMemory(t *testing.T) {
 		t.Errorf("Error creating temp dir %v", err)
 		return
 	}
+
+	defer func() {
+		os.RemoveAll(tmpDir)
+	}()
+
 	log.Infof("Using temporary directory: %s", tmpDir)
 
 	lex := NewLexicon(10000, tmpDir)
