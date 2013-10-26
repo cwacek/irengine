@@ -145,6 +145,19 @@ func TestDocMapSerialize(t *testing.T) {
 
 		t.Errorf("Expected:\n%s\n Got:\n%s", expectedmap, string(bytes))
 	}
+
+	docmap = make(DocInfoMap)
+	if err := json.Unmarshal([]byte(expectedmap), &docmap); err != nil {
+		t.Errorf("Error unmarshalling DocInfoMap: %s", err.Error())
+	}
+
+	if bytes, err := json.Marshal(docmap); err != nil {
+		t.Errorf("error marshalling: %v", err)
+	} else if string(bytes) != expectedmap {
+
+		t.Errorf("Reserializing de-serialized docmap failed. Expected:\n%s\n Got:\n%s", expectedmap, string(bytes))
+	}
+
 }
 
 func TestCanLoad(t *testing.T) {
@@ -199,7 +212,7 @@ func TestCanLoad(t *testing.T) {
 		if len(scanner.Text()) == 0 {
 			continue
 		}
-		log.Infof("Scanned %s", scanner.Text())
+		t.Logf("Scanned %s", scanner.Text())
 
 		pl_entry := NewBasicEntry(0)
 
@@ -219,7 +232,7 @@ func TestCanLoad(t *testing.T) {
 		if len(scanner.Text()) == 0 {
 			continue
 		}
-		log.Infof("Scanned %s", scanner.Text())
+		t.Logf("Scanned %s", scanner.Text())
 
 		pl_entry := NewPositionalEntry(0)
 
@@ -232,7 +245,7 @@ func TestCanLoad(t *testing.T) {
 		}
 		log.Flush()
 
-		log.Infof("Scanned %s into %s", scanner.Text(), pl_entry.Serialize())
+		t.Logf("Scanned %s into %s", scanner.Text(), pl_entry.Serialize())
 	}
 
 }

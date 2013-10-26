@@ -20,6 +20,15 @@ func (info *StoredDocInfo) MarshalJSON() ([]byte, error) {
 	return json.Marshal(*info)
 }
 
+func (info *StoredDocInfo) Clone() (new_info *StoredDocInfo) {
+	new_info = new(StoredDocInfo)
+	new_info.HumanId = info.HumanId
+	new_info.TermCount = info.TermCount
+	new_info.Id = info.Id
+
+	return
+}
+
 func (info *StoredDocInfo) OrigIdent() string {
 	return info.HumanId
 }
@@ -52,6 +61,20 @@ func (m DocInfoMap) MarshalJSON() ([]byte, error) {
 	buf.Truncate(buf.Len() - 1)
 	buf.WriteRune(']')
 	return buf.Bytes(), nil
+}
+
+func (m DocInfoMap) UnmarshalJSON(input []byte) (e error) {
+
+	info_array := make([]StoredDocInfo, 0)
+	if e = json.Unmarshal(input, &info_array); e != nil {
+		return e
+	}
+
+	for _, info := range info_array {
+		m[info.Id] = (&info).Clone()
+	}
+
+	return nil
 }
 
 type SingleTermIndex struct {

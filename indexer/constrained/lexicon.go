@@ -5,7 +5,9 @@ import log "github.com/cihub/seelog"
 import "github.com/cwacek/irengine/scanner/filereader"
 import radix "github.com/cwacek/radix-go"
 import "bufio"
+import "bytes"
 import "os"
+import "encoding/json"
 import "sync"
 import "io"
 import "strings"
@@ -500,7 +502,6 @@ func (lex *lexicon) SaveToDisk() {
 				file.Close()
 			}
 			lex.evict()
-			/*lex.AddPLS(pls)*/
 		}
 		lex.dump_pls(pls)
 	}
@@ -571,10 +572,8 @@ func (lex *lexicon) LoadFromDisk(dataDir string) {
 		e         error
 	)
 
-	if fi, err := os.Lstat(dataDir); os.IsExist(err) {
-		panic(&PersistenceError{"Data directory doesn't exist."})
-	} else if fi.Mode().IsDir() == false {
-		panic(&PersistenceError{"Data directory is not a directory."})
+	if _, err := os.Lstat(dataDir); err != nil {
+		panic(&PersistenceError{"Error: " + err.Error()})
 	}
 
 	lex.DataDirectory = dataDir
@@ -701,4 +700,44 @@ func (lex *lexicon) PrintDiskStats(w io.Writer) {
 	for stat, val := range lex.stats {
 		fmt.Printf("# %s: %d\n", stat, val)
 	}
+}
+
+func SingleTermIndexFromDisk(location string) (st_index *index.SingleTermIndex, e error) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			st_index = nil
+			e = err.(error)
+		}
+	}()
+
+	lexicon := LoadLexiconFromDisk(location)
+	st_index = new(index.SingleTermIndex)
+	st_index.Init(lexicon)
+
+	if file, e := os.Open(location + "docmap.txt"); e != nil {
+		log.Criticalf("Error opening document map file: %v", e)
+		return nil, e
+	} else {
+
+		raw_bytes := new(bytes.Buffer)
+
+		if n, e := raw_bytes.ReadFrom(file); e != nil {
+			log.Criticalf("Error reading from document map file: %v", e)
+			return nil, e
+		} else {
+			log.Debugf("Read %d bytes from document map.", n)
+		}
+
+		if e = json.Unmarshal(raw_bytes.Bytes(), &st_index.DocumentMap); e != nil {
+			log.Criticalf("Error unmarshalling document map: %v", e)
+			return nil, e
+		} else {
+			st_index.DocumentCount = len(st_index.DocumentMap)
+			log.Debugf("Successfully unmarshaled document map")
+		}
+		file.Close()
+	}
+
+	return st_index, nil
 }
