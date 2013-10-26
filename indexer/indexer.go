@@ -16,8 +16,10 @@ type Lexicon interface {
 	SetPLInitializer(PostingListInitializer)
 }
 
+
 type PersistentLexicon interface {
 	SaveToDisk()
+  LoadFromDisk(datadir string)
 	PrintDiskStats(io.Writer)
   Location() string // Obtain the on disk location
 }

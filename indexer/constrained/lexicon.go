@@ -3,72 +3,76 @@ package constrained
 import index "github.com/cwacek/irengine/indexer"
 import log "github.com/cihub/seelog"
 import "github.com/cwacek/irengine/scanner/filereader"
+import radix "github.com/cwacek/radix-go"
+import "bufio"
 import "os"
 import "sync"
 import "io"
+import "strings"
 import "fmt"
 import "strconv"
+import "path/filepath"
 import "math/rand"
 
 type PLSStat int
 
 const (
-    PLSDumpCount PLSStat = iota
-    PLSLoadCount
-    PLSHits
-    PLSCreates
-    PLSFetches
+	PLSDumpCount PLSStat = iota
+	PLSLoadCount
+	PLSHits
+	PLSCreates
+	PLSFetches
 )
 
 func (T PLSStat) String() string {
-    switch (T) {
-    case PLSLoadCount:
-        return "PLS Loads"
-    case PLSDumpCount:
-        return "PLS Dumps"
-    case PLSHits:
-        return "PLS Hits"
-    case PLSFetches:
-        return "PLS Fetches"
-    case PLSCreates:
-        return "PLS Creates"
-    default:
-        panic("Unknown stat type")
-    }
+	switch T {
+	case PLSLoadCount:
+		return "PLS Loads"
+	case PLSDumpCount:
+		return "PLS Dumps"
+	case PLSHits:
+		return "PLS Hits"
+	case PLSFetches:
+		return "PLS Fetches"
+	case PLSCreates:
+		return "PLS Creates"
+	default:
+		panic("Unknown stat type")
+	}
 }
 
 type LRUSet []*PLSContainer
 
-func (l LRUSet) LeastRecent() *PLSContainer{
-    if len(l) == 0 {
-        return nil
-    }
+func (l LRUSet) LeastRecent() *PLSContainer {
+	if len(l) == 0 {
+		return nil
+	}
 	return l[0]
 }
 
 func (l LRUSet) RemoveOldest() LRUSet {
-    return l[1:]
+	return l[1:]
 }
 
 type PLSContainer struct {
-  Tag DatastoreTag
-  Size int
-  Hits int
-  Dumps int
-  Loads int
-  PLS *PostingListSet
+	Tag   DatastoreTag
+	Size  int
+	Hits  int
+	Dumps int
+	Loads int
+	PLS   *PostingListSet
 }
 
 func NewPLSContainer(newPLS *PostingListSet) *PLSContainer {
-  container := new(PLSContainer)
-  container.Size = newPLS.Size
-  container.Dumps = 0
-  container.Loads = 0
-  container.Hits = 1
-  container.PLS = newPLS
-  container.Tag = newPLS.Tag
+	container := new(PLSContainer)
+	container.Size = newPLS.Size
+	container.Dumps = 0
+	container.Loads = 0
+	container.Hits = 1
+	container.PLS = newPLS
+	container.Tag = newPLS.Tag
 
-  return container
+	return container
 }
 
 type persistent_term struct {
@@ -187,21 +191,30 @@ func (lex *lexicon) load_factor() float64 {
     return load
 }
 
+func LoadLexiconFromDisk(dataDir string) index.Lexicon {
+  var lex *lexicon
+  lex = new(lexicon)
+
+  lex.LoadFromDisk(dataDir)
+
+  return lex
+}
+
 func NewLexicon(maxMem int, dataDir string) index.Lexicon {
 	var lex *lexicon
 	lex = new(lexicon)
-	lex.Init()
 
-    if err := os.RemoveAll(dataDir); err != nil {
-        panic(err)
-    }
+  if err := os.RemoveAll(dataDir); err != nil {
+      panic(err)
+  }
 
-    if err := os.MkdirAll(dataDir, 0755); err != nil {
-        panic(err)
-    }
+  if err := os.MkdirAll(dataDir, 0755); err != nil {
+      panic(err)
+  }
 
-    lex.DataDirectory = dataDir
+  lex.Init()
 
+  lex.DataDirectory = dataDir
 
 	// Wrap args
 	lex.TermInit =
@@ -213,25 +226,36 @@ func NewLexicon(maxMem int, dataDir string) index.Lexicon {
 		}
 
 	lex.PLInit = index.BasicPostingListInitializer
+  lex.setMaxLoad(maxMem)
 
+	return lex
+}
+
+func (lex *lexicon) setMaxLoad(maxMem int) {
 	lex.maxLoad = maxMem
+
+  if lex.maxLoad > 0 {
+    switch {
+    case maxMem > 20000:
+      lex.perPLSLoad = 5000 //maxMem / 10
+    default:
+      lex.perPLSLoad = maxMem / 5
+    }
+  } else {
+      // This is int max
+      lex.perPLSLoad = int(^uint(0) >> 1)
+  }
+
+  if lex.perPLSLoad <= 10 {
+      log.Criticalf("Warning. PLS Load is set very low (< 10) terms per PLS")
+  }
+
+}
+
+func (lex *lexicon) Init() {
+  lex.Trie.Init()
+
 	lex.currentLoad = 0
-    if lex.maxLoad > 0 {
-      switch {
-      case maxMem > 20000:
-        lex.perPLSLoad = 5000 //maxMem / 10
-      default:
-        lex.perPLSLoad = maxMem / 5
-      }
-    } else {
-        // This is int max
-        lex.perPLSLoad = int(^uint(0) >> 1)
-    }
-
-    if lex.perPLSLoad <= 10 {
-        log.Criticalf("Warning. PLS Load is set very low (< 10) terms per PLS")
-    }
-
 	lex.pl_set_cache = make(map[DatastoreTag]*PLSContainer)
 	lex.lru_cache = make(LRUSet, 0)
 	lex.swapped_cache = make(LRUSet, 0)
@@ -243,7 +267,7 @@ func NewLexicon(maxMem int, dataDir string) index.Lexicon {
 
   lex.swapped_worker_q = make(chan *PLSContainer)
   go lex.SwappedWorker()
-	return lex
+
 }
 
 func (lex *lexicon) Location() string {
@@ -251,7 +275,7 @@ func (lex *lexicon) Location() string {
 }
 
 func (lex *lexicon) DSPath(tag DatastoreTag) string {
-	return lex.DataDirectory + "/" + string(tag)
+	return lex.DataDirectory + "/pls_" + string(tag)
 }
 
 func (lex *lexicon) makeRecent(pls *PLSContainer) {
@@ -454,6 +478,14 @@ func(lex *lexicon) SaveToDisk() {
     var pls *PLSContainer
     var tag DatastoreTag
 
+    if mdfile, err := os.Create(lex.Location() + "lexicon.mdt"); err == nil {
+      log.Debug("Writing metadata")
+      lex.WriteMetadata(mdfile)
+      mdfile.Close()
+    } else {
+      panic(&PersistenceError{"Failed to create metadata files:" + err.Error()})
+    }
+
     for tag, pls = range lex.pl_set_cache {
       if pls.PLS == nil {
         pls.PLS = NewPostingListSet(tag, lex.PLInit)
@@ -466,6 +498,136 @@ func(lex *lexicon) SaveToDisk() {
       }
       lex.dump_pls(pls)
     }
+}
+
+func (lex *lexicon)WriteMetadata(w io.Writer) {
+  fmt.Fprintf(w, "pls_count %d\n", len(lex.pl_set_cache) )
+  fmt.Fprintf(w, "pl_type %s\n", lex.PLInit.Name)
+  fmt.Fprintf(w, "memlimit %d\n", lex.maxLoad)
+}
+
+func (lex *lexicon) ReadMetadata(r io.Reader) {
+  scanner := bufio.NewScanner(r)
+  var fields []string
+  var (
+    have_memlimit = false
+    have_pltype = false
+  )
+
+  for ; scanner.Scan(); {
+    log.Debugf("Read %s from file.", scanner.Text())
+    fields = strings.SplitN(scanner.Text(), " ", 2)
+    switch fields[0] {
+
+    case "memlimit":
+    if field, err := strconv.Atoi(fields[1]); err == nil {
+      lex.setMaxLoad(field)
+      have_memlimit = true
+    } else {
+      panic(&PersistenceError{
+        "Failed to convert memory limit from metadata: " + err.Error()})
+    }
+
+    case "pl_type":
+      have_pltype = true
+      switch string(fields[1]) {
+
+      case "basic":
+        lex.SetPLInitializer(index.BasicPostingListInitializer)
+        log.Infof("Set PLInit to %p", lex.PLInit)
+
+      case "positional":
+        lex.SetPLInitializer(index.PositionalPostingListInitializer)
+        log.Infof("Set PLInit to %p", lex.PLInit)
+      default:
+        panic("Found unrecognized pl_type: " + fields[1])
+      }
+
+    }
+  }
+
+  if have_pltype == false || have_memlimit == false {
+    panic("Didn't find all required metadata")
+  }
+}
+
+func(lex *lexicon) LoadFromDisk(dataDir string) {
+  log.Criticalf("Loading from disk")
+
+  var (
+    pls *PostingListSet
+    tag DatastoreTag
+    files []string
+    parsedTag int
+    file io.Reader
+    term_s string
+    term *persistent_term
+    e error
+  )
+
+  if fi, err := os.Lstat(dataDir); os.IsExist(err) {
+    panic(&PersistenceError{"Data directory doesn't exist."})
+  } else if fi.Mode().IsDir() == false {
+    panic(&PersistenceError{"Data directory is not a directory."})
+  }
+
+  lex.DataDirectory = dataDir
+  lex.Init()
+
+	lex.TermInit =
+		func(tok *filereader.Token,
+			p index.PostingListInitializer) index.LexiconTerm {
+                term := NewTerm(tok, lex, lex.LeastUsedPLS())
+                log.Debugf("Creating new term: %v", term)
+                return term
+		}
+
+  if file, e = os.Open(lex.Location() + "lexicon.mdt"); e == nil {
+    lex.ReadMetadata(file)
+  } else {
+    panic(&PersistenceError{"Failed to read metadata file: " + e.Error()})
+  }
+
+  if files, e = filepath.Glob(lex.Location() + "pls_*"); e != nil {
+    panic(&PersistenceError{e.Error()})
+  }
+
+  for i, fname := range files {
+    log.Debugf("Read %d PLS", i)
+    if parsedTag, e = strconv.Atoi(strings.TrimPrefix(fname, "pls_")); e == nil {
+      tag = DatastoreTag(parsedTag)
+    }
+
+    log.Debugf("Loading PLS with Initializer %p", lex.PLInit)
+
+    var pl index.PostingList
+    var pli index.PostingListIterator
+
+    pls = NewPostingListSet(tag, lex.PLInit)
+    if file, e := os.Open(fname); e == nil {
+      pls.Load(file)
+
+      /* Make sure the terms are in the radix */
+      for term_s, pl = range pls.Terms() {
+
+        term = new(persistent_term)
+        term.Text_ = term_s
+        term.Tf_ = 0
+        for pli = pl.Iterator(); pli.Next(); {
+          term.Tf_ += pli.Value().Frequency()
+        }
+        term.Pl = nil
+        term.lex = lex
+        term.DataTag = tag
+        lex.Insert(index.LexiconTerm(term).(radix.RadixTreeEntry))
+      }
+
+      lex.AddPLS(pls)
+
+      file.Close()
+    }
+    lex.evict()
+  }
 }
 
 //Evict the least recent PostingListSet from the Lexicon if

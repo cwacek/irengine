@@ -67,6 +67,9 @@ func TransferPL(src, dst *PostingListSet, term string) (sz int ){
   return
 }
 
+func (pls *PostingListSet) Terms() (map[string]index.PostingList) {
+  return  pls.listMap
+}
 
 
 //Get and return the PostingList for a particular term

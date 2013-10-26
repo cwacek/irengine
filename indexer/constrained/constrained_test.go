@@ -208,7 +208,7 @@ func TestConstrainedMemory(t *testing.T) {
     }
     log.Infof("Using temporary directory: %s", tmpDir)
 
-    lex := NewLexicon(12, tmpDir)
+    lex := NewLexicon(10000, tmpDir)
 
     for _, document := range testDocs {
         log.Debugf("Inserting %s", document)
@@ -220,7 +220,32 @@ func TestConstrainedMemory(t *testing.T) {
 
     lex.(index.PersistentLexicon).SaveToDisk()
 
-    /*os.RemoveAll(tmpDir)*/
+    lex2 := LoadLexiconFromDisk(tmpDir)
+
+    if lex.Len() != lex2.Len() {
+      t.Errorf("Re-loaded lexicon (%d terms) is not the right size (%d).",
+               lex2.Len(), lex.Len())
+    }
+
+    buf1 := new(bytes.Buffer)
+    buf2 := new(bytes.Buffer)
+    lex.Print(buf1)
+    lex2.Print(buf2)
+    var buf2_bytes = buf2.Bytes()
+
+    for i, v := range buf1.Bytes() {
+      switch {
+      case i >= len(buf2_bytes):
+        t.Logf("Serialized: %s", buf1.String())
+        t.Logf("Deserialized: %s", buf2.String())
+        t.Errorf("Found end of deserialized, but serializedhad %c at %d", v, i)
+
+      case v != buf2_bytes[i]:
+        t.Logf("Serialized: %s", buf1.String())
+        t.Logf("Deserialized: %s", buf2.String())
+        t.Errorf("'%c' did not match expected '%c' at %d", v, buf2_bytes[i], i)
+      }
+    }
 }
 
 func BenchmarkSerialize(b *testing.B) {
