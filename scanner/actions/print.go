@@ -11,6 +11,9 @@ func PrintTokens() *print_tokens_action {
 type print_tokens_action struct {
 	Args
 
+	docroot    *string
+	docpattern *string
+
 	workers      chan string
 	output       chan string
 	worker_count int
@@ -22,6 +25,13 @@ func (a *print_tokens_action) Name() string {
 
 func (a *print_tokens_action) DefineFlags(fs *flag.FlagSet) {
 	a.AddDefaultArgs(fs)
+
+	a.docroot = fs.String("doc.root", "",
+		`The root directory under which to find document`)
+
+	a.docpattern = fs.String("doc.pattern", `^[^\.].+`,
+		`A regular expression to match document names`)
+
 }
 
 func (a *print_tokens_action) Run() {

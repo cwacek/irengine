@@ -10,11 +10,11 @@ func main() {
 }
 
 func Run() {
-  actions.SetupLogging(0)
+	actions.SetupLogging(0)
 
-  subcommand.Parse( true,
-    actions.PrintTokens(),
-    actions.RunIndexer(),
-  )
+	subcommand.Parse(true,
+		actions.PrintTokens(),
+		actions.RunIndexer(),
+		actions.QueryEngineRunner(),
+	)
 }
-
