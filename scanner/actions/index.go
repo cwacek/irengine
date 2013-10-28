@@ -7,6 +7,7 @@ import "github.com/cwacek/irengine/indexer"
 import "github.com/cwacek/irengine/indexer/constrained"
 import "os"
 import "fmt"
+import "path/filepath"
 import "runtime/pprof"
 import "github.com/cwacek/irengine/indexer/filters"
 import "flag"
@@ -94,8 +95,8 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 
 	case "phrase":
 		lexicon.SetPLInitializer(indexer.BasicPostingListInitializer)
-		if filter, err := filters.GetFactory("phrase"); err != nil {
-			log.Criticalf("Have no phrase filter. Cannot run phrase index")
+		if filter, err := filters.GetFactory("phrases"); err != nil {
+			return nil, errors.New("Have no phrase filters. Cannot run phrase index")
 		} else {
 			filter.(*filters.PhraseFilterArgs).PhraseLen = *a.phraseLen
 			filter.(*filters.PhraseFilterArgs).TfLimit = *a.phraseStop
@@ -114,10 +115,17 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 	} else {
 		if _, err := os.Lstat(*a.stopWordList); err == nil {
 			log.Info("Using stopword list")
-			filter.(*filters.StopWordFilterFactory).Filename = *a.stopWordList
+
+			path, err := filepath.Abs(*a.stopWordList)
+			if err != nil {
+				log.Criticalf("Couldn't turn '%s' into absolute path: %v", path, err)
+				return nil, err
+			}
+
+			filter.(*filters.StopWordFilterFactory).Filename = path
 			index.AddFilter(filter.Instantiate())
 		} else {
-			log.Criticalf("Couldn't read stop word list: ", err)
+			log.Criticalf("Couldn't read stop word list: %v", err)
 			return nil, err
 		}
 	}
