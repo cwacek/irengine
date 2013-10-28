@@ -7,7 +7,7 @@ import "strings"
 import log "github.com/cihub/seelog"
 
 type TestCase struct {
-	FilterFunc func(string) Filter
+	FilterFunc func() Filter
 	Input      string
 	Expected   []*filereader.Token
 }
@@ -157,7 +157,7 @@ func TestChained(t *testing.T) {
 
 		inputs = append(inputs, testcase.Input)
 
-		f := testcase.FilterFunc(testname)
+		f := testcase.FilterFunc()
 		if i > 0 {
 			f.Follow(filters[len(filters)-1], false)
 			log.Debugf("Chained %v after %v", f, filters[len(filters)-1])
@@ -195,7 +195,7 @@ func RunTestCase(testname string, t *testing.T) {
 	input := NewFilterPipe("test")
 	log.Debugf("Created input pipe %v", input)
 
-	filter := testcase.FilterFunc(testname)
+	filter := testcase.FilterFunc()
 	log.Debugf("Created filter %v", filter)
 	log.Flush()
 	filter.Head().SetInput(input)

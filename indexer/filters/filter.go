@@ -2,10 +2,43 @@ package filters
 
 import "fmt"
 import "strings"
+import "errors"
 import "github.com/cwacek/irengine/scanner/filereader"
 import log "github.com/cihub/seelog"
 
 var SingleTermFilterSequence Filter
+
+type FilterFactory interface {
+	Instantiate() Filter
+	Deserialize(string)
+	Serialize() string
+}
+
+var filterFactory map[string]FilterFactory
+
+func Register(name string, filter FilterFactory) {
+	if filterFactory == nil {
+		filterFactory = make(map[string]FilterFactory)
+	}
+
+	filterFactory[name] = filter
+}
+
+func GetFactory(filterName string) (FilterFactory, error) {
+	if generator, ok := filterFactory[filterName]; ok {
+		return generator, nil
+	} else {
+		return nil, errors.New("Unknown filter: " + filterName)
+	}
+}
+
+func Instantiate(filterName string) Filter {
+	if generator, ok := filterFactory[filterName]; ok {
+		return generator.Instantiate()
+	} else {
+		panic(errors.New("Unknown filter: " + filterName))
+	}
+}
 
 func init() {
 	if logger, err := log.LoggerFromConfigAsBytes(
@@ -13,13 +46,13 @@ func init() {
 		log.ReplaceLogger(logger)
 	}
 
-	f := NewDigitsFilter("digits")
-	f = f.Connect(NewDateFilter("dates"), false)
-	f = f.Connect(NewHyphenFilter("hyphens"), false)
-	f = f.Connect(NewSlashFilter("slashes"), false)
-	f = f.Connect(NewAcronymFilter("acronyms"), false)
-	f = f.Connect(NewFilenameFilter("filenames"), false)
-	f = f.Connect(NewLowerCaseFilter("lower"), false)
+	f := NewDigitsFilter()
+	f = f.Connect(NewDateFilter(), false)
+	f = f.Connect(NewHyphenFilter(), false)
+	f = f.Connect(NewSlashFilter(), false)
+	f = f.Connect(NewAcronymFilter(), false)
+	f = f.Connect(NewFilenameFilter(), false)
+	f = f.Connect(NewLowerCaseFilter(), false)
 	SingleTermFilterSequence = f
 }
 
@@ -56,6 +89,8 @@ type Filter interface {
 	String() string
 	// Write just this filter to string
 	Serialize() string
+	// Return a list of the IDs in this filtercahin
+	Ids() []string
 }
 
 /* A FilterPipe connects two filters together */

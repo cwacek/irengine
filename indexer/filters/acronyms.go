@@ -6,15 +6,19 @@ import "strings"
 import "unicode"
 import "github.com/cwacek/irengine/scanner/filereader"
 
+func init() {
+	Register("acronyms", &GenericFilterArgs{NewAcronymFilter})
+}
+
 var acronymRegex = regexp.MustCompile(`[A-Z][a-z]*(?:\.[A-Z][a-z]*)+`)
 
 type AcronymFilter struct {
 	FilterPlumbing
 }
 
-func NewAcronymFilter(id string) Filter {
+func NewAcronymFilter() Filter {
 	f := new(AcronymFilter)
-	f.Id = id
+	f.Id = "acronyms"
 	f.self = f
 	return f
 }

@@ -4,6 +4,10 @@ import log "github.com/cihub/seelog"
 import "strings"
 import "github.com/cwacek/irengine/scanner/filereader"
 
+func init() {
+	Register("filename", &GenericFilterArgs{NewFilenameFilter})
+}
+
 var (
 	FileExtensions = map[string]bool{
 		"aiff":  true,
@@ -61,9 +65,9 @@ type FilenameFilter struct {
 	FilterPlumbing
 }
 
-func NewFilenameFilter(id string) Filter {
+func NewFilenameFilter() Filter {
 	f := new(FilenameFilter)
-	f.Id = id
+	f.Id = "filename"
 	f.self = f
 	return f
 }

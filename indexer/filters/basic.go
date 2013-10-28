@@ -7,6 +7,27 @@ import "strconv"
 import "regexp"
 import "github.com/cwacek/irengine/scanner/filereader"
 
+func init() {
+	Register("lower", &GenericFilterArgs{NewLowerCaseFilter})
+	Register("digits", &GenericFilterArgs{NewDigitsFilter})
+	Register("null", &GenericFilterArgs{NewNullFilter})
+}
+
+type GenericFilterArgs struct {
+	Fn func() Filter
+}
+
+func (arg *GenericFilterArgs) Instantiate() Filter {
+	return arg.Fn()
+}
+
+func (arg *GenericFilterArgs) Serialize() string {
+	return ""
+}
+
+func (arg *GenericFilterArgs) Deserialize(opts string) {
+}
+
 func CombineTokens(
 	tokens []*filereader.Token,
 	resultType filereader.TokenType) *filereader.Token {
@@ -31,9 +52,9 @@ type LowerCaseFilter struct {
 	FilterPlumbing
 }
 
-func NewLowerCaseFilter(id string) Filter {
+func NewLowerCaseFilter() Filter {
 	f := new(LowerCaseFilter)
-	f.Id = id
+	f.Id = "lower"
 	f.self = f
 	f.ignoresFinal = true
 	return f
@@ -45,9 +66,9 @@ type DigitsFilter struct {
 
 var DigitsRegex = regexp.MustCompile(`^((?:\d+,)*\d+)(?:\.(\d+))?$`)
 
-func NewDigitsFilter(id string) Filter {
+func NewDigitsFilter() Filter {
 	f := new(DigitsFilter)
-	f.Id = id
+	f.Id = "digits"
 	f.self = f
 	return f
 }
@@ -93,9 +114,9 @@ type NullFilter struct {
 	FilterPlumbing
 }
 
-func NewNullFilter(id string) Filter {
+func NewNullFilter() Filter {
 	f := new(NullFilter)
-	f.Id = id
+	f.Id = "null"
 	f.self = f
 	return f
 }

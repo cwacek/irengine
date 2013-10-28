@@ -15,9 +15,9 @@ var sw_expected = []*filereader.Token{
 	&filereader.Token{Text: "dog", Type: filereader.TextToken},
 }
 
-func MakeStopWordFilter(id string) Filter {
+func MakeStopWordFilter() Filter {
 	f := NewStopWordFilterFromReader(strings.NewReader(sw_stopwords))
-	f.Follow(NewLowerCaseFilter("lowercase"), false)
+	f.Follow(NewLowerCaseFilter(), false)
 	return f
 }
 

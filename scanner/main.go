@@ -1,7 +1,7 @@
 package main
 
 import "github.com/cwacek/irengine/scanner/actions"
-import "github.com/cwacek/subcommand"
+import subcommand "github.com/cwacek/go-subcommand"
 import log "github.com/cihub/seelog"
 
 func main() {

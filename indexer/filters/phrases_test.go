@@ -20,7 +20,7 @@ with shoes; frequently I would wear them. Tarnation.`
 
 func init() {
 
-	builder := func(id string) Filter {
+	builder := func() Filter {
 		return NewPhraseFilter(2, 0.4)
 	}
 

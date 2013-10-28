@@ -7,6 +7,7 @@ import "github.com/cwacek/irengine/indexer"
 import "github.com/cwacek/irengine/indexer/constrained"
 import "os"
 import "fmt"
+import "path/filepath"
 import "runtime/pprof"
 import "github.com/cwacek/irengine/indexer/filters"
 import "flag"
@@ -90,12 +91,17 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 	case "stemmed":
 		lexicon.SetPLInitializer(indexer.BasicPostingListInitializer)
 		index.AddFilter(filters.SingleTermFilterSequence)
-		index.AddFilter(filters.NewPorterFilter("porterstemmer"))
+		index.AddFilter(filters.Instantiate("porter"))
 
 	case "phrase":
 		lexicon.SetPLInitializer(indexer.BasicPostingListInitializer)
-		index.AddFilter(
-			filters.NewPhraseFilter(*a.phraseLen, *a.phraseStop))
+		if filter, err := filters.GetFactory("phrases"); err != nil {
+			return nil, errors.New("Have no phrase filters. Cannot run phrase index")
+		} else {
+			filter.(*filters.PhraseFilterArgs).PhraseLen = *a.phraseLen
+			filter.(*filters.PhraseFilterArgs).TfLimit = *a.phraseStop
+			index.AddFilter(filter.Instantiate())
+		}
 
 	default:
 		log.Criticalf("Unknown index type: %s", *a.indexType)
@@ -104,12 +110,24 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 
 	// Allow anything to use the stopword list (even if it makes
 	// no sense)
-	if file, err := os.Open(*a.stopWordList); err != nil {
+	if filter, err := filters.GetFactory("stopwords"); err != nil {
 		log.Warnf("Not using stop word list")
 	} else {
-		log.Info("Using stopword list")
-		index.AddFilter(filters.NewStopWordFilterFromReader(file))
-		file.Close()
+		if _, err := os.Lstat(*a.stopWordList); err == nil {
+			log.Info("Using stopword list")
+
+			path, err := filepath.Abs(*a.stopWordList)
+			if err != nil {
+				log.Criticalf("Couldn't turn '%s' into absolute path: %v", path, err)
+				return nil, err
+			}
+
+			filter.(*filters.StopWordFilterFactory).Filename = path
+			index.AddFilter(filter.Instantiate())
+		} else {
+			log.Criticalf("Couldn't read stop word list: %v", err)
+			return nil, err
+		}
 	}
 
 	return index, nil

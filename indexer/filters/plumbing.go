@@ -75,15 +75,19 @@ func (fc *FilterPlumbing) Connect(f Filter, force bool) Filter {
 }
 
 func (fc *FilterPlumbing) String() string {
+	return strings.Join(fc.Ids(), " -> ")
+}
+
+func (fc *FilterPlumbing) Ids() []string {
 	parts := make([]string, 0)
 
 	if fc.parent != nil {
-		parts = append(parts, fc.parent.String())
+		parts = append(parts, fc.parent.Ids()...)
 	}
 
 	parts = append(parts, fc.self.Serialize())
 
-	return strings.Join(parts, " -> ")
+	return parts
 }
 
 func (fc *FilterPlumbing) Serialize() string {

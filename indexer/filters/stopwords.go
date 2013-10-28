@@ -3,8 +3,13 @@ package filters
 import log "github.com/cihub/seelog"
 import "bufio"
 import "io"
+import "os"
 import "fmt"
 import "github.com/cwacek/irengine/scanner/filereader"
+
+func init() {
+	Register("stopwords", &StopWordFilterFactory{})
+}
 
 type StopWordFilter struct {
 	FilterPlumbing
@@ -12,8 +17,30 @@ type StopWordFilter struct {
 	removed   int
 }
 
-func (f *StopWordFilter) Serialize() string {
-	return fmt.Sprintf("%s{%d}", f.Id, len(f.stopwords))
+type StopWordFilterFactory struct {
+	Filename string
+}
+
+func (arg *StopWordFilterFactory) Instantiate() Filter {
+	if file, err := os.Open(arg.Filename); err != nil {
+		panic("Cannot open " + arg.Filename)
+	} else {
+
+		defer func() {
+			file.Close()
+		}()
+
+		return NewStopWordFilterFromReader(file)
+	}
+
+}
+
+func (arg *StopWordFilterFactory) Serialize() string {
+	return fmt.Sprintf("%s", arg.Filename)
+}
+
+func (arg *StopWordFilterFactory) Deserialize(input string) {
+	arg.Filename = input
 }
 
 func NewStopWordFilterFromReader(r io.Reader) Filter {
