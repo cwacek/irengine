@@ -34,7 +34,7 @@ var (
 func TestLowerCase(t *testing.T) {
 	logging.SetupTestLogging()
 
-	toLower := NewLowerCaseFilter("lowercase")
+	toLower := NewLowerCaseFilter()
 
 	input := NewFilterPipe("test")
 	toLower.SetInput(input)
@@ -64,10 +64,10 @@ func TestChainedFilters(t *testing.T) {
 
 	input := NewFilterPipe("test")
 
-	f_lower := NewLowerCaseFilter("lowercase")
+	f_lower := NewLowerCaseFilter()
 	f_lower.SetInput(input)
 
-	f_null := NewNullFilter("null1")
+	f_null := NewNullFilter()
 	f_null.Follow(f_lower, false)
 
 	f_null.Pull()
@@ -94,11 +94,11 @@ func TestMultipleOutputs(t *testing.T) {
 
 	input := NewFilterPipe("test")
 
-	f_lower := NewLowerCaseFilter("lowercase")
+	f_lower := NewLowerCaseFilter()
 	f_lower.SetInput(input)
 
-	f_null := NewNullFilter("null1")
-	f_null2 := NewNullFilter("null2")
+	f_null := NewNullFilter()
+	f_null2 := NewNullFilter()
 
 	f_null.Follow(f_lower, false)
 	f_null2.Follow(f_lower, false)

@@ -6,6 +6,10 @@ import "github.com/cwacek/irengine/scanner/filereader"
 import "strings"
 import "unicode"
 
+func init() {
+	Register("hyphens", &GenericFilterArgs{NewHyphenFilter})
+}
+
 var alpha_num = regexp.MustCompile(`^([A-z]+)-([0-9]+)$`)
 var num_alpha = regexp.MustCompile(`^([0-9]+)-([A-z]+)$`)
 var WordPrefixes = map[string]bool{
@@ -33,9 +37,9 @@ type HyphenFilter struct {
 	FilterPlumbing
 }
 
-func NewHyphenFilter(id string) Filter {
+func NewHyphenFilter() Filter {
 	f := new(HyphenFilter)
-	f.Id = id
+	f.Id = "hyphens"
 	f.self = f
 	return f
 }

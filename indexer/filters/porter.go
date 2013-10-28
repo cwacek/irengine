@@ -4,13 +4,17 @@ import "github.com/cwacek/irengine/scanner/filereader"
 import log "github.com/cihub/seelog"
 import porter "github.com/agonopol/go-stem/stemmer"
 
+func init() {
+	Register("porter", &GenericFilterArgs{NewPorterFilter})
+}
+
 type PorterFilter struct {
 	FilterPlumbing
 }
 
-func NewPorterFilter(id string) Filter {
+func NewPorterFilter() Filter {
 	f := new(PorterFilter)
-	f.Id = id
+	f.Id = "porter"
 	f.self = f
 
 	return f

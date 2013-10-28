@@ -3,6 +3,43 @@ package filters
 import log "github.com/cihub/seelog"
 import "bytes"
 import "github.com/cwacek/irengine/scanner/filereader"
+import "fmt"
+import "strings"
+import "strconv"
+
+func init() {
+	Register("phrases", &PhraseFilterArgs{2, 0.4})
+}
+
+type PhraseFilterArgs struct {
+	PhraseLen int
+	TfLimit   float64
+}
+
+func (arg *PhraseFilterArgs) Instantiate() Filter {
+	return NewPhraseFilter(arg.PhraseLen, arg.TfLimit)
+}
+
+func (arg *PhraseFilterArgs) Serialize() string {
+	return fmt.Sprintf("%d %0.2f", arg.PhraseLen, arg.TfLimit)
+}
+
+func (arg *PhraseFilterArgs) Deserialize(input string) {
+	var err error
+
+	fields := strings.Fields(input)
+	if len(fields) != 2 {
+		panic("Could not deserialize phrase filter args. Expected <int> <float>")
+	}
+
+	if arg.PhraseLen, err = strconv.Atoi(fields[0]); err != nil {
+		panic(fmt.Sprintf("Couldn't interpret %s as <int>", fields[0]))
+	}
+
+	if arg.TfLimit, err = strconv.ParseFloat(fields[1], 64); err != nil {
+		panic(fmt.Sprintf("Coulnd't interpret %s as <float>", fields[1]))
+	}
+}
 
 func AugmentedTf(tf, max_tf int) float64 {
 	return 0.5 + ((0.5 * float64(tf)) / float64(max_tf))

@@ -4,11 +4,15 @@ import log "github.com/cihub/seelog"
 import "strings"
 import "github.com/cwacek/irengine/scanner/filereader"
 
+func init() {
+	Register("slashes", &GenericFilterArgs{NewSlashFilter})
+}
+
 type SlashFilter struct {
 	FilterPlumbing
 }
 
-func NewSlashFilter(dummy string) Filter {
+func NewSlashFilter() Filter {
 	f := new(SlashFilter)
 	f.Id = "slashes"
 	f.self = f

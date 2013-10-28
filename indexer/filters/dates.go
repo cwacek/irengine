@@ -8,6 +8,10 @@ import "strconv"
 import "fmt"
 import "strings"
 
+func init() {
+	Register("dates", &GenericFilterArgs{NewDateFilter})
+}
+
 type DateFilterState int
 
 const (
@@ -88,9 +92,9 @@ type DateFilter struct {
 	state       DateFilterState
 }
 
-func NewDateFilter(id string) Filter {
+func NewDateFilter() Filter {
 	f := new(DateFilter)
-	f.Id = id
+	f.Id = "dates"
 	f.self = f
 	f.havePartial = false
 	f.matches = make(map[DateFilterState]string)
