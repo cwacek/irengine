@@ -18,27 +18,29 @@ type StopWordFilter struct {
 }
 
 type StopWordFilterFactory struct {
-	filename string
+	Filename string
 }
 
 func (arg *StopWordFilterFactory) Instantiate() Filter {
-	if file, err := os.Open(arg.filename); err != nil {
-		panic("Cannot open " + arg.filename)
+	if file, err := os.Open(arg.Filename); err != nil {
+		panic("Cannot open " + arg.Filename)
 	} else {
+
+		defer func() {
+			file.Close()
+		}()
+
 		return NewStopWordFilterFromReader(file)
 	}
+
 }
 
 func (arg *StopWordFilterFactory) Serialize() string {
-	return fmt.Sprintf("%s", arg.filename)
+	return fmt.Sprintf("%s", arg.Filename)
 }
 
 func (arg *StopWordFilterFactory) Deserialize(input string) {
-	arg.filename = input
-}
-
-func (f *StopWordFilter) Serialize() string {
-	return fmt.Sprintf("%s{%d}", f.Id, len(f.stopwords))
+	arg.Filename = input
 }
 
 func NewStopWordFilterFromReader(r io.Reader) Filter {

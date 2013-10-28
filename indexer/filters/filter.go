@@ -24,6 +24,14 @@ func Register(name string, filter FilterFactory) {
 	filterFactory[name] = filter
 }
 
+func GetFactory(filterName string) (FilterFactory, error) {
+	if generator, ok := filterFactory[filterName]; ok {
+		return generator, nil
+	} else {
+		return nil, errors.New("Unknown filter: " + filterName)
+	}
+}
+
 func Instantiate(filterName string) Filter {
 	if generator, ok := filterFactory[filterName]; ok {
 		return generator.Instantiate()
@@ -81,6 +89,8 @@ type Filter interface {
 	String() string
 	// Write just this filter to string
 	Serialize() string
+	// Return a list of the IDs in this filtercahin
+	Ids() []string
 }
 
 /* A FilterPipe connects two filters together */

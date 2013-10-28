@@ -1,11 +1,13 @@
 package constrained
 
 import index "github.com/cwacek/irengine/indexer"
+import "github.com/cwacek/irengine/indexer/filters"
 import log "github.com/cihub/seelog"
 import "github.com/cwacek/irengine/scanner/filereader"
 import radix "github.com/cwacek/radix-go"
 import "bufio"
 import "bytes"
+import "errors"
 import "os"
 import "encoding/json"
 import "sync"
@@ -737,6 +739,28 @@ func SingleTermIndexFromDisk(location string) (st_index *index.SingleTermIndex, 
 			log.Debugf("Successfully unmarshaled document map")
 		}
 		file.Close()
+	}
+
+	if file, e := os.Open(location + "filters.mdt"); e != nil {
+		log.Criticalf("Error opening filter metadata file: %v", e)
+		return nil, e
+	} else {
+		scanner := bufio.NewScanner(file)
+		var fields []string
+
+		for scanner.Scan() {
+			log.Debugf("Read %s from file.", scanner.Text())
+			fields = strings.SplitN(scanner.Text(), " ", 1)
+
+			if filterFactory, err := filters.GetFactory(fields[0]); err != nil {
+				return nil, errors.New(fmt.Sprintf("Asked to load filter '%s' with args '%s', but don't know how.",
+					fields[0], fields[1]))
+			} else {
+				filterFactory.Deserialize(fields[1])
+				log.Debugf("Adding filter %s", fields[1])
+				st_index.AddFilter(filterFactory.Instantiate())
+			}
+		}
 	}
 
 	return st_index, nil

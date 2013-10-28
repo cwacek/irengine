@@ -115,6 +115,29 @@ func (t *SingleTermIndex) Save() {
 			file.Close()
 		}
 
+		if file, err := os.Create(persist.Location() + "filters.mdt"); err != nil {
+			log.Criticalf("Error opening filter file: %v", err)
+			panic(err)
+		} else {
+
+			var filterFactory filters.FilterFactory
+			var e error
+			var out string
+
+			log.Warnf("filterchain Ids: %v", t.filterChain.Ids())
+			for _, filter := range t.filterChain.Ids() {
+				log.Infof("Writing '%s' to filter metadata", filter)
+				if filterFactory, e = filters.GetFactory(filter); e == nil {
+					out = filter + " " + filterFactory.Serialize()
+					fmt.Fprintln(file, out)
+				} else {
+					log.Warnf("Couldn't save %s because don't know how.", filter)
+				}
+			}
+
+			file.Close()
+		}
+
 	default:
 		panic("Save to disk not supported")
 		log.Critical("Save to disk not supported")
@@ -183,7 +206,7 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
 	if t.filterChain == nil {
 		// There's no existing filterchain, so just make it the
 		// same as input
-		t.filterChain = filters.NewNullFilter("null")
+		t.filterChain = filters.NewNullFilter()
 	}
 
 	if input = t.filterChain.Head().Input(); input == nil {
