@@ -78,9 +78,9 @@ func TestSingleTermIndex(t *testing.T) {
 	index.Init(lexicon)
 	rand.Seed(0)
 
-	filterChain := filters.NewAcronymFilter("acronyms")
-	filterChain = filterChain.Connect(filters.NewHyphenFilter("hyphens"), false)
-	filterChain = filterChain.Connect(filters.NewLowerCaseFilter("lower"), false)
+	filterChain := filters.NewAcronymFilter()
+	filterChain = filterChain.Connect(filters.NewHyphenFilter(), false)
+	filterChain = filterChain.Connect(filters.NewLowerCaseFilter(), false)
 	index.AddFilter(filterChain)
 
 	for _, document := range TestDocuments {
