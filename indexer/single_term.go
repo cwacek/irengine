@@ -181,7 +181,7 @@ func (t *SingleTermIndex) AddFilter(f filters.Filter) {
 	} else {
 		t.filterChain = t.filterChain.Connect(f, false)
 	}
-	log.Infof("Added %s to filterchain. Now have %s", f, t.filterChain)
+	log.Infof("Added %s to filterchain. Now have %s", f.Serialize(), t.filterChain)
 
 	t.filterChain.Pull()
 }
@@ -195,6 +195,39 @@ func (t *SingleTermIndex) PrintLexicon(w io.Writer) {
 		t.lexicon.(PersistentLexicon).PrintDiskStats(w)
 	}
 	t.insertLock.RUnlock()
+
+	return
+}
+
+/* Connect the filter chain to the input and output channels and translate between them. */
+func (t *SingleTermIndex) FilterTokens(input, output chan *filereader.Token) {
+
+	if t.filterChain == nil {
+		// There's no existing filterchain, so just make it the
+		// same as input
+		t.filterChain = filters.NewNullFilter()
+	}
+
+	log.Infof("Filtering tokens")
+	t.filterChain.Head().SetInput(&filters.FilterPipe{"input", input})
+	t.filterChain.Pull()
+
+	filterChainOut := t.filterChain.Output()
+
+	var token *filereader.Token
+	var ok bool
+	for {
+		log.Infof("Reading from filter chain")
+
+		token, ok = <-filterChainOut.Pipe
+		if !ok {
+			return
+		}
+
+		log.Infof("Read %v", token)
+
+		output <- token
+	}
 
 	return
 }

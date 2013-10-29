@@ -750,7 +750,7 @@ func SingleTermIndexFromDisk(location string) (st_index *index.SingleTermIndex, 
 
 		for scanner.Scan() {
 			log.Debugf("Read %s from file.", scanner.Text())
-			fields = strings.SplitN(scanner.Text(), " ", 1)
+			fields = strings.SplitN(scanner.Text(), " ", 2)
 
 			if filterFactory, err := filters.GetFactory(fields[0]); err != nil {
 				return nil, errors.New(fmt.Sprintf("Asked to load filter '%s' with args '%s', but don't know how.",

@@ -2,6 +2,7 @@ package filters
 
 import "github.com/cwacek/irengine/scanner/filereader"
 import "strings"
+import "fmt"
 import log "github.com/cihub/seelog"
 
 type FilterPlumbing struct {
@@ -14,10 +15,11 @@ type FilterPlumbing struct {
 
 	running      bool
 	ignoresFinal bool
+	restart      chan int
 }
 
 func (fc *FilterPlumbing) Head() Filter {
-	log.Debugf("Looking for head in %v, which has parent %v", fc.self, fc.parent)
+	log.Debugf("Looking for head in %v, which has parent %v", fc.self.Serialize(), fc.parent)
 	if fc.parent != nil {
 		return fc.parent.Head()
 	} else {
@@ -31,11 +33,15 @@ func (fc *FilterPlumbing) Input() *FilterPipe {
 
 func (fc *FilterPlumbing) SetInput(input_fp *FilterPipe) {
 	fc.input = input_fp
+	if fc.running {
+		fc.restart <- 1
+	}
 }
 
 func (fc *FilterPlumbing) Output() *FilterPipe {
 	if len(fc.output) > 0 {
-		panic("Tried to grab output of something with connected filters")
+		panic(fmt.Sprintf(
+			"Tried to grab output of %s with connected filters: %v", fc.Serialize(), fc.output))
 	}
 
 	newconn := NewFilterPipe("out:" + fc.GetId())
@@ -122,8 +128,22 @@ func (fc *FilterPlumbing) Terminate() {
 
 func (fc *FilterPlumbing) apply() {
 	log.Debugf("Applying %v. Reading %v", fc, fc.Input())
-	for tok := range fc.Input().Pipe {
-		/*log.Debugf("%s received %s", fc.Id, tok)*/
+	var tok *filereader.Token
+	var ok bool
+
+	for {
+		log.Debugf("Reading from %v", fc.Input().Pipe)
+		select {
+		case tok, ok = <-fc.Input().Pipe:
+			if !ok {
+				goto Terminate
+			}
+		case <-fc.restart:
+			log.Debugf("Restarting on request!")
+			continue
+		}
+
+		log.Debugf("%s received %s", fc.Id, tok)
 
 		switch {
 		case tok.Type == filereader.SymbolToken:
@@ -140,8 +160,9 @@ func (fc *FilterPlumbing) apply() {
 		default:
 			fc.SendAll(fc.self.Apply(tok))
 		}
-
 	}
+
+Terminate:
 
 	fc.Terminate()
 
@@ -158,12 +179,14 @@ func (fc *FilterPlumbing) Pull() (input *FilterPipe) {
 		input = fc.parent.Pull()
 	} else {
 		if fc.input == nil {
+			log.Warnf("Setting input filter pipe to %v", input)
 			input = NewFilterPipe("input")
 			fc.SetInput(input)
 		}
 	}
 
 	if !fc.running {
+		fc.restart = make(chan int)
 		go fc.apply()
 		fc.running = true
 	}
