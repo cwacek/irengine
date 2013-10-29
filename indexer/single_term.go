@@ -14,6 +14,14 @@ type StoredDocInfo struct {
 	Id        filereader.DocumentId
 	HumanId   string
 	TermCount int
+	MaxTf     int
+	// Store the term frequency for every term
+	// in this document. This is heinous, but
+	// Cosine doesn't work without it, and no
+	// one can adequately explain how that makes
+	// any fucking sense. You have to iterate
+	// over all the terms *in a document*........
+	TermTfIdf map[string]float64
 }
 
 func (info *StoredDocInfo) MarshalJSON() ([]byte, error) {
@@ -93,6 +101,10 @@ type SingleTermIndex struct {
 	inserterRunning bool
 	insertLock      *sync.RWMutex
 	shutdown        chan bool
+}
+
+func (t *SingleTermIndex) Retrieve(text string) (LexiconTerm, bool) {
+	return t.lexicon.FindTerm([]byte(text))
 }
 
 func (t *SingleTermIndex) Save() {
@@ -286,6 +298,7 @@ func (t *SingleTermIndex) inserter() {
 
 	var termcounter = 0
 	var info *StoredDocInfo
+	var term LexiconTerm
 
 	for {
 		var token *filereader.Token
@@ -306,7 +319,15 @@ func (t *SingleTermIndex) inserter() {
 			continue
 		}
 
-		t.lexicon.InsertToken(token)
+		term = t.lexicon.InsertToken(token)
+
+		/* Update document-indexed statistics */
+		info.TermTfIdf[term.Text()] =
+			term.Tf_d(info.Id) * term.Idf(info.TermCount)
+
+		if term.Tf() > info.MaxTf {
+			info.MaxTf = term.Tf()
+		}
 		termcounter++
 	}
 

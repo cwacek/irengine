@@ -2,6 +2,7 @@ package indexer
 
 import "bytes"
 import "bufio"
+import "math"
 import "encoding/json"
 import "strings"
 import "fmt"
@@ -69,7 +70,7 @@ func TestSingleTermIndex(t *testing.T) {
 		}
 	}()
 
-	var index Indexer
+	var index *SingleTermIndex
 	var lexicon Lexicon
 
 	lexicon = NewTrieLexicon()
@@ -106,6 +107,35 @@ func TestSingleTermIndex(t *testing.T) {
 				t.Errorf("Mismatched lexicon output at line %d: Expected '%s' (len: %d). Got '%s' (len: %d)",
 					i+1, expected, len(expected), line, len(line))
 			}
+		}
+	}
+
+	if term, ok := index.Retrieve("since"); !ok {
+		t.Errorf("Failed to find expected term 'since' in index")
+	} else {
+		if idf := term.Idf(index.DocumentCount); idf != 1 {
+			t.Errorf("Failed to compute IDF. Expected %0.6f. Got %0.6f",
+				1, idf)
+		}
+
+		if tf := term.Tf(); tf != 2 {
+			t.Errorf("Failed to compute TF. Expected %d. Got %d",
+				2, tf)
+		}
+	}
+
+	if term, ok := index.Retrieve("jets"); !ok {
+		t.Errorf("Failed to find expected term 'since' in index")
+	} else {
+		expected := 1 + math.Log10(2.0/1.0)
+		if idf := term.Idf(index.DocumentCount); idf != expected {
+			t.Errorf("Failed to compute IDF. Expected %0.6f. Got %0.6f",
+				expected, idf)
+		}
+
+		if tf := term.Tf(); tf != 1 {
+			t.Errorf("Failed to compute TF. Expected %d. Got %d",
+				1, tf)
 		}
 	}
 

@@ -4,6 +4,7 @@ import "io"
 import "encoding/json"
 import "sort"
 import "fmt"
+import "math"
 import "bytes"
 import "github.com/cwacek/irengine/scanner/filereader"
 import radix "github.com/cwacek/radix-go"
@@ -33,14 +34,17 @@ func (t *TrieLexicon) SetPLInitializer(pl_init PostingListInitializer) {
 	t.PLInit = pl_init
 }
 
-func (t *TrieLexicon) InsertToken(token *filereader.Token) {
+/* Insert a term in to the lexicon, and return the updated
+ * term frequency for that term */
+func (t *TrieLexicon) InsertToken(token *filereader.Token) LexiconTerm {
 
 	if token.Type == filereader.NullToken {
 		// This shouldn't get through, but ignore it if it does
-		return
+		return nil
 	}
 
 	log.Debugf("Looking for %s in the lexicon.", token)
+	var term LexiconTerm
 
 	if term, ok := t.FindTerm([]byte(token.Text)); ok {
 		// We found the term
@@ -56,6 +60,7 @@ func (t *TrieLexicon) InsertToken(token *filereader.Token) {
 		// Insert the new term
 		t.Insert(term.(radix.RadixTreeEntry))
 	}
+	return term
 }
 
 func (t *TrieLexicon) Print(w io.Writer) {
@@ -157,6 +162,15 @@ func (t *Term) PostingList() PostingList {
 	return t.Pl
 }
 
+func (t *Term) Tf_d(d filereader.DocumentId) float64 {
+	pl_entry, ok := t.PostingList().GetEntry(d)
+	if !ok {
+		return 0.0
+	}
+
+	return float64(pl_entry.Frequency())
+}
+
 func (t *Term) Tf() int {
 	return t.Tf_
 }
@@ -166,7 +180,9 @@ func (t *Term) Df() int {
 }
 
 func (t *Term) Idf(totalDocCount int) float64 {
-	return (float64(totalDocCount) / float64(t.PostingList().Len()))
+	plLen := t.Df()
+	log.Infof("%s has posting list length: %d", t.Text(), plLen)
+	return 1 + math.Log10(float64(totalDocCount)/float64(plLen))
 }
 
 func (t Term) String() string {

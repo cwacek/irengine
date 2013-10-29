@@ -11,7 +11,7 @@ type LexiconInitializer func(datadir string, memLimit int) PostingList
 type Lexicon interface {
 	radix.RadixTree
 	FindTerm([]byte) (LexiconTerm, bool)
-	InsertToken(*filereader.Token)
+	InsertToken(*filereader.Token) LexiconTerm
 	Print(io.Writer)
 	SetPLInitializer(PostingListInitializer)
 }
@@ -28,6 +28,7 @@ type TermFromTokenFunc func(*filereader.Token, PostingListInitializer) LexiconTe
 type LexiconTerm interface {
 	Text() string
 	Tf() int
+	Tf_d(d filereader.DocumentId) float64
 	Df() int
 	Idf(totalDocCount int) float64
 	PostingList() PostingList
