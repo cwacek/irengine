@@ -4,7 +4,6 @@ import "io"
 import "encoding/json"
 import "sort"
 import "fmt"
-import "math"
 import "bytes"
 import "github.com/cwacek/irengine/scanner/filereader"
 import radix "github.com/cwacek/radix-go"
@@ -91,8 +90,8 @@ func (t *TrieLexicon) Print(w io.Writer) {
 			panic(err)
 		}
 
-		dfSum += term.Df()
-		df_array = append(df_array, term.Df())
+		dfSum += Df(term)
+		df_array = append(df_array, Df(term))
 
 	}
 
@@ -162,27 +161,8 @@ func (t *Term) PostingList() PostingList {
 	return t.Pl
 }
 
-func (t *Term) Tf_d(d filereader.DocumentId) float64 {
-	pl_entry, ok := t.PostingList().GetEntry(d)
-	if !ok {
-		return 0.0
-	}
-
-	return float64(pl_entry.Frequency())
-}
-
 func (t *Term) Tf() int {
 	return t.Tf_
-}
-
-func (t *Term) Df() int {
-	return t.PostingList().Len()
-}
-
-func (t *Term) Idf(totalDocCount int) float64 {
-	plLen := t.Df()
-	log.Infof("%s has posting list length: %d", t.Text(), plLen)
-	return 1 + math.Log10(float64(totalDocCount)/float64(plLen))
 }
 
 func (t Term) String() string {

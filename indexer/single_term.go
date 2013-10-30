@@ -2,6 +2,7 @@ package indexer
 
 import "fmt"
 import "io"
+import "math"
 import "os"
 import "bytes"
 import "encoding/json"
@@ -328,7 +329,7 @@ func (t *SingleTermIndex) inserter() {
 			term.String(), info.TermTfIdf)
 		/* Update document-indexed statistics */
 		info.TermTfIdf[term.Text()] =
-			term.Tf_d(info.Id) * term.Idf(info.TermCount)
+			Tf_d(term, info.Id) * Idf(term, info.TermCount)
 
 		if term.Tf() > info.MaxTf {
 			info.MaxTf = term.Tf()
@@ -356,4 +357,26 @@ func (t *SingleTermIndex) WaitInsert() {
 
 func (t *SingleTermIndex) Len() int {
 	return t.DocumentCount
+}
+
+func Tf_d(t LexiconTerm, d filereader.DocumentId) float64 {
+	pl := t.PostingList()
+	log.Infof("Looking for entry for %d in posting list %v", d, pl)
+	log.Flush()
+	pl_entry, ok := t.PostingList().GetEntry(d)
+	if !ok {
+		return 0.0
+	}
+
+	return float64(pl_entry.Frequency())
+}
+
+func Df(t LexiconTerm) int {
+	return t.PostingList().Len()
+}
+
+func Idf(t LexiconTerm, totalDocCount int) float64 {
+	plLen := Df(t)
+	log.Infof("%s has posting list length: %d", t.Text(), plLen)
+	return 1 + math.Log10(float64(totalDocCount)/float64(plLen))
 }

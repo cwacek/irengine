@@ -28,9 +28,6 @@ type TermFromTokenFunc func(*filereader.Token, PostingListInitializer) LexiconTe
 type LexiconTerm interface {
 	Text() string
 	Tf() int
-	Tf_d(d filereader.DocumentId) float64
-	Df() int
-	Idf(totalDocCount int) float64
 	PostingList() PostingList
 	Register(token *filereader.Token)
 	String() string
