@@ -132,7 +132,7 @@ func (fc *FilterPlumbing) apply() {
 	var ok bool
 
 	for {
-		log.Debugf("Reading from %v", fc.Input().Pipe)
+		log.Tracef("Reading from %v", fc.Input().Pipe)
 		select {
 		case tok, ok = <-fc.Input().Pipe:
 			if !ok {
@@ -143,7 +143,7 @@ func (fc *FilterPlumbing) apply() {
 			continue
 		}
 
-		log.Debugf("%s received %s", fc.Id, tok)
+		log.Tracef("%s received %s", fc.Id, tok)
 
 		switch {
 		case tok.Type == filereader.SymbolToken:
