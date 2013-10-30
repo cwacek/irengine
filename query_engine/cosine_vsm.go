@@ -41,7 +41,7 @@ func (vsm *CosineVSM) ProcessQuery(
 			pl_entry = pl_iter.Value()
 			/* Add to the numerator for each document. We'll divide later */
 			docScores[pl_entry.DocId()] += float64(pl_entry.Frequency()) *
-				term.Idf(index.DocumentCount) *
+				indexer.Idf(term, index.DocumentCount) *
 				float64(query_tf[q_term.Text])
 		}
 
