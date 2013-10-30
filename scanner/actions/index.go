@@ -197,9 +197,13 @@ func (a *run_index_action) Run() {
 	}
 
 	index.WaitInsert()
+	if ctr == 0 {
+		log.Criticalf("No documents matched")
+		return
+	}
 
 	log.Flush()
 	fmt.Println(index.String())
-	index.PrintLexicon(os.Stdout)
 	index.(*indexer.SingleTermIndex).Save()
+	index.PrintLexicon(os.Stdout)
 }

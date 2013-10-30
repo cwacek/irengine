@@ -114,7 +114,7 @@ func (pl *positional_pl) InsertRawEntry(text string,
 		return false
 	}
 
-	log.Debug("Creating new positional entry")
+	log.Debug("Creating new entry")
 	entry := pl.entry_factory(docid)
 	log.Tracef("Adding position %d to entry", position)
 	entry.AddPosition(position)

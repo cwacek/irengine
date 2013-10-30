@@ -34,6 +34,9 @@ func (d *DocWalker) WalkDocuments(docroot, pattern string,
 
 	log.Infof("Reading documents matching %s from: %s", pattern, docroot)
 	filepath.Walk(docroot, d.read_file)
+	if d.worker_count == 0 {
+		close(d.output)
+	}
 
 	go d.signal_when_done()
 }
