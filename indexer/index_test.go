@@ -149,13 +149,17 @@ func TestDocMapSerialize(t *testing.T) {
 		filereader.DocumentId(10),
 		"Fred",
 		64,
+		1,
+		map[string]float64{"test": 2.42},
 	}
-	var expected1 = `{"Id":10,"HumanId":"Fred","TermCount":64}`
+	var expected1 = `{"Id":10,"HumanId":"Fred","TermCount":64,"MaxTf":1,"TermTfIdf":{"test":2.42}}`
 
 	var info2 = &StoredDocInfo{
 		filereader.DocumentId(11),
 		"James",
 		64,
+		1,
+		make(map[string]float64),
 	}
 
 	var buf = new(bytes.Buffer)
@@ -167,7 +171,7 @@ func TestDocMapSerialize(t *testing.T) {
 	var docmap = make(DocInfoMap)
 	docmap[info1.Id] = info1
 	docmap[info2.Id] = info2
-	expectedmap := `[{"Id":10,"HumanId":"Fred","TermCount":64},{"Id":11,"HumanId":"James","TermCount":64}]`
+	expectedmap := fmt.Sprintf(`[%s,{"Id":11,"HumanId":"James","TermCount":64,"MaxTf":1,"TermTfIdf":{}}]`, expected1)
 
 	if bytes, err := json.Marshal(docmap); err != nil {
 		t.Errorf("error marshalling: %v", err)

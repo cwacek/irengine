@@ -36,17 +36,17 @@ func (t *TrieLexicon) SetPLInitializer(pl_init PostingListInitializer) {
 
 /* Insert a term in to the lexicon, and return the updated
  * term frequency for that term */
-func (t *TrieLexicon) InsertToken(token *filereader.Token) LexiconTerm {
+func (t *TrieLexicon) InsertToken(token *filereader.Token) (term LexiconTerm) {
 
+	var ok bool
 	if token.Type == filereader.NullToken {
 		// This shouldn't get through, but ignore it if it does
 		return nil
 	}
 
 	log.Debugf("Looking for %s in the lexicon.", token)
-	var term LexiconTerm
 
-	if term, ok := t.FindTerm([]byte(token.Text)); ok {
+	if term, ok = t.FindTerm([]byte(token.Text)); ok {
 		// We found the term
 		log.Debugf("Found %s in the lexicon: %s", token.Text, term.String())
 

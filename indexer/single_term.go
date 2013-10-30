@@ -33,6 +33,8 @@ func (info *StoredDocInfo) Clone() (new_info *StoredDocInfo) {
 	new_info.HumanId = info.HumanId
 	new_info.TermCount = info.TermCount
 	new_info.Id = info.Id
+	new_info.MaxTf = info.MaxTf
+	new_info.TermTfIdf = info.TermTfIdf
 
 	return
 }
@@ -272,6 +274,7 @@ func (t *SingleTermIndex) Insert(d filereader.Document) {
 	}()
 
 	info := new(StoredDocInfo)
+	info.TermTfIdf = make(map[string]float64)
 	info.HumanId = d.OrigIdent()
 	info.Id = d.Identifier()
 	t.DocumentMap[info.Id] = info
@@ -310,9 +313,9 @@ func (t *SingleTermIndex) inserter() {
 			return
 		}
 
+		info = t.DocumentMap[token.DocId]
 		if token.Type == filereader.NullToken {
 			t.DocumentCount += 1
-			info = t.DocumentMap[token.DocId]
 			info.TermCount = termcounter
 			termcounter = 0
 			t.insertLock.Unlock()
@@ -321,6 +324,8 @@ func (t *SingleTermIndex) inserter() {
 
 		term = t.lexicon.InsertToken(token)
 
+		log.Debugf("about to insert weight for term %s in to weight map %v",
+			term.String(), info.TermTfIdf)
 		/* Update document-indexed statistics */
 		info.TermTfIdf[term.Text()] =
 			term.Tf_d(info.Id) * term.Idf(info.TermCount)
