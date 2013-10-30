@@ -360,9 +360,6 @@ func (t *SingleTermIndex) Len() int {
 }
 
 func Tf_d(t LexiconTerm, d filereader.DocumentId) float64 {
-	pl := t.PostingList()
-	log.Infof("Looking for entry for %d in posting list %v", d, pl)
-	log.Flush()
 	pl_entry, ok := t.PostingList().GetEntry(d)
 	if !ok {
 		return 0.0
@@ -377,6 +374,5 @@ func Df(t LexiconTerm) int {
 
 func Idf(t LexiconTerm, totalDocCount int) float64 {
 	plLen := Df(t)
-	log.Infof("%s has posting list length: %d", t.Text(), plLen)
 	return 1 + math.Log10(float64(totalDocCount)/float64(plLen))
 }
