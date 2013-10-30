@@ -5,6 +5,7 @@ import "strings"
 import "github.com/cwacek/irengine/scanner/filereader"
 
 type Query struct {
+	Id   string
 	Text string
 }
 
