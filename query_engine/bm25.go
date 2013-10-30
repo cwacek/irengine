@@ -3,13 +3,15 @@ package query_engine
 import log "github.com/cihub/seelog"
 import "github.com/cwacek/irengine/indexer"
 import "github.com/cwacek/irengine/scanner/filereader"
-import "math"
 import "sort"
 
-type CosineVSM struct {
+type BM25 struct {
+	k1 float64
+	k2 int
+	b  float64
 }
 
-func (vsm *CosineVSM) ProcessQuery(
+func (bm *BM25) ProcessQuery(
 	query_terms []*filereader.Token,
 	index *indexer.SingleTermIndex) Response {
 
@@ -22,6 +24,7 @@ func (vsm *CosineVSM) ProcessQuery(
 		pl        indexer.PostingList
 		pl_iter   indexer.PostingListIterator
 		pl_entry  indexer.PostingListEntry
+		doc_info  *indexer.StoredDocInfo
 	)
 
 	for _, q_term = range query_terms {
@@ -29,7 +32,9 @@ func (vsm *CosineVSM) ProcessQuery(
 		log.Infof("Processing token %s. Have %d", q_term, query_tf[q_term.Text])
 	}
 
-	query_weight := 0.0
+	var partial_score, tf_d float64
+	avgDocLen := float64(index.TermCount) / float64(index.DocumentCount)
+
 	/* For each term in the query */
 	for _, q_term = range query_terms {
 		term, ok = index.Retrieve(q_term.Text)
@@ -37,42 +42,30 @@ func (vsm *CosineVSM) ProcessQuery(
 			continue
 		}
 
+		// Iterate over the whole posting list
 		pl = term.PostingList()
 		for pl_iter = pl.Iterator(); pl_iter.Next(); {
 			pl_entry = pl_iter.Value()
-			/* Add to the numerator for each document. We'll divide later */
-			docScores[pl_entry.DocId()] += float64(pl_entry.Frequency()) *
-				indexer.Idf(term, index.DocumentCount) *
-				float64(query_tf[q_term.Text])
-		}
+			tf_d = float64(pl_entry.Frequency())
+			doc_info = index.DocumentMap[pl_entry.DocId()]
 
-		query_weight += math.Pow(float64(query_tf[q_term.Text])*1, 2.0)
+			/* Add to the numerator for each document. We'll divide later */
+			partial_score = tf_d * (bm.k1 + 1)
+			partial_score /= tf_d +
+				bm.k1*((1.0-bm.b)+(bm.b*(float64(doc_info.TermCount)/avgDocLen)))
+
+			docScores[pl_entry.DocId()] +=
+				indexer.Idf(term, index.DocumentCount) * partial_score
+		}
 	}
 
-	/* Now we need to sum the square of the document weights for every term
-	 * *in the document*. We'll use the list of documents we obtained as
-	 * partial scores. */
-
 	responseSet := make(Response, 0)
-	var doc_weight, term_tfidf float64
-	var doc_info *indexer.StoredDocInfo
-
-	for id, numerator := range docScores {
-
+	for id, score := range docScores {
 		doc_info = index.DocumentMap[id]
 
-		for _, term_tfidf = range doc_info.TermTfIdf {
-			doc_weight += math.Pow(term_tfidf, 2.0)
-		}
-
-		responseSet = append(responseSet, &Result{doc_info.HumanId,
-			numerator / math.Sqrt(doc_weight*query_weight)})
+		responseSet = append(responseSet, &Result{doc_info.HumanId, score})
 	}
 
 	sort.Sort(responseSet)
 	return responseSet
-}
-
-func NewCosineVSM() RelevanceRanker {
-	return &CosineVSM{}
 }
