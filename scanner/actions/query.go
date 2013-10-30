@@ -11,7 +11,7 @@ import "bufio"
 import "encoding/json"
 import "strings"
 
-func QuerierRunner() *query_action {
+func QueryRunner() *query_action {
 	return new(query_action)
 }
 
@@ -51,12 +51,13 @@ func (a *query_action) BufferQueriesFromFile(r io.Reader) {
 
 	for i := 0; scanner.Scan(); i++ {
 		line = scanner.Text()
+		log.Debugf("Read %s from file", line)
 		switch {
 
 		case strings.HasPrefix(line, "<num>"):
 			q_id = strings.TrimPrefix(line, "<num> Number: ")
 
-		case strings.HasPrefix(line, "<topic>"):
+		case strings.HasPrefix(line, "<title>"):
 
 			if q_id == "" {
 				log.Criticalf("Parsed query topic before identifier on line %d", i)
@@ -64,11 +65,12 @@ func (a *query_action) BufferQueriesFromFile(r io.Reader) {
 			}
 
 			query = &query_engine.Query{Id: q_id,
-				Text: strings.TrimPrefix(line, "<topic> Topic: ")}
+				Text: strings.TrimSpace(strings.TrimPrefix(line, "<title> Topic: "))}
 
 			a.queryBuffer = append(a.queryBuffer, query)
 			q_id = ""
 
+			log.Debugf("Created query %v. BUffer is %v", query, a.queryBuffer)
 		}
 	}
 }
@@ -76,7 +78,7 @@ func (a *query_action) BufferQueriesFromFile(r io.Reader) {
 func ZMQConnect(host string, port int) (sock *zmq.Socket, err error) {
 
 	log.Debug("Setting up socket")
-	if sock, err = zmq.NewSocket(zmq.REQ); err == nil {
+	if sock, err = zmq.NewSocket(zmq.REQ); err != nil {
 		return
 	}
 
@@ -89,6 +91,7 @@ func ZMQConnect(host string, port int) (sock *zmq.Socket, err error) {
 }
 
 func (a *query_action) Run() {
+	defer log.Flush()
 	var (
 		err       error
 		requester *zmq.Socket
@@ -113,10 +116,11 @@ func (a *query_action) Run() {
 
 	if requester, err = ZMQConnect(*a.host, *a.port); err != nil {
 		log.Criticalf("Failed to connect socket: %v", err)
+		return
 	}
 	defer requester.Close()
 
-	for query := range a.queryBuffer {
+	for _, query := range a.queryBuffer {
 
 		if asJSON, err = json.Marshal(query); err == nil {
 			log.Infof("Sending %s", asJSON)

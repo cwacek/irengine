@@ -16,5 +16,6 @@ func Run() {
 		actions.PrintTokens(),
 		actions.RunIndexer(),
 		actions.QueryEngineRunner(),
+		actions.QueryRunner(),
 	)
 }
