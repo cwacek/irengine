@@ -325,11 +325,18 @@ func (t *SingleTermIndex) inserter() {
 
 		term = t.lexicon.InsertToken(token)
 
-		log.Debugf("about to insert weight for term %s in to weight map %v",
-			term.String(), info.TermTfIdf)
 		/* Update document-indexed statistics */
-		info.TermTfIdf[term.Text()] =
-			Tf_d(term, info.Id) * Idf(term, info.TermCount)
+
+		// Add 1 to the document count to make sure we count this one
+		weight := Tf_d(term, info.Id) * Idf(term, t.DocumentCount+1)
+
+		log.Debugf("Setting weight for %s in %s to %0.4f * %0.4f = %0.4f",
+			token.Text, info.HumanId, Tf_d(term, info.Id), Idf(term, t.DocumentCount), weight)
+		if math.IsInf(weight, 0) {
+			panic("TO INFINITY AND BEYOND!")
+		}
+
+		info.TermTfIdf[term.Text()] = weight
 
 		if term.Tf() > info.MaxTf {
 			info.MaxTf = term.Tf()
@@ -373,6 +380,6 @@ func Df(t LexiconTerm) int {
 }
 
 func Idf(t LexiconTerm, totalDocCount int) float64 {
-	plLen := Df(t)
-	return 1 + math.Log10(float64(totalDocCount)/float64(plLen))
+	plLen := float64(Df(t))
+	return math.Log10((float64(totalDocCount) - plLen + 0.5) / (plLen + 0.5))
 }
