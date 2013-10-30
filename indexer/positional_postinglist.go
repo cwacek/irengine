@@ -128,7 +128,6 @@ func (pl *positional_pl) InsertRawEntry(text string,
 func (pl positional_pl) String() string {
 	entries := make([]string, 0)
 
-	log.Tracef("Converting PL %#v to string", pl)
 	for i := pl.list.Iterator(); i.Next(); {
 		entries = append(entries, i.Value().(PostingListEntry).Serialize())
 	}
@@ -332,12 +331,6 @@ func (p *positional_sk_entry) String() string {
 
 	parts = append(parts, strconv.FormatInt(int64(p.docId), 10))
 	parts = append(parts, strconv.Itoa(len(p.positions)))
-
-	/*for i,position := range p.positions {*/
-	/*posParts[i] =  strconv.Itoa(position)*/
-	/*}*/
-
-	/*parts = append(parts, "{" + strings.Join(posParts,",")+ "}")*/
 
 	log.Tracef("Writing PL entry: %#v", parts)
 	return "(" + strings.Join(parts, ", ") + ")"
