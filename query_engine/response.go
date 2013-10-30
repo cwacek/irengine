@@ -8,4 +8,22 @@ type Result struct {
 }
 
 // A sorted set of results
-type Response []Result
+type Response []*Result
+
+func (r Response) Len() int {
+	return len(r)
+}
+
+func (r Response) Less(i, j int) bool {
+	if r[i].Score > r[j].Score {
+		return true
+	}
+
+	return false
+}
+
+func (r Response) Swap(i, j int) {
+	tmp := r[i]
+	r[i] = r[j]
+	r[j] = tmp
+}
