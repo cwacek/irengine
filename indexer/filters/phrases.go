@@ -125,6 +125,11 @@ func (f *PhraseFilter) NotifyDocComplete() {
 		}
 	}
 
+	if len(f.tokenbuffer) < 25 {
+		f.stopwords = make(map[string]int)
+
+	}
+
 	log.Debugf("Stopwords: %v", f.stopwords)
 
 	position_counter := 0
