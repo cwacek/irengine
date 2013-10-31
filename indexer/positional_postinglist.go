@@ -17,6 +17,7 @@ var (
 		Create: func() PostingList {
 			pl := new(positional_pl)
 			pl.Length = 0
+			pl.positional = false
 			pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
 			pl.entry_factory = NewBasicEntry
 			return pl
@@ -28,6 +29,7 @@ var (
 		Create: func() PostingList {
 			pl := new(positional_pl)
 			pl.Length = 0
+			pl.positional = true
 			pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
 			pl.entry_factory = NewPositionalEntry
 			return pl
@@ -58,7 +60,12 @@ func (it *pl_iterator) Key() int {
 type positional_pl struct {
 	list          *skiplist.SkipList
 	Length        int
+	positional    bool
 	entry_factory func(filereader.DocumentId) PostingListEntry
+}
+
+func (pl *positional_pl) IsPositional() bool {
+	return pl.positional
 }
 
 func (pl *positional_pl) EntryFactory(docid filereader.DocumentId) PostingListEntry {

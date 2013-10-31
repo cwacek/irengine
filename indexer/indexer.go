@@ -60,6 +60,8 @@ type PostingList interface {
 	InsertRawEntry(text string, docid filereader.DocumentId, pos int) bool
 	InsertCompleteEntry(pl_entry PostingListEntry) bool
 
+	IsPositional() bool
+
 	String() string
 	Len() int
 	Iterator() PostingListIterator
