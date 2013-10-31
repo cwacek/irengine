@@ -14,6 +14,7 @@ type Lexicon interface {
 	InsertToken(*filereader.Token) LexiconTerm
 	Print(io.Writer)
 	SetPLInitializer(PostingListInitializer)
+	IsPositional() bool
 }
 
 type PersistentLexicon interface {

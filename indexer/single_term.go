@@ -106,7 +106,7 @@ type SingleTermIndex struct {
 }
 
 func (t *SingleTermIndex) IsPositional() bool {
-	return t.lexicon.(*TrieLexicon).PLInit.Positional
+	return t.lexicon.IsPositional()
 }
 
 func (t *SingleTermIndex) TermCount() int {

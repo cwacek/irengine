@@ -25,6 +25,10 @@ func (t *TrieLexicon) FindTerm(key []byte) (LexiconTerm, bool) {
 	return nil, false
 }
 
+func (t *TrieLexicon) IsPositional() bool {
+	return t.PLInit.Positional
+}
+
 func (t *TrieLexicon) SetPLInitializer(pl_init PostingListInitializer) {
 	if t.Len() > 0 {
 		panic("Cannot set PL initializer after terms are inserted")
