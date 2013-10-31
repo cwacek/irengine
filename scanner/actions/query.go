@@ -20,6 +20,7 @@ type query_action struct {
 
 	queryFile *string
 	engine    *string
+	indexPref *string
 
 	host *string
 	port *int
@@ -46,6 +47,10 @@ func (a *query_action) DefineFlags(fs *flag.FlagSet) {
 	a.host = fs.String("index.host", "localhost",
 		"The host running the query engine")
 
+	a.indexPref = fs.String("index.pref", "", `
+  A comma separated list specifying the indices that
+  should be used, in order of preference.`)
+
 	a.port = fs.Int("index.port", 10800,
 		"The port on which the query engine can be found")
 }
@@ -71,8 +76,10 @@ func (a *query_action) BufferQueriesFromFile(r io.Reader) {
 				continue
 			}
 
-			query = &query_engine.Query{Id: q_id,
-				Text: strings.TrimSpace(strings.TrimPrefix(line, "<title> Topic: "))}
+			query = &query_engine.Query{
+				Id:   q_id,
+				Text: strings.TrimSpace(strings.TrimPrefix(line, "<title> Topic: ")),
+			}
 
 			a.queryBuffer = append(a.queryBuffer, query)
 			q_id = ""
@@ -108,13 +115,17 @@ func (a *query_action) Run() {
 
 	SetupLogging(*a.verbosity)
 
-	if *a.queryFile == "" {
+	switch {
+	case *a.queryFile == "":
 		log.Criticalf("queryfile is required argument")
 		os.Exit(1)
-	}
 
-	if *a.engine == "" {
+	case *a.engine == "":
 		log.Criticalf("ranking is required argument")
+		os.Exit(1)
+
+	case *a.indexPref == "":
+		log.Criticalf("index.pref is required argument")
 		os.Exit(1)
 	}
 
@@ -134,6 +145,7 @@ func (a *query_action) Run() {
 
 	for _, query := range a.queryBuffer {
 		query.Engine = *a.engine
+		query.IndexPref = *a.indexPref
 
 		if asJSON, err = json.Marshal(query); err == nil {
 			log.Debugf("Sending %s", asJSON)
