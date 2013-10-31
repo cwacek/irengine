@@ -46,8 +46,9 @@ type PostingListEntry interface {
 }
 
 type PostingListInitializer struct {
-	Create func() PostingList
-	Name   string
+	Create     func() PostingList
+	Name       string
+	Positional bool
 }
 
 type PostingList interface {
@@ -59,8 +60,6 @@ type PostingList interface {
 	InsertEntry(token *filereader.Token) bool
 	InsertRawEntry(text string, docid filereader.DocumentId, pos int) bool
 	InsertCompleteEntry(pl_entry PostingListEntry) bool
-
-	IsPositional() bool
 
 	String() string
 	Len() int

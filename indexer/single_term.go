@@ -105,6 +105,10 @@ type SingleTermIndex struct {
 	shutdown        chan bool
 }
 
+func (t *SingleTermIndex) IsPositional() bool {
+	return t.lexicon.(*TrieLexicon).PLInit.Positional
+}
+
 func (t *SingleTermIndex) TermCount() int {
 	return t.lexicon.Len()
 }
