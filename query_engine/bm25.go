@@ -37,15 +37,19 @@ func (bm *BM25) ProcessQuery(
 	}
 
 	var partial_score, tf_d float64
-	avgDocLen := float64(index.TermCount) / float64(index.DocumentCount)
+	avgDocLen := float64(index.TermCount()) / float64(index.DocumentCount)
 
 	/* For each term in the query */
-	for _, q_term = range query_terms {
+	var i int
+	for i, q_term = range query_terms {
 		q_term_tf := query_tf[q_term.Text]
 		term, ok = index.Retrieve(q_term.Text)
 		if !ok {
 			continue
 		}
+
+		log.Debugf("Calculating score for query term %d: %s [%d]",
+			i, q_term.Text, q_term_tf)
 
 		// Iterate over the whole posting list
 		pl = term.PostingList()
@@ -54,10 +58,13 @@ func (bm *BM25) ProcessQuery(
 			tf_d = float64(pl_entry.Frequency())
 			doc_info = index.DocumentMap[pl_entry.DocId()]
 
+			log.Debugf("Obtained PL Entry %v with frequency %f", pl_entry, tf_d)
 			/* Add to the numerator for each document. We'll divide later */
 			partial_score = tf_d * (bm.k1 + 1)
 			partial_score /= tf_d +
 				bm.k1*((1.0-bm.b)+(bm.b*(float64(doc_info.TermCount)/avgDocLen)))
+
+			log.Debugf("Doc TermCount: %d, avgDocLen: %f", doc_info.TermCount, avgDocLen)
 
 			partial_score *=
 				(float64((bm.k2+1)*q_term_tf) / float64(bm.k2*q_term_tf))
@@ -74,7 +81,6 @@ func (bm *BM25) ProcessQuery(
 		log.Debugf("Doc: %s, Score: %0.4f", doc_info.HumanId, score)
 		responseSet.Append(&Result{doc_info.HumanId, score})
 	}
-	log.Debugf("identified result set: %v", responseSet)
 
 	sort.Sort(responseSet)
 	return responseSet
