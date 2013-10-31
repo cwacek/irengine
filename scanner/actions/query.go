@@ -19,6 +19,7 @@ type query_action struct {
 	Args
 
 	queryFile *string
+	engine    *string
 
 	host *string
 	port *int
@@ -35,6 +36,12 @@ func (a *query_action) DefineFlags(fs *flag.FlagSet) {
 
 	a.queryFile = fs.String("queryfile", "",
 		"A file containing a bunch of queries to run in bulk")
+
+	a.engine = fs.String("ranking", "", `
+  The ranking engine to use. Options are:
+    COSINE    Cosine-normalized VSM similarity
+    BM25      BM25 with Sparks-weight IDF
+    LM        Query-likelihood with Dirichlet Smoothing`)
 
 	a.host = fs.String("index.host", "localhost",
 		"The host running the query engine")
@@ -106,6 +113,11 @@ func (a *query_action) Run() {
 		os.Exit(1)
 	}
 
+	if *a.engine == "" {
+		log.Criticalf("ranking is required argument")
+		os.Exit(1)
+	}
+
 	if file, err := os.Open(*a.queryFile); err == nil {
 		a.BufferQueriesFromFile(file)
 
@@ -121,22 +133,31 @@ func (a *query_action) Run() {
 	defer requester.Close()
 
 	for _, query := range a.queryBuffer {
+		query.Engine = *a.engine
 
 		if asJSON, err = json.Marshal(query); err == nil {
-			log.Tracef("Sending %s", asJSON)
+			log.Debugf("Sending %s", asJSON)
 			requester.SendBytes(asJSON, 0)
+		} else {
+			panic(err)
 		}
 
 		// Wait for reply:
 		if reply, err := requester.RecvBytes(0); err == nil {
-			log.Tracef("Received %s", reply)
+			log.Debugf("Received %s", reply)
 
-			if err = json.Unmarshal(reply, &response); err != nil {
+			err = json.Unmarshal(reply, &response)
+			switch {
+			case err != nil:
 				panic(err)
-			}
 
-			for i, result := range response {
-				fmt.Printf("%s Q0 %s %d %0.6f STANDARD\n", query.Id, result.Document, i, result.Score)
+			case response.Error != "":
+				log.Criticalf("Query failed: %s", response.Error)
+
+			default:
+				for i, result := range response.Results {
+					fmt.Printf("%s Q0 %s %d %0.6f STANDARD\n", query.Id, result.Document, i, result.Score)
+				}
 			}
 
 		} else {

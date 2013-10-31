@@ -13,5 +13,5 @@ func RegisterRankingEngine(name string, r RelevanceRanker) {
 }
 
 type RelevanceRanker interface {
-	ProcessQuery([]*filereader.Token, *indexer.SingleTermIndex) Response
+	ProcessQuery([]*filereader.Token, *indexer.SingleTermIndex) *Response
 }

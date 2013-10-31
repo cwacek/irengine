@@ -15,7 +15,7 @@ type CosineVSM struct {
 
 func (vsm *CosineVSM) ProcessQuery(
 	query_terms []*filereader.Token,
-	index *indexer.SingleTermIndex) Response {
+	index *indexer.SingleTermIndex) *Response {
 
 	var (
 		q_term    *filereader.Token
@@ -64,7 +64,7 @@ func (vsm *CosineVSM) ProcessQuery(
 	 * *in the document*. We'll use the list of documents we obtained as
 	 * partial scores. */
 
-	responseSet := make(Response, 0)
+	responseSet := NewResponse()
 	var doc_weight, term_tfidf float64
 	var doc_info *indexer.StoredDocInfo
 
@@ -78,7 +78,8 @@ func (vsm *CosineVSM) ProcessQuery(
 
 		log.Debugf("Document weight for %s is %0.4f", doc_info.HumanId, doc_weight)
 
-		responseSet = append(responseSet, &Result{doc_info.HumanId,
+		responseSet.Append(&Result{
+			doc_info.HumanId,
 			numerator / math.Sqrt(doc_weight*query_weight)})
 	}
 

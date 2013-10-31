@@ -8,14 +8,29 @@ type Result struct {
 }
 
 // A sorted set of results
-type Response []*Result
+type Response struct {
+	Results []*Result
+	Error   string
+}
+
+func ErrorResponse(msg string) *Response {
+	return &Response{nil, msg}
+}
+
+func NewResponse() *Response {
+	return &Response{make([]*Result, 0), ""}
+}
+
+func (r *Response) Append(result *Result) {
+	r.Results = append(r.Results, result)
+}
 
 func (r Response) Len() int {
-	return len(r)
+	return len(r.Results)
 }
 
 func (r Response) Less(i, j int) bool {
-	if r[i].Score > r[j].Score {
+	if r.Results[i].Score > r.Results[j].Score {
 		return true
 	}
 
@@ -23,7 +38,7 @@ func (r Response) Less(i, j int) bool {
 }
 
 func (r Response) Swap(i, j int) {
-	tmp := r[i]
-	r[i] = r[j]
-	r[j] = tmp
+	tmp := r.Results[i]
+	r.Results[i] = r.Results[j]
+	r.Results[j] = tmp
 }

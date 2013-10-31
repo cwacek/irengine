@@ -5,8 +5,9 @@ import "strings"
 import "github.com/cwacek/irengine/scanner/filereader"
 
 type Query struct {
-	Id   string
-	Text string
+	Id     string
+	Text   string
+	Engine string
 }
 
 func (q *Query) TokenizeToChan(out chan *filereader.Token) {

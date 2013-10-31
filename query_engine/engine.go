@@ -41,10 +41,12 @@ func (engine *ZeroMQEngine) Start() error {
 	var (
 		msg            []byte
 		e              error
+		ok             bool
 		socket         *zmq.Socket
 		query          Query
-		resultSet      Response
+		resultSet      *Response
 		filteredTokens []*filereader.Token
+		ranker         RelevanceRanker
 	)
 
 	if socket, e = zmq.NewSocket(zmq.REP); e != nil {
@@ -70,12 +72,25 @@ func (engine *ZeroMQEngine) Start() error {
 		}
 		log.Infof("Decoded %v", query)
 
+		if ranker, ok = RankingEngines[query.Engine]; !ok {
+
+			if msg, e = json.Marshal(
+				ErrorResponse("Unsupported ranking engine: " + query.Engine)); e != nil {
+				panic(e)
+			}
+
+			socket.SendBytes(msg, 0)
+			continue
+		}
+
 		query.TokenizeToChan(engine.filterStart)
 
 		filteredTokens = engine.getDocTokens(engine.filterEnd)
 
-		resultSet = engine.ranker.ProcessQuery(
+		log.Infof("Processing query with %v", ranker)
+		resultSet = ranker.ProcessQuery(
 			filteredTokens, engine.index)
+		log.Infof("Returned result set %v", resultSet)
 
 		if msg, e = json.Marshal(resultSet); e != nil {
 			panic(e)
@@ -86,12 +101,11 @@ func (engine *ZeroMQEngine) Start() error {
 
 }
 
-func (engine *ZeroMQEngine) Init(index *indexer.SingleTermIndex, port int, ranker RelevanceRanker) error {
+func (engine *ZeroMQEngine) Init(index *indexer.SingleTermIndex, port int) error {
 
 	engine.index = index
 	engine.port = port
 	engine.control = make(chan int)
-	engine.ranker = ranker
 
 	go engine.watch_for_exit()
 

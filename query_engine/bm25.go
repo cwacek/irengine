@@ -17,7 +17,7 @@ func init() {
 
 func (bm *BM25) ProcessQuery(
 	query_terms []*filereader.Token,
-	index *indexer.SingleTermIndex) Response {
+	index *indexer.SingleTermIndex) *Response {
 
 	var (
 		q_term    *filereader.Token
@@ -67,12 +67,14 @@ func (bm *BM25) ProcessQuery(
 		}
 	}
 
-	responseSet := make(Response, 0)
+	responseSet := NewResponse()
 	for id, score := range docScores {
 		doc_info = index.DocumentMap[id]
 
-		responseSet = append(responseSet, &Result{doc_info.HumanId, score})
+		log.Debugf("Doc: %s, Score: %0.4f", doc_info.HumanId, score)
+		responseSet.Append(&Result{doc_info.HumanId, score})
 	}
+	log.Debugf("identified result set: %v", responseSet)
 
 	sort.Sort(responseSet)
 	return responseSet

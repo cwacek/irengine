@@ -37,7 +37,6 @@ func (a *query_engine_action) DefineFlags(fs *flag.FlagSet) {
 func (a *query_engine_action) Run() {
 	var index *indexer.SingleTermIndex
 	var err error
-	var ranker query_engine.RelevanceRanker
 
 	SetupLogging(*a.verbosity)
 
@@ -54,12 +53,9 @@ func (a *query_engine_action) Run() {
 	}
 
 	fmt.Println("Loaded index: " + index.String())
-	index.PrintLexicon(os.Stdout)
-
-	ranker = query_engine.NewCosineVSM()
 
 	engine := &query_engine.ZeroMQEngine{}
-	engine.Init(index, *a.port, ranker)
+	engine.Init(index, *a.port)
 	go engine.Start()
 
 	indefinite_wait := make(chan int)
