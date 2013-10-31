@@ -6,6 +6,10 @@ import "github.com/cwacek/irengine/scanner/filereader"
 import "math"
 import "sort"
 
+func init() {
+	RegisterRankingEngine("COSINE", &CosineVSM{})
+}
+
 type CosineVSM struct {
 }
 

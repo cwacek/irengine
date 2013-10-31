@@ -11,6 +11,10 @@ type BM25 struct {
 	b  float64
 }
 
+func init() {
+	RegisterRankingEngine("BM25", &BM25{1.2, 1, 0.75})
+}
+
 func (bm *BM25) ProcessQuery(
 	query_terms []*filereader.Token,
 	index *indexer.SingleTermIndex) Response {
