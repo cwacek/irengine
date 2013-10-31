@@ -111,7 +111,7 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 	// Allow anything to use the stopword list (even if it makes
 	// no sense)
 	if filter, err := filters.GetFactory("stopwords"); err != nil {
-		log.Warnf("Not using stop word list")
+		return nil, errors.New("Can't load stopword filter module")
 	} else {
 		if _, err := os.Lstat(*a.stopWordList); err == nil {
 			log.Info("Using stopword list")
@@ -125,8 +125,7 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 			filter.(*filters.StopWordFilterFactory).Filename = path
 			index.AddFilter(filter.Instantiate())
 		} else {
-			log.Criticalf("Couldn't read stop word list: %v", err)
-			return nil, err
+			log.Warn("Not using stopword list")
 		}
 	}
 
