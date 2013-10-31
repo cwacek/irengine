@@ -54,6 +54,7 @@ func (a *query_engine_action) Run() {
 	}
 
 	fmt.Println("Loaded index: " + index.String())
+	index.PrintLexicon(os.Stdout)
 
 	ranker = query_engine.NewCosineVSM()
 

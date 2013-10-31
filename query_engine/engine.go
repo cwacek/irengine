@@ -54,15 +54,10 @@ func (engine *ZeroMQEngine) Start() error {
 
 	log.Infof("Starting ZeroMQEngine")
 	socket.Bind(fmt.Sprintf("tcp://*:%d", engine.port))
-	go engine.watch_for_exit()
-
-	engine.filterStart = make(chan *filereader.Token, 100)
-	engine.filterEnd = make(chan *filereader.Token, 100)
-
-	go engine.index.FilterTokens(engine.filterStart, engine.filterEnd)
 
 	for {
-		log.Tracef("ZeroMQEngine waiting for messages")
+		log.Debugf("ZeroMQEngine waiting for messages")
+		log.Flush()
 		if msg, e = socket.RecvBytes(0); e != nil {
 			panic(e)
 		}
@@ -97,6 +92,13 @@ func (engine *ZeroMQEngine) Init(index *indexer.SingleTermIndex, port int, ranke
 	engine.port = port
 	engine.control = make(chan int)
 	engine.ranker = ranker
+
+	go engine.watch_for_exit()
+
+	engine.filterStart = make(chan *filereader.Token, 100)
+	engine.filterEnd = make(chan *filereader.Token, 100)
+
+	go engine.index.FilterTokens(engine.filterStart, engine.filterEnd)
 
 	return nil
 }

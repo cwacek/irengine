@@ -123,17 +123,22 @@ func (a *query_action) Run() {
 	for _, query := range a.queryBuffer {
 
 		if asJSON, err = json.Marshal(query); err == nil {
-			log.Infof("Sending %s", asJSON)
+			log.Tracef("Sending %s", asJSON)
 			requester.SendBytes(asJSON, 0)
 		}
 
 		// Wait for reply:
 		if reply, err := requester.RecvBytes(0); err == nil {
-			log.Infof("Received %s", reply)
-			err = json.Unmarshal(reply, &response)
-			if err != nil {
+			log.Tracef("Received %s", reply)
+
+			if err = json.Unmarshal(reply, &response); err != nil {
 				panic(err)
 			}
+
+			for i, result := range response {
+				fmt.Printf("%s Q0 %s %d %0.6f STANDARD\n", query.Id, result.Document, i, result.Score)
+			}
+
 		} else {
 			panic(err)
 		}

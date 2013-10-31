@@ -22,6 +22,7 @@ func (vsm *CosineVSM) ProcessQuery(
 		pl        indexer.PostingList
 		pl_iter   indexer.PostingListIterator
 		pl_entry  indexer.PostingListEntry
+		partial   float64
 	)
 
 	for _, q_term = range query_terms {
@@ -30,6 +31,7 @@ func (vsm *CosineVSM) ProcessQuery(
 	}
 
 	query_weight := 0.0
+
 	/* For each term in the query */
 	for _, q_term = range query_terms {
 		term, ok = index.Retrieve(q_term.Text)
@@ -40,14 +42,19 @@ func (vsm *CosineVSM) ProcessQuery(
 		pl = term.PostingList()
 		for pl_iter = pl.Iterator(); pl_iter.Next(); {
 			pl_entry = pl_iter.Value()
+
 			/* Add to the numerator for each document. We'll divide later */
-			docScores[pl_entry.DocId()] += float64(pl_entry.Frequency()) *
+			partial = float64(pl_entry.Frequency()) *
 				indexer.Idf(term, index.DocumentCount) *
 				float64(query_tf[q_term.Text])
+			log.Debugf("Computed dot-product partial: %0.4f", partial)
+			docScores[pl_entry.DocId()] += partial
 		}
 
 		query_weight += math.Pow(float64(query_tf[q_term.Text])*1, 2.0)
 	}
+
+	log.Debugf("Computed a query weight of %0.4f", query_weight)
 
 	/* Now we need to sum the square of the document weights for every term
 	 * *in the document*. We'll use the list of documents we obtained as
@@ -65,11 +72,14 @@ func (vsm *CosineVSM) ProcessQuery(
 			doc_weight += math.Pow(term_tfidf, 2.0)
 		}
 
+		log.Debugf("Document weight for %s is %0.4f", doc_info.HumanId, doc_weight)
+
 		responseSet = append(responseSet, &Result{doc_info.HumanId,
 			numerator / math.Sqrt(doc_weight*query_weight)})
 	}
 
 	sort.Sort(responseSet)
+	log.Debugf("CosineVSM returning: %v", responseSet)
 	return responseSet
 }
 
