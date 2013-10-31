@@ -41,6 +41,7 @@ func (bm *BM25) ProcessQuery(
 
 	/* For each term in the query */
 	for _, q_term = range query_terms {
+		q_term_tf := query_tf[q_term.Text]
 		term, ok = index.Retrieve(q_term.Text)
 		if !ok {
 			continue
@@ -57,6 +58,9 @@ func (bm *BM25) ProcessQuery(
 			partial_score = tf_d * (bm.k1 + 1)
 			partial_score /= tf_d +
 				bm.k1*((1.0-bm.b)+(bm.b*(float64(doc_info.TermCount)/avgDocLen)))
+
+			partial_score *=
+				(float64((bm.k2+1)*q_term_tf) / float64(bm.k2*q_term_tf))
 
 			docScores[pl_entry.DocId()] +=
 				indexer.Idf(term, index.DocumentCount) * partial_score
