@@ -206,13 +206,13 @@ func TestConstrainedMemory(t *testing.T) {
 		return
 	}
 
-	defer func() {
-		os.RemoveAll(tmpDir)
-	}()
+	/*defer func() {*/
+	/*os.RemoveAll(tmpDir)*/
+	/*}()*/
 
 	log.Infof("Using temporary directory: %s", tmpDir)
 
-	lex := NewLexicon(10000, tmpDir)
+	lex := NewLexicon(5, tmpDir)
 
 	for _, document := range testDocs {
 		log.Debugf("Inserting %s", document)
@@ -240,15 +240,41 @@ func TestConstrainedMemory(t *testing.T) {
 	for i, v := range buf1.Bytes() {
 		switch {
 		case i >= len(buf2_bytes):
-			t.Logf("Serialized: %s", buf1.String())
-			t.Logf("Deserialized: %s", buf2.String())
-			t.Errorf("Found end of deserialized, but serializedhad %c at %d", v, i)
+			t.Logf("Serialized:\n%s", buf1.String())
+			t.Logf("Deserialized:\n%s", buf2.String())
+			t.Errorf("Found end of deserialized, but serialized had %c at %d", v, i)
+			goto Fail
 
 		case v != buf2_bytes[i]:
-			t.Logf("Serialized: %s", buf1.String())
-			t.Logf("Deserialized: %s", buf2.String())
+			t.Logf("Serialized:\n%s", buf1.String())
+			t.Logf("Deserialized:\n%s", buf2.String())
 			t.Errorf("'%c' did not match expected '%c' at %d", v, buf2_bytes[i], i)
+			goto Fail
 		}
+	}
+
+Fail:
+
+	var orig, recovered index.LexiconTerm
+	var orig_pl, recovered_pl index.PostingList
+	var ok bool
+
+	orig, ok = lex.FindTerm([]byte("quick"))
+	orig_pl = orig.PostingList()
+
+	if !ok {
+		t.Errorf("Can't find 'quick' in index even though it shoudl be there")
+	}
+
+	recovered, ok = lex2.FindTerm([]byte("quick"))
+	recovered_pl = recovered.PostingList()
+
+	if !ok {
+		t.Errorf("Can't find 'quick' in index even though it shoudl be there")
+	}
+
+	if recovered_pl.Len() != orig_pl.Len() {
+		t.Errorf("That's odd")
 	}
 }
 

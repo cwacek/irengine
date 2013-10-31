@@ -334,7 +334,7 @@ func (lex *lexicon) AddPLS(newPLS *PostingListSet) {
 	lex.pl_set_cache[newPLS.Tag] = container
 	lex.lru_cache = append(lex.lru_cache, container)
 	lex.currentLoad += newPLS.Size
-	/*log.Infof("Added a PLS of size %d. Load is now %d", newPLS.Size, lex.currentLoad)*/
+	log.Debugf("Added a PLS of size %d. Load is now %d", newPLS.Size, lex.currentLoad)
 }
 
 // Retrieve the PostingList set being used by :term:
@@ -567,7 +567,7 @@ func (lex *lexicon) LoadFromDisk(dataDir string) {
 		pls       *PostingListSet
 		tag       DatastoreTag
 		files     []string
-		parsedTag int
+		parsedTag string
 		file      io.Reader
 		term_s    string
 		term      *persistent_term
@@ -599,11 +599,13 @@ func (lex *lexicon) LoadFromDisk(dataDir string) {
 		panic(&PersistenceError{e.Error()})
 	}
 
+	log.Debugf("Will load PLS from %v", files)
+
 	for i, fname := range files {
 		log.Debugf("Read %d PLS", i)
-		if parsedTag, e = strconv.Atoi(strings.TrimPrefix(fname, "pls_")); e == nil {
-			tag = DatastoreTag(parsedTag)
-		}
+		basename := filepath.Base(fname)
+		parsedTag = strings.TrimPrefix(basename, "pls_")
+		tag = DatastoreTag(parsedTag)
 
 		log.Debugf("Loading PLS with Initializer %p", lex.PLInit)
 
@@ -613,6 +615,7 @@ func (lex *lexicon) LoadFromDisk(dataDir string) {
 		pls = NewPostingListSet(tag, lex.PLInit)
 		if file, e := os.Open(fname); e == nil {
 			pls.Load(file)
+			log.Debugf("Loaded PLS: %v", pls)
 
 			/* Make sure the terms are in the radix */
 			for term_s, pl = range pls.Terms() {
@@ -632,6 +635,7 @@ func (lex *lexicon) LoadFromDisk(dataDir string) {
 			lex.AddPLS(pls)
 
 			file.Close()
+			log.Debugf("Loaded %s. Lexicon now has %d terms", fname, lex.Len())
 		}
 		lex.evict()
 	}
@@ -706,12 +710,12 @@ func (lex *lexicon) PrintDiskStats(w io.Writer) {
 
 func SingleTermIndexFromDisk(location string) (st_index *index.SingleTermIndex, e error) {
 
-	defer func() {
-		if err := recover(); err != nil {
-			st_index = nil
-			e = err.(error)
-		}
-	}()
+	/*defer func() {*/
+	/*if err := recover(); err != nil {*/
+	/*st_index = nil*/
+	/*e = err.(error)*/
+	/*}*/
+	/*}()*/
 
 	lexicon := LoadLexiconFromDisk(location)
 	st_index = new(index.SingleTermIndex)
