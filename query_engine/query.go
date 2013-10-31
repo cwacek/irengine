@@ -21,14 +21,13 @@ func (q *Query) TokenizeToChan(out chan *filereader.Token) {
 	log.Info("Created tokenizer")
 
 	for {
-		log.Infof("Going to tokenize")
 		token, ok = tokenizer.Next()
 
 		if ok != nil {
 			log.Infof("Done")
 			break
 		}
-		log.Infof("Pushing '%v' into output channel %v", token, out)
+		log.Tracef("Pushing '%v' into output channel %v", token, out)
 
 		out <- token
 	}

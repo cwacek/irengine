@@ -95,7 +95,6 @@ type SingleTermIndex struct {
 
 	lexicon Lexicon
 
-	TermCount     int
 	DocumentCount int
 
 	DocumentMap DocInfoMap
@@ -104,6 +103,10 @@ type SingleTermIndex struct {
 	inserterRunning bool
 	insertLock      *sync.RWMutex
 	shutdown        chan bool
+}
+
+func (t *SingleTermIndex) TermCount() int {
+	return t.lexicon.Len()
 }
 
 func (t *SingleTermIndex) Retrieve(text string) (LexiconTerm, bool) {
@@ -173,7 +176,6 @@ func (t *SingleTermIndex) Init(lexicon Lexicon) error {
 
 	t.lexicon = lexicon
 
-	t.TermCount = 0
 	t.DocumentCount = 0
 
 	t.DocumentMap = make(DocInfoMap)
@@ -232,14 +234,14 @@ func (t *SingleTermIndex) FilterTokens(input, output chan *filereader.Token) {
 	var token *filereader.Token
 	var ok bool
 	for {
-		log.Infof("Reading from filter chain")
+		log.Tracef("Reading from filter chain")
 
 		token, ok = <-filterChainOut.Pipe
 		if !ok {
 			return
 		}
 
-		log.Infof("Read %v", token)
+		log.Tracef("Read %v", token)
 
 		output <- token
 	}

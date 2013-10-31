@@ -87,10 +87,9 @@ func (engine *ZeroMQEngine) Start() error {
 
 		filteredTokens = engine.getDocTokens(engine.filterEnd)
 
-		log.Infof("Processing query with %v", ranker)
+		log.Infof("Processing query with %#v", ranker)
 		resultSet = ranker.ProcessQuery(
 			filteredTokens, engine.index)
-		log.Infof("Returned result set %v", resultSet)
 
 		if msg, e = json.Marshal(resultSet); e != nil {
 			panic(e)
