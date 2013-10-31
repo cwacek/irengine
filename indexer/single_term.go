@@ -336,8 +336,8 @@ func (t *SingleTermIndex) inserter() {
 		// Add 1 to the document count to make sure we count this one
 		weight := Tf_d(term, info.Id) * Idf(term, t.DocumentCount+1)
 
-		log.Debugf("Setting weight for %s in %s to %0.4f * %0.4f = %0.4f",
-			token.Text, info.HumanId, Tf_d(term, info.Id), Idf(term, t.DocumentCount), weight)
+		log.Debugf("Setting weight for %s in %s to %0.4f * %0.4f = %f",
+			token.Text, info.HumanId, Tf_d(term, info.Id), Idf(term, t.DocumentCount+1), weight)
 		if math.IsInf(weight, 0) {
 			panic("TO INFINITY AND BEYOND!")
 		}

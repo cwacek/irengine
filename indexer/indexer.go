@@ -66,6 +66,14 @@ type PostingList interface {
 	Len() int
 	Iterator() PostingListIterator
 	EntryFactory(docId filereader.DocumentId) PostingListEntry
+
+	// tell whether or not the posting list is positional
+	IsPositional() bool
+
+	/* Filter this posting list against p, returning a posting
+	 * list containing the positions for terms which occur less
+	 * that 'within' positions after those in p. */
+	FilterSequential(p PostingList, within int) PostingList
 }
 
 type PostingListIterator interface {

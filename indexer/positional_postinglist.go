@@ -1,6 +1,7 @@
 package indexer
 
 import "sort"
+import "errors"
 import "fmt"
 import "unicode"
 import "io"
@@ -18,6 +19,7 @@ var (
 		Create: func() PostingList {
 			pl := new(positional_pl)
 			pl.Length = 0
+			pl.Positional = false
 			pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
 			pl.entry_factory = NewBasicEntry
 			return pl
@@ -30,6 +32,7 @@ var (
 		Create: func() PostingList {
 			pl := new(positional_pl)
 			pl.Length = 0
+			pl.Positional = true
 			pl.list = skiplist.NewCustomMap(DocumentIdLessThan)
 			pl.entry_factory = NewPositionalEntry
 			return pl
@@ -60,7 +63,75 @@ func (it *pl_iterator) Key() int {
 type positional_pl struct {
 	list          *skiplist.SkipList
 	Length        int
+	Positional    bool
 	entry_factory func(filereader.DocumentId) PostingListEntry
+}
+
+func (pl *positional_pl) IsPositional() bool {
+	return pl.Positional
+}
+
+func (pl *positional_pl) FilterSequential(other PostingList,
+	within int) PostingList {
+
+	if !pl.Positional || !other.IsPositional() {
+		panic(errors.New("FilterSequential requires positional posting lists"))
+	}
+
+	filtered := new(positional_pl)
+	filtered.entry_factory = pl.entry_factory
+	filtered.Length = 0
+	filtered.Positional = true
+	filtered.list = skiplist.NewCustomMap(DocumentIdLessThan)
+
+	var plEntry, otherEntry, newEntry PostingListEntry
+	var found bool
+
+	for pl_iter := pl.Iterator(); pl_iter.Next(); {
+		plEntry = pl_iter.Value()
+
+		if otherEntry, found = other.GetEntry(plEntry.DocId()); !found {
+			// if the document isn't even in our filtering list,
+			// then just drop it.
+			continue
+		}
+
+		newEntry = filtered.entry_factory(plEntry.DocId())
+
+		plPos := plEntry.Positions()
+		filterPos := otherEntry.Positions()
+		fIdx := 0
+		plIdx := 0
+
+		for fIdx < len(filterPos) && plIdx < len(plPos) {
+			// If the old position is within our range in the
+			// filter, move the filter position up
+			switch {
+
+			case plPos[plIdx]+within >= filterPos[fIdx]:
+				newEntry.AddPosition(filterPos[fIdx])
+				fIdx++
+
+			case plPos[plIdx]+within < filterPos[fIdx]:
+				plIdx++
+
+			default:
+				log.Warnf("within: %d, plPos: %d @%d, filterPos: %d @%d",
+					within,
+					plPos[plIdx], plIdx, filterPos[fIdx], fIdx)
+				panic("NOT ME")
+
+			}
+		}
+
+		// If we 't actually keep any positions, store
+		// the entry.
+		if newEntry.Frequency() > 0 {
+			filtered.InsertCompleteEntry(newEntry)
+		}
+	}
+
+	return filtered
 }
 
 func (pl *positional_pl) EntryFactory(docid filereader.DocumentId) PostingListEntry {

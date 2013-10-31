@@ -143,6 +143,78 @@ func TestSingleTermIndex(t *testing.T) {
 	index.Delete()
 }
 
+func TestPostingListSerialize(t *testing.T) {
+	var index *SingleTermIndex
+	var lexicon Lexicon
+	var term LexiconTerm
+	var ok bool
+
+	lexicon = NewTrieLexicon()
+
+	index = new(SingleTermIndex)
+	index.Init(lexicon)
+	rand.Seed(0)
+
+	filterChain := filters.NewAcronymFilter()
+	filterChain = filterChain.Connect(filters.NewHyphenFilter(), false)
+	filterChain = filterChain.Connect(filters.NewLowerCaseFilter(), false)
+	index.AddFilter(filterChain)
+
+	for _, document := range TestDocuments {
+		index.Insert(document)
+	}
+	index.WaitInsert()
+
+	if term, ok = index.Retrieve("the"); !ok {
+		t.Errorf("Failed to find expected term 'the' in index")
+	}
+	the_pl := term.PostingList()
+
+	if term, ok = index.Retrieve("cdc"); !ok {
+		t.Errorf("Failed to find expected term 'cdc' in index")
+	}
+	cdc_pl := term.PostingList()
+
+	if term, ok = index.Retrieve("project"); !ok {
+		t.Errorf("Failed to find expected term 'project' in index")
+	}
+	project_pl := term.PostingList()
+
+	// Test  where it shouldn't filter
+	filtered := the_pl.FilterSequential(cdc_pl, 1)
+	expected := fmt.Sprintf("%d 13 16", RandInts[1])
+
+	if filtered.String() != expected {
+		t.Errorf("Filtered PL Mismatch. Expected '%s'. Got '%s'",
+			expected, filtered.String())
+	}
+
+	// Test where it should filter
+	filtered = cdc_pl.FilterSequential(project_pl, 1)
+	expected = fmt.Sprintf("%d 17", RandInts[1])
+
+	if filtered.String() != expected {
+		t.Errorf("Filtered PL Mismatch. Expected '%s'. Got '%s'",
+			expected, filtered.String())
+	}
+
+	// Test relatively far away terms
+	if term, ok = index.Retrieve("since"); !ok {
+		t.Errorf("Failed to find expected term 'since' in index")
+	}
+
+	since_pl := term.PostingList()
+	filtered = since_pl.FilterSequential(the_pl, 12)
+
+	expected = fmt.Sprintf("%d 12 | %d 9", RandInts[1], RandInts[0])
+
+	if filtered.String() != expected {
+		t.Errorf("Filtered PL Mismatch. Expected '%s'. Got '%s'",
+			expected, filtered.String())
+	}
+
+}
+
 func TestDocMapSerialize(t *testing.T) {
 	logging.SetupTestLogging()
 
