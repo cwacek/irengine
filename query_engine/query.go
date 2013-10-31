@@ -18,13 +18,12 @@ func (q *Query) TokenizeToChan(out chan *filereader.Token) {
 	)
 
 	tokenizer := filereader.BadXMLTokenizer_FromReader(strings.NewReader(q.Text))
-	log.Info("Created tokenizer")
+	log.Debugf("Created tokenizer")
 
 	for {
 		token, ok = tokenizer.Next()
 
 		if ok != nil {
-			log.Infof("Done")
 			break
 		}
 		log.Tracef("Pushing '%v' into output channel %v", token, out)
@@ -32,5 +31,5 @@ func (q *Query) TokenizeToChan(out chan *filereader.Token) {
 		out <- token
 	}
 	out <- &filereader.Token{Type: filereader.NullToken, DocId: 0, Position: 0, Final: true}
-	log.Infof("Done tokenizing")
+	log.Debugf("Done tokenizing")
 }

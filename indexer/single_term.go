@@ -198,7 +198,7 @@ func (t *SingleTermIndex) AddFilter(f filters.Filter) {
 	} else {
 		t.filterChain = t.filterChain.Connect(f, false)
 	}
-	log.Infof("Added %s to filterchain. Now have %s", f.Serialize(), t.filterChain)
+	log.Debugf("Added %s to filterchain. Now have %s", f.Serialize(), t.filterChain)
 
 	t.filterChain.Pull()
 }
@@ -225,7 +225,7 @@ func (t *SingleTermIndex) FilterTokens(input, output chan *filereader.Token) {
 		t.filterChain = filters.NewNullFilter()
 	}
 
-	log.Infof("Filtering tokens")
+	log.Debugf("Filtering tokens")
 	t.filterChain.Head().SetInput(&filters.FilterPipe{"input", input})
 	t.filterChain.Pull()
 

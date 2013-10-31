@@ -561,7 +561,7 @@ func (lex *lexicon) ReadMetadata(r io.Reader) {
 }
 
 func (lex *lexicon) LoadFromDisk(dataDir string) {
-	log.Criticalf("Loading from disk")
+	log.Debugf("Loading from disk")
 
 	var (
 		pls       *PostingListSet
