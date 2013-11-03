@@ -122,7 +122,7 @@ func (bm *BM25) ProcessPositional(
 		doc_info = index.DocumentMap[id]
 
 		log.Debugf("Doc: %s, Score: %0.4f", doc_info.HumanId, score)
-		responseSet.Append(&Result{doc_info.HumanId, score})
+		responseSet.Append(&Result{doc_info.HumanId, score, ""})
 	}
 
 	sort.Sort(responseSet)
@@ -206,7 +206,7 @@ func (bm *BM25) ProcessQuery(
 		doc_info = index.DocumentMap[id]
 
 		log.Debugf("Doc: %s, Score: %0.4f", doc_info.HumanId, score)
-		responseSet.Append(&Result{doc_info.HumanId, score})
+		responseSet.Append(&Result{doc_info.HumanId, score, ""})
 	}
 
 	sort.Sort(responseSet)

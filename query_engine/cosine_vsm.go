@@ -94,7 +94,7 @@ func (vsm *CosineVSM) ProcessQuery(
 
 		responseSet.Append(&Result{
 			doc_info.HumanId,
-			numerator / math.Sqrt(doc_weight*query_weight)})
+			numerator / math.Sqrt(doc_weight*query_weight), ""})
 	}
 
 	sort.Sort(responseSet)
@@ -160,7 +160,7 @@ func (cosine *CosineVSM) ProcessPositional(
 
 		responseSet.Append(&Result{
 			doc_info.HumanId,
-			numerator / math.Sqrt(doc_weight)})
+			numerator / math.Sqrt(doc_weight), ""})
 	}
 
 	sort.Sort(responseSet)

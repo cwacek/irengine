@@ -9,6 +9,8 @@ type Result struct {
 	Document string
 	// The score that document received
 	Score float64
+	// Random info
+	Info string
 }
 
 // A sorted set of results

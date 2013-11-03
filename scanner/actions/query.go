@@ -18,10 +18,11 @@ func QueryRunner() *query_action {
 type query_action struct {
 	Args
 
-	queryFile *string
-	engine    *string
-	indexPref *string
-	limit     *int
+	queryFile  *string
+	engine     *string
+	indexPref  *string
+	statistics *string
+	limit      *int
 
 	host *string
 	port *int
@@ -35,6 +36,9 @@ func (a *query_action) Name() string {
 
 func (a *query_action) DefineFlags(fs *flag.FlagSet) {
 	a.AddDefaultArgs(fs)
+
+	a.statistics = fs.String("term.statistics", "",
+		"Look up statistics for the given term. ")
 
 	a.queryFile = fs.String("queryfile", "",
 		"A file containing a bunch of queries to run in bulk")
@@ -81,6 +85,7 @@ func (a *query_action) BufferQueriesFromFile(r io.Reader) {
 			}
 
 			query = &query_engine.Query{
+				Type: query_engine.PhraseQuery,
 				Id:   q_id,
 				Text: strings.TrimSpace(strings.TrimPrefix(line, "<title> Topic: ")),
 			}
@@ -113,8 +118,6 @@ func (a *query_action) Run() {
 	var (
 		err       error
 		requester *zmq.Socket
-		asJSON    []byte
-		response  query_engine.Response
 	)
 
 	SetupLogging(*a.verbosity)
@@ -133,19 +136,75 @@ func (a *query_action) Run() {
 		os.Exit(1)
 	}
 
-	if file, err := os.Open(*a.queryFile); err == nil {
-		a.BufferQueriesFromFile(file)
-
-	} else {
-		log.Criticalf("Failed to open query file: %v", err)
-		os.Exit(1)
-	}
-
 	if requester, err = ZMQConnect(*a.host, *a.port); err != nil {
 		log.Criticalf("Failed to connect socket: %v", err)
 		return
 	}
 	defer requester.Close()
+
+	if *a.statistics != "" {
+		a.lookupStatistics(requester, *a.statistics)
+	} else {
+
+		if file, err := os.Open(*a.queryFile); err == nil {
+			a.BufferQueriesFromFile(file)
+
+			a.runBufferedQueries(requester)
+
+		} else {
+			log.Criticalf("Failed to open query file: %v", err)
+			os.Exit(1)
+		}
+	}
+}
+
+func (a *query_action) lookupStatistics(requester *zmq.Socket, term string) {
+	query := new(query_engine.Query)
+	query.Id = "stats"
+	query.Text = term
+	query.Engine = ""
+	query.IndexPref = *a.indexPref
+	query.Force = false
+	query.Type = query_engine.StatsQuery
+
+	if asJSON, err := json.Marshal(query); err == nil {
+		log.Debugf("Sending %s", asJSON)
+		requester.SendBytes(asJSON, 0)
+	} else {
+		panic(err)
+	}
+
+	var response query_engine.Response
+
+	if reply, err := requester.RecvBytes(0); err == nil {
+		log.Debugf("Received %s", reply)
+
+		err = json.Unmarshal(reply, &response)
+		switch {
+		case err != nil:
+			panic(err)
+
+		case response.Error != "":
+			log.Criticalf("Query failed: %s", response.Error)
+
+		default:
+			best := 0.0
+			fmt.Printf("Stats for %s\n", term)
+			for _, result := range response.Results {
+				if best == 0 {
+					best = result.Score
+				}
+
+				fmt.Printf("%s %0.6f %s\n", result.Document, result.Score, response.Source)
+			}
+		}
+	}
+}
+
+func (a *query_action) runBufferedQueries(requester *zmq.Socket) {
+	var asJSON []byte
+	var err error
+	var response query_engine.Response
 
 	for _, query := range a.queryBuffer {
 		query.Engine = *a.engine
@@ -163,6 +222,7 @@ func (a *query_action) Run() {
 			log.Debugf("Received %s", reply)
 
 			err = json.Unmarshal(reply, &response)
+			best := 0.0
 			switch {
 			case err != nil:
 				panic(err)

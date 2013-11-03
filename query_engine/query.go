@@ -6,12 +6,20 @@ import "strings"
 import "encoding/json"
 import "github.com/cwacek/irengine/scanner/filereader"
 
+type QueryType int
+
+const (
+	StatsQuery QueryType = iota
+	PhraseQuery
+)
+
 type Query struct {
 	Id        string
 	Text      string
 	Engine    string
 	IndexPref string
 	Force     bool
+	Type      QueryType
 }
 
 func (q *Query) Send(s *zmq.Socket) {

@@ -70,7 +70,7 @@ func (lm *DirichletQL) ProcessPositional(
 		doc_info = index.DocumentMap[id]
 
 		log.Debugf("Doc: %s, Score: %0.4f", doc_info.HumanId, score)
-		responseSet.Append(&Result{doc_info.HumanId, score})
+		responseSet.Append(&Result{doc_info.HumanId, score, ""})
 	}
 
 	sort.Sort(responseSet)
@@ -149,7 +149,7 @@ func (lm *DirichletQL) ProcessQuery(
 		doc_info = index.DocumentMap[id]
 
 		log.Debugf("Doc: %s, Score: %0.4f", doc_info.HumanId, score)
-		responseSet.Append(&Result{doc_info.HumanId, score})
+		responseSet.Append(&Result{doc_info.HumanId, score, ""})
 	}
 
 	sort.Sort(responseSet)

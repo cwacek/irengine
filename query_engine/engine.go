@@ -72,32 +72,58 @@ func (engine *ZeroMQEngine) Start() error {
 		}
 		log.Infof("Decoded %v", query)
 
-		if ranker, ok = RankingEngines[query.Engine]; !ok {
+		switch query.Type {
+		case PhraseQuery:
+			if ranker, ok = RankingEngines[query.Engine]; !ok {
 
-			if msg, e = json.Marshal(
-				ErrorResponse("Unsupported ranking engine: " + query.Engine)); e != nil {
-				panic(e)
+				if msg, e = json.Marshal(
+					ErrorResponse("Unsupported ranking engine: " + query.Engine)); e != nil {
+					panic(e)
+				}
+
+				socket.SendBytes(msg, 0)
+				continue
 			}
 
-			socket.SendBytes(msg, 0)
-			continue
+			query.TokenizeToChan(engine.filterStart)
+
+			filteredTokens = engine.getDocTokens(engine.filterEnd)
+
+			log.Infof("Processing query with %#v", ranker)
+			resultSet = ranker.ProcessQuery(
+				filteredTokens, engine.index, query.Force)
+
+		case StatsQuery:
+			resultSet = engine.LookupStats(query)
 		}
-
-		query.TokenizeToChan(engine.filterStart)
-
-		filteredTokens = engine.getDocTokens(engine.filterEnd)
-
-		log.Infof("Processing query with %#v", ranker)
-		resultSet = ranker.ProcessQuery(
-			filteredTokens, engine.index, query.Force)
 
 		if msg, e = json.Marshal(resultSet); e != nil {
 			panic(e)
 		}
 
 		socket.SendBytes(msg, 0)
+
 	}
 
+}
+
+func (engine *ZeroMQEngine) LookupStats(query Query) *Response {
+	if term, ok := engine.index.Retrieve(query.Text); !ok {
+		return ErrorResponse(query.Text + " does not exist in index.")
+	} else {
+
+		response := NewResponse()
+		response.Append(
+			&Result{"IDF", indexer.Idf(term, engine.index.DocumentCount), ""})
+		response.Append(
+			&Result{"DF", float64(indexer.Df(term)), ""})
+		response.Append(
+			&Result{"Aggregate Tf", float64(term.Tf()), ""})
+		response.Append(
+			&Result{"PostingList", 0.0, term.PostingList().String()})
+
+		return response
+	}
 }
 
 func (engine *ZeroMQEngine) Init(index *indexer.SingleTermIndex, port int) error {
