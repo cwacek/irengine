@@ -68,7 +68,7 @@ func (vsm *CosineVSM) ProcessQuery(
 		query_weight += math.Pow(float64(query_tf[q_term.Text])*1, 2.0)
 	}
 
-	if !force && avgDf < float64(index.DocumentCount)*0.05 {
+	if !force && avgDf < float64(index.DocumentCount)*0.01 {
 		return ErrorResponse(fmt.Sprintf("Avg DF %0.4f too low for index", avgDf))
 	}
 
@@ -128,6 +128,9 @@ func (cosine *CosineVSM) ProcessPositional(
 		return ErrorResponse(fmt.Sprintf("Insufficient DF [%d/%d] for positional index",
 			pl.Len(), index.DocumentCount))
 	}
+
+	//Make a fake term with the posting list
+	term = &indexer.Term{"<phrase>", -1, pl}
 
 	//Calculate the scores
 	var partial float64

@@ -23,9 +23,9 @@ func (lm *DirichletQL) ProcessPositional(
 
 	var (
 		pl                  indexer.PostingList
-		term                indexer.LexiconTerm
 		partial_score, tf_d float64
 		pl_entry            indexer.PostingListEntry
+		term                indexer.LexiconTerm
 		doc_info            *indexer.StoredDocInfo
 	)
 
@@ -40,6 +40,9 @@ func (lm *DirichletQL) ProcessPositional(
 			pl.Len(), index.DocumentCount))
 	}
 
+	//Make a fake term with the posting list
+	term = &indexer.Term{"<phrase>", -1, pl}
+
 	docScores := make(map[filereader.DocumentId]float64)
 
 	pl = term.PostingList()
@@ -48,7 +51,7 @@ func (lm *DirichletQL) ProcessPositional(
 		tf_d = float64(pl_entry.Frequency())
 		doc_info = index.DocumentMap[pl_entry.DocId()]
 
-		log.Debugf("Obtained PL Entry %v with frequency %f", pl_entry, tf_d)
+		log.Debugf("Obtained PL Entry %s with frequency %f", pl_entry.Serialize(), tf_d)
 
 		partial_score = tf_d
 		log.Debugf("Tf_d %f", tf_d)
@@ -137,7 +140,7 @@ func (lm *DirichletQL) ProcessQuery(
 		}
 	}
 
-	if !force && avgDf < float64(index.DocumentCount)*0.05 {
+	if !force && avgDf < float64(index.DocumentCount)*0.01 {
 		return ErrorResponse(fmt.Sprintf("Avg DF %0.4f too low for index", avgDf))
 	}
 

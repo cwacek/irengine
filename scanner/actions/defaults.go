@@ -115,16 +115,12 @@ func SetupLogging(verbosity int) {
 		fallthrough
 	case 1:
 		config = fmt.Sprintf(appConfig, "warn")
-		fmt.Printf("Configured logging at 'warn'\n")
 	case 2:
 		config = fmt.Sprintf(appConfig, "info")
-		fmt.Printf("Configured logging at 'info'\n")
 	case 3:
 		config = fmt.Sprintf(appConfig, "debug")
-		fmt.Printf("Configured logging at 'debug'\n")
 	default:
 		config = fmt.Sprintf(appConfig, "trace")
-		fmt.Printf("Configured logging at 'trace'\n")
 	}
 
 	logger, err := log.LoggerFromConfigAsBytes([]byte(config))
