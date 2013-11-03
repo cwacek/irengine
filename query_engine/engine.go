@@ -89,7 +89,7 @@ func (engine *ZeroMQEngine) Start() error {
 
 		log.Infof("Processing query with %#v", ranker)
 		resultSet = ranker.ProcessQuery(
-			filteredTokens, engine.index)
+			filteredTokens, engine.index, query.Force)
 
 		if msg, e = json.Marshal(resultSet); e != nil {
 			panic(e)

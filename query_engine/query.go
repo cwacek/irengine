@@ -11,6 +11,7 @@ type Query struct {
 	Text      string
 	Engine    string
 	IndexPref string
+	Force     bool
 }
 
 func (q *Query) Send(s *zmq.Socket) {
@@ -49,6 +50,7 @@ func (q *Query) TokenizeToChan(out chan *filereader.Token) {
 	tokenizer := filereader.BadXMLTokenizer_FromReader(strings.NewReader(q.Text))
 	log.Debugf("Created tokenizer")
 
+	i := 1
 	for {
 		token, ok = tokenizer.Next()
 
@@ -56,6 +58,8 @@ func (q *Query) TokenizeToChan(out chan *filereader.Token) {
 			break
 		}
 		log.Tracef("Pushing '%v' into output channel %v", token, out)
+		token.Position = i
+		i++
 
 		out <- token
 	}

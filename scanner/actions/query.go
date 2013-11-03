@@ -21,6 +21,7 @@ type query_action struct {
 	queryFile *string
 	engine    *string
 	indexPref *string
+	limit     *int
 
 	host *string
 	port *int
@@ -43,6 +44,9 @@ func (a *query_action) DefineFlags(fs *flag.FlagSet) {
     COSINE    Cosine-normalized VSM similarity
     BM25      BM25 with Sparks-weight IDF
     LM        Query-likelihood with Dirichlet Smoothing`)
+
+	a.limit = fs.Int("limit", 100,
+		"Limit the results to this many results")
 
 	a.host = fs.String("index.host", "localhost",
 		"The host running the query engine")
@@ -168,7 +172,10 @@ func (a *query_action) Run() {
 
 			default:
 				for i, result := range response.Results {
-					fmt.Printf("%s Q0 %s %d %0.6f STANDARD\n", query.Id, result.Document, i, result.Score)
+					fmt.Printf("%s Q0 %s %d %0.6f %s\n", query.Id, result.Document, i, result.Score, response.Source)
+					if i >= *a.limit {
+						break
+					}
 				}
 			}
 

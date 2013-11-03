@@ -13,5 +13,10 @@ func RegisterRankingEngine(name string, r RelevanceRanker) {
 }
 
 type RelevanceRanker interface {
-	ProcessQuery([]*filereader.Token, *indexer.SingleTermIndex) *Response
+	// Return a response for a query on a given index. If force is true, return the
+	// resultset whether or not the DF is deemed high enough.
+	ProcessQuery([]*filereader.Token, *indexer.SingleTermIndex, bool) *Response
+
+	// Same as process query, but do it for a positional index .
+	ProcessPositional([]*filereader.Token, *indexer.SingleTermIndex, bool) *Response
 }

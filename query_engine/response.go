@@ -15,6 +15,8 @@ type Result struct {
 type Response struct {
 	Results []*Result
 	Error   string
+	// The engine that actually answered
+	Source string
 }
 
 func ReceiveResponse(s *zmq.Socket) (r *Response) {
@@ -37,11 +39,11 @@ func ReceiveResponse(s *zmq.Socket) (r *Response) {
 }
 
 func ErrorResponse(msg string) *Response {
-	return &Response{nil, msg}
+	return &Response{nil, msg, ""}
 }
 
 func NewResponse() *Response {
-	return &Response{make([]*Result, 0), ""}
+	return &Response{make([]*Result, 0), "", "DEFAULT"}
 }
 
 func (r *Response) Send(s *zmq.Socket) {
