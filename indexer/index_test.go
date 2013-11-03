@@ -113,7 +113,7 @@ func TestSingleTermIndex(t *testing.T) {
 	if term, ok := index.Retrieve("since"); !ok {
 		t.Errorf("Failed to find expected term 'since' in index")
 	} else {
-		expected := math.Log10(0.5 / 2.5)
+		expected := math.Log(0.5 / 2.5)
 		if idf := Idf(term, index.DocumentCount); idf != expected {
 			t.Errorf("Failed to compute IDF. Expected %0.6f. Got %0.6f",
 				expected, idf)
@@ -128,7 +128,7 @@ func TestSingleTermIndex(t *testing.T) {
 	if term, ok := index.Retrieve("jets"); !ok {
 		t.Errorf("Failed to find expected term 'since' in index")
 	} else {
-		expected := math.Log10(1.5 / 1.5)
+		expected := math.Log(1.5 / 1.5)
 		if idf := Idf(term, index.DocumentCount); idf != expected {
 			t.Errorf("Failed to compute IDF. Expected %0.6f. Got %0.6f",
 				expected, idf)

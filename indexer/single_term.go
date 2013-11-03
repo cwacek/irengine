@@ -387,5 +387,5 @@ func Df(t LexiconTerm) int {
 
 func Idf(t LexiconTerm, totalDocCount int) float64 {
 	plLen := float64(Df(t))
-	return math.Log10((float64(totalDocCount) - plLen + 0.5) / (plLen + 0.5))
+	return math.Log((float64(totalDocCount) - plLen + 0.5) / (plLen + 0.5))
 }
