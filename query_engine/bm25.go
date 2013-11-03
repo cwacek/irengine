@@ -38,11 +38,11 @@ func FilterPositional(query_terms []*filereader.Token,
 
 		switch {
 		case pl != nil && ok:
-			log.Debug("Filtering by PostingList for '%s': %s", term.Text(), term.PostingList())
+			log.Debugf("Filtering by PostingList for '%s': %s", term.Text(), term.PostingList())
 
 			pl = pl.FilterSequential(term.PostingList(), within)
 
-			log.Debugf("After filtering within %d positions, have %s", pl.String())
+			log.Debugf("After filtering within %d positions, have %s", within, pl.String())
 
 			within = 1
 
@@ -55,7 +55,7 @@ func FilterPositional(query_terms []*filereader.Token,
 
 		default:
 			pl = term.PostingList()
-			log.Debug("Postinglist for first term: %s", pl.String())
+			log.Debugf("Postinglist for first term: %s", pl.String())
 		}
 
 	}
@@ -85,6 +85,8 @@ func (bm *BM25) ProcessPositional(
 		return ErrorResponse("Could not find phrase using positional posting list")
 	}
 
+	log.Debugf("Filtered posting list. Result: %s", pl.String())
+
 	q_term_tf := 1
 	docScores := make(map[filereader.DocumentId]float64)
 
@@ -100,7 +102,7 @@ func (bm *BM25) ProcessPositional(
 		tf_d = float64(pl_entry.Frequency())
 		doc_info = index.DocumentMap[pl_entry.DocId()]
 
-		log.Debugf("Obtained PL Entry %v with frequency %f", pl_entry, tf_d)
+		log.Debugf("Obtained PL Entry %s with frequency %f", pl_entry.Serialize(), tf_d)
 		/* Add to the numerator for each document. We'll divide later */
 		partial_score = tf_d * (bm.k1 + 1)
 		partial_score /= tf_d +
@@ -195,7 +197,7 @@ func (bm *BM25) ProcessQuery(
 		}
 	}
 
-	if !force && avgDf < float64(index.DocumentCount)*0.05 {
+	if !force && avgDf < float64(index.DocumentCount)*0.01 {
 		return ErrorResponse(fmt.Sprintf("Avg DF %0.4f too low for index", avgDf))
 	}
 

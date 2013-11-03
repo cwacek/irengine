@@ -109,6 +109,8 @@ func (pl *positional_pl) FilterSequential(other PostingList,
 			switch {
 
 			case plPos[plIdx]+within >= filterPos[fIdx]:
+				log.Debugf("Filtering posting list: Keeping position %d because it's within %d of previous term",
+					filterPos[fIdx], within)
 				newEntry.AddPosition(filterPos[fIdx])
 				fIdx++
 

@@ -137,6 +137,7 @@ func (a *query_engine_action) Run() {
 			query.Send(deployed.socket)
 
 			response = query_engine.ReceiveResponse(deployed.socket)
+			response.Source = index
 
 			if msg, isErr := response.IsError(); isErr {
 				log.Warnf("Error from %s [%s]. Moving to next engine",
@@ -144,7 +145,6 @@ func (a *query_engine_action) Run() {
 				continue
 			}
 
-			response.Source = index
 			// Break out so that we send with our current values
 			break
 
