@@ -118,7 +118,8 @@ func (a *query_engine_action) Run() {
 
 		log.Infof("Query: %v", query)
 
-		for i, index := range strings.Split(query.IndexPref, ",") {
+		prefs := strings.Split(query.IndexPref, ",")
+		for i, index := range prefs {
 			tag = strings.TrimSpace(index)
 
 			if deployed, ok = a.engineMap[tag]; !ok {
@@ -129,7 +130,7 @@ func (a *query_engine_action) Run() {
 			}
 
 			//If this is the last index, force it to answer
-			if i == len(query.IndexPref)-1 {
+			if i == len(prefs)-1 {
 				query.Force = true
 			}
 			log.Infof("Querying '%s'", tag)
