@@ -95,6 +95,9 @@ func (vsm *CosineVSM) ProcessQuery(
 		responseSet.Append(&Result{
 			doc_info.HumanId,
 			numerator / math.Sqrt(doc_weight*query_weight), ""})
+
+		// Reset document weight back to zero....!!>!>
+		doc_weight = 0
 	}
 
 	sort.Sort(responseSet)
