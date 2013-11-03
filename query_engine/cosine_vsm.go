@@ -48,20 +48,22 @@ func (vsm *CosineVSM) ProcessQuery(
 	for _, q_term = range query_terms {
 		term, ok = index.Retrieve(q_term.Text)
 		if !ok {
+			log.Debugf("Couldn't find query term %s", q_term)
 			continue
 		}
 
 		avgDf += float64(indexer.Df(term))
 
 		pl = term.PostingList()
+		log.Debugf("Retrieved Posting list for %s: %s", term.Text(), pl.String())
 		for pl_iter = pl.Iterator(); pl_iter.Next(); {
 			pl_entry = pl_iter.Value()
 
 			/* Add to the numerator for each document. We'll divide later */
-			partial = float64(pl_entry.Frequency()) *
+			partial = float64(1+math.Log(float64(pl_entry.Frequency()))) *
 				indexer.Idf(term, index.DocumentCount) *
 				float64(query_tf[q_term.Text])
-			log.Debugf("Computed dot-product partial: %0.4f", partial)
+			log.Debugf("Computed dot-product partial for %s in %d: %0.4f", term.Text, pl_entry.DocId(), partial)
 			docScores[pl_entry.DocId()] += partial
 		}
 
@@ -81,12 +83,14 @@ func (vsm *CosineVSM) ProcessQuery(
 	responseSet := NewResponse()
 	var doc_weight, term_tfidf float64
 	var doc_info *indexer.StoredDocInfo
+	var term_s string
 
 	for id, numerator := range docScores {
 
 		doc_info = index.DocumentMap[id]
 
-		for _, term_tfidf = range doc_info.TermTfIdf {
+		for term_s, term_tfidf = range doc_info.TermTfIdf {
+			log.Debugf("Found Tf-Idf weight for %s: %f", term_s, term_tfidf)
 			doc_weight += math.Pow(term_tfidf, 2.0)
 		}
 
@@ -141,7 +145,7 @@ func (cosine *CosineVSM) ProcessPositional(
 		pl_entry = pl_iter.Value()
 
 		/* Add to the numerator for each document. We'll divide later */
-		partial = float64(pl_entry.Frequency()) *
+		partial = float64(1+math.Log(float64(pl_entry.Frequency()))) *
 			indexer.Idf(term, index.DocumentCount)
 
 		log.Debugf("Computed dot-product partial: %0.4f", partial)
