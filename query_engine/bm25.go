@@ -4,6 +4,7 @@ import log "github.com/cihub/seelog"
 import "github.com/cwacek/irengine/indexer"
 import "github.com/cwacek/irengine/scanner/filereader"
 import "sort"
+import "math"
 import "fmt"
 
 type BM25 struct {
@@ -99,7 +100,7 @@ func (bm *BM25) ProcessPositional(
 
 	for pl_iter := pl.Iterator(); pl_iter.Next(); {
 		pl_entry = pl_iter.Value()
-		tf_d = float64(pl_entry.Frequency())
+		tf_d = float64(1 + math.Log(float64(pl_entry.Frequency())))
 		doc_info = index.DocumentMap[pl_entry.DocId()]
 
 		log.Debugf("Obtained PL Entry %s with frequency %f", pl_entry.Serialize(), tf_d)
@@ -178,7 +179,7 @@ func (bm *BM25) ProcessQuery(
 		pl = term.PostingList()
 		for pl_iter = pl.Iterator(); pl_iter.Next(); {
 			pl_entry = pl_iter.Value()
-			tf_d = float64(pl_entry.Frequency())
+			tf_d = float64(1 + math.Log(float64(pl_entry.Frequency())))
 			doc_info = index.DocumentMap[pl_entry.DocId()]
 
 			log.Debugf("Obtained PL Entry %v with frequency %f", pl_entry, tf_d)
