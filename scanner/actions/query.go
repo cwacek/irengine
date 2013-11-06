@@ -232,8 +232,18 @@ func (a *query_action) runBufferedQueries(requester *zmq.Socket) {
 
 			default:
 				for i, result := range response.Results {
+					if best == 0.0 {
+						best = result.Score
+					}
+
+					//Stop printing if it's really bad
+					/*if (best-result.Score)/best > 0.7 {*/
+					/*log.Debugf("Truncating results at %d because returned values are terrible", i)*/
+					/*break*/
+					/*}*/
+
 					fmt.Printf("%s Q0 %s %d %0.6f %s\n", query.Id, result.Document, i, result.Score, response.Source)
-					if i >= *a.limit {
+					if i >= *a.limit-1 {
 						break
 					}
 				}
@@ -244,4 +254,5 @@ func (a *query_action) runBufferedQueries(requester *zmq.Socket) {
 		}
 
 	}
+
 }
