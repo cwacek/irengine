@@ -83,14 +83,12 @@ func (vsm *CosineVSM) ProcessQuery(
 	responseSet := NewResponse()
 	var doc_weight, term_tfidf float64
 	var doc_info *indexer.StoredDocInfo
-	var term_s string
 
 	for id, numerator := range docScores {
 
 		doc_info = index.DocumentMap[id]
 
-		for term_s, term_tfidf = range doc_info.TermTfIdf {
-			log.Debugf("Found Tf-Idf weight for %s: %f", term_s, term_tfidf)
+		for _, term_tfidf = range doc_info.TermTfIdf {
 			doc_weight += math.Pow(term_tfidf, 2.0)
 		}
 
