@@ -311,6 +311,8 @@ func decodeEntity(entity string) (string, bool) {
 		return "<", true
 	case "&gt;":
 		return ">", true
+	case "&times;":
+		return "x", true
 
 	case "&eacute;":
 		return "\u00E9", true
@@ -330,6 +332,8 @@ func decodeEntity(entity string) (string, bool) {
 	case "&lsquo;":
 		return "'", true
 
+	case "&atilde;":
+		fallthrough
 	case "&mu;":
 		fallthrough
 	case "&para;":
