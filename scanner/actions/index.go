@@ -6,6 +6,8 @@ import log "github.com/cihub/seelog"
 import "github.com/cwacek/irengine/indexer"
 import "github.com/cwacek/irengine/indexer/constrained"
 import "os"
+import "strconv"
+import "strings"
 import "fmt"
 import "path/filepath"
 import "runtime/pprof"
@@ -29,6 +31,8 @@ type run_index_action struct {
 
 	phraseStop *float64
 	phraseLen  *int
+
+	pruning *string
 
 	cpuprofile *string
 	memprofile *string
@@ -56,12 +60,17 @@ func (a *run_index_action) DefineFlags(fs *flag.FlagSet) {
 	a.stopWordList = fs.String("index.stopwords", "",
 		"A file containing stopwords to use.")
 
+	a.pruning = fs.String("index.pruning", "none",
+		`The type of pruning to perform. Options:
+      - hard <p>    Trims the posting list for each word to top <p> documents .
+      - soft <p>    Trims the posting list to include only those with TF <p> std deviations above mean.`)
+
 	a.indexType = fs.String("index.type", "single-term",
 		`The type of index to build. Options:
-    - single-term
-    - single-term-positional
-    - phrase
-    - stemmed
+      - single-term
+      - single-term-positional
+      - phrase
+      - stemmed
     `)
 
 	a.phraseStop = fs.Float64("phrase.limit", 0.2,
@@ -71,6 +80,33 @@ func (a *run_index_action) DefineFlags(fs *flag.FlagSet) {
 
 	a.cpuprofile = fs.String("cprofile", "", "write CPU profile to file")
 	a.memprofile = fs.String("mprofile", "", "write memory profile to file")
+}
+
+func (a *run_index_action) parsePruningArg() (indexer.PostingListPruner, error) {
+
+	var pruneArgs = strings.Fields(*a.pruning)
+
+	switch pruneArgs[0] {
+	case "hard":
+		if param, err := strconv.Atoi(pruneArgs[1]); err != nil {
+			return nil, errors.New("'hard' requires integer parameter")
+		} else {
+			return &indexer.DocCountPruner{param}, nil
+		}
+
+	case "soft":
+		if param, err := strconv.ParseFloat(pruneArgs[1], 64); err != nil {
+			return nil, errors.New("'soft' requires float parameter")
+		} else {
+			return &indexer.TFPruner{param}, nil
+		}
+
+	case "none":
+		return nil, nil
+
+	default:
+		return nil, errors.New(fmt.Sprintf("Invalid pruning option '%s'", pruneArgs[0]))
+	}
 }
 
 func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
@@ -135,6 +171,7 @@ func (a *run_index_action) SetupIndex() (indexer.Indexer, error) {
 func (a *run_index_action) Run() {
 	var index indexer.Indexer
 	var err error
+	var pruner indexer.PostingListPruner
 	defer func() {
 		log.Flush()
 	}()
@@ -155,6 +192,11 @@ func (a *run_index_action) Run() {
 	walker.WalkDocuments(*a.docroot, *a.docpattern, docStream)
 
 	if index, err = a.SetupIndex(); err != nil {
+		log.Criticalf("Error creating index: %v", err)
+		return
+	}
+
+	if pruner, err = a.parsePruningArg(); err != nil {
 		log.Criticalf("Error creating index: %v", err)
 		return
 	}
@@ -200,6 +242,9 @@ func (a *run_index_action) Run() {
 		log.Criticalf("No documents matched")
 		return
 	}
+
+	// Prune the index
+	index.Prune(pruner)
 
 	log.Flush()
 	fmt.Println(index.String())

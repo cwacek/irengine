@@ -70,6 +70,10 @@ type PostingList interface {
 	// tell whether or not the posting list is positional
 	IsPositional() bool
 
+	/* Remove the entries in <ids> from the posting list.
+	 *  Return the number of entries removed. */
+	Remove(ids ...filereader.DocumentId) int
+
 	/* Filter this posting list against p, returning a posting
 	 * list containing the positions for terms which occur less
 	 * that 'within' positions after those in p. */
@@ -99,6 +103,9 @@ type Indexer interface {
 
 	// Insert a document into the index
 	Insert(t filereader.Document)
+
+	// Prune the posting lists according to some function
+	Prune(pruner PostingListPruner)
 
 	// Give the number of indexed documents
 	Len() int

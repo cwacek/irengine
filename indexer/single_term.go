@@ -105,6 +105,26 @@ type SingleTermIndex struct {
 	shutdown        chan bool
 }
 
+//Prune posting lists in the index according to the
+// supplied function.
+func (t *SingleTermIndex) Prune(pruner PostingListPruner) {
+	if pruner == nil {
+		return
+	}
+
+	var (
+		term LexiconTerm
+	)
+
+	log.Debug("Pruning index")
+
+	for _, entry := range t.lexicon.Walk() {
+		term = entry.(LexiconTerm)
+
+		pruner.Prune(term)
+	}
+}
+
 func (t *SingleTermIndex) IsPositional() bool {
 	return t.lexicon.IsPositional()
 }

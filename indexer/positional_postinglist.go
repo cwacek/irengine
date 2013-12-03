@@ -67,6 +67,19 @@ type positional_pl struct {
 	entry_factory func(filereader.DocumentId) PostingListEntry
 }
 
+func (pl *positional_pl) Remove(ids ...filereader.DocumentId) (count int) {
+	for _, id := range ids {
+		if _, deleted := pl.list.Delete(id); !deleted {
+			panic(fmt.Sprintf(
+				"Requested delete of %s, but it's not in posting list", id))
+		} else {
+			count++
+		}
+	}
+	pl.Length -= count
+	return
+}
+
 func (pl *positional_pl) IsPositional() bool {
 	return pl.Positional
 }

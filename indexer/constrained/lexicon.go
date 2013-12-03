@@ -704,7 +704,7 @@ func (lex *lexicon) dump_pls(oldPLS *PLSContainer) {
 
 func (lex *lexicon) PrintDiskStats(w io.Writer) {
 	for stat, val := range lex.stats {
-		fmt.Printf("# %s: %d\n", stat, val)
+		log.Debugf("# %s: %d\n", stat, val)
 	}
 }
 
