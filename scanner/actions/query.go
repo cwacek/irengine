@@ -22,7 +22,10 @@ type query_action struct {
 	engine     *string
 	indexPref  *string
 	statistics *string
-	limit      *int
+
+	queryThreshold  *float64
+	thresholdRanker *string
+	limit           *int
 
 	host *string
 	port *int
@@ -58,6 +61,9 @@ func (a *query_action) DefineFlags(fs *flag.FlagSet) {
 	a.indexPref = fs.String("index.pref", "", `
   A comma separated list specifying the indices that
   should be used, in order of preference.`)
+
+	a.queryThreshold = fs.Float64("query.thresh", 1.0,
+		`Run the query using this percentage of the query terms`)
 
 	a.port = fs.Int("index.port", 10800,
 		"The port on which the query engine can be found")
@@ -209,6 +215,17 @@ func (a *query_action) runBufferedQueries(requester *zmq.Socket) {
 	for _, query := range a.queryBuffer {
 		query.Engine = *a.engine
 		query.IndexPref = *a.indexPref
+		query.QueryThresh = *a.queryThreshold
+
+		/*switch strings.ToLower(*a.thresholdRanker) {*/
+		/*case "tf-idf": */
+		/*query.QueryThreshRanker = query_engine.TfIdfThreshold*/
+		/*case "tf":*/
+		/*query.QueryThreshRanker = query_engine.TfThreshold*/
+		/*default:*/
+		/*log.Criticalf("Unrecognized ranker option '%s'", *a.thresholdRanker)*/
+		/*return*/
+		/*}*/
 
 		if asJSON, err = json.Marshal(query); err == nil {
 			log.Debugf("Sending %s", asJSON)
@@ -235,12 +252,6 @@ func (a *query_action) runBufferedQueries(requester *zmq.Socket) {
 					if best == 0.0 {
 						best = result.Score
 					}
-
-					//Stop printing if it's really bad
-					/*if (best-result.Score)/best > 0.7 {*/
-					/*log.Debugf("Truncating results at %d because returned values are terrible", i)*/
-					/*break*/
-					/*}*/
 
 					fmt.Printf("%s Q0 %s %d %0.6f %s\n", query.Id, result.Document, i, result.Score, response.Source)
 					if i >= *a.limit-1 {

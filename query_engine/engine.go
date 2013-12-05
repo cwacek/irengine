@@ -39,14 +39,15 @@ func (engine *ZeroMQEngine) watch_for_exit() {
 
 func (engine *ZeroMQEngine) Start() error {
 	var (
-		msg            []byte
-		e              error
-		ok             bool
-		socket         *zmq.Socket
-		query          Query
-		resultSet      *Response
-		filteredTokens []*filereader.Token
-		ranker         RelevanceRanker
+		msg                    []byte
+		e                      error
+		ok                     bool
+		socket                 *zmq.Socket
+		query                  Query
+		resultSet              *Response
+		filteredTokens         []*filereader.Token
+		thresholdedQueryTokens [][]*filereader.Token
+		ranker                 RelevanceRanker
 	)
 
 	if socket, e = zmq.NewSocket(zmq.REP); e != nil {
@@ -89,9 +90,24 @@ func (engine *ZeroMQEngine) Start() error {
 
 			filteredTokens = engine.getDocTokens(engine.filterEnd)
 
+			if query.QueryThresh < 1.0 {
+				thresholdedQueryTokens = ThresholdQueryTerms(
+					filteredTokens, query.QueryThresh, engine.index)
+			}
+
 			log.Infof("Processing query with %#v", ranker)
-			resultSet = ranker.ProcessQuery(
-				filteredTokens, engine.index, query.Force)
+			resultSet = new(Response)
+			for _, queryTermSet := range thresholdedQueryTokens {
+				resultSet.Extend(ranker.ProcessQuery(
+					queryTermSet, engine.index, query.Force))
+
+				if resultSet.Len() > 100 {
+					//If we have the number of documents we want without
+					// processing more, return
+					break
+				}
+
+			}
 
 		case StatsQuery:
 			resultSet = engine.LookupStats(query)
@@ -104,7 +120,6 @@ func (engine *ZeroMQEngine) Start() error {
 		socket.SendBytes(msg, 0)
 
 	}
-
 }
 
 func (engine *ZeroMQEngine) LookupStats(query Query) *Response {

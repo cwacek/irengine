@@ -13,13 +13,22 @@ const (
 	PhraseQuery
 )
 
+type ThresholdRankerType int
+
+const (
+	TfThreshold = iota
+	TfIdfThreshold
+)
+
 type Query struct {
-	Id        string
-	Text      string
-	Engine    string
-	IndexPref string
-	Force     bool
-	Type      QueryType
+	Id                string
+	Text              string
+	Engine            string
+	IndexPref         string
+	Force             bool
+	QueryThresh       float64
+	QueryThreshRanker ThresholdRankerType
+	Type              QueryType
 }
 
 func (q *Query) Send(s *zmq.Socket) {

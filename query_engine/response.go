@@ -69,6 +69,10 @@ func (r *Response) Append(result *Result) {
 	r.Results = append(r.Results, result)
 }
 
+func (r *Response) Extend(result *Response) {
+	r.Results = append(r.Results, result.Results...)
+}
+
 func (r Response) Len() int {
 	return len(r.Results)
 }
