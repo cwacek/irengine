@@ -58,6 +58,10 @@ func (a *query_engine_action) DefineFlags(fs *flag.FlagSet) {
 // Load the index at path into our index set labeled as tag
 func (a *query_engine_action) LoadEngine(tag, path string, port int) {
 
+	if path == "" {
+		return
+	}
+
 	index, err := constrained.SingleTermIndexFromDisk(path)
 
 	if err != nil {
