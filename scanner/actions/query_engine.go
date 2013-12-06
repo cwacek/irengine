@@ -147,6 +147,8 @@ func (a *query_engine_action) Run() {
 				log.Warnf("Error from %s [%s]. Moving to next engine",
 					tag, msg)
 				continue
+			} else {
+				log.Infof("%s returned %d results", tag, len(response.Results))
 			}
 
 			// Break out so that we send with our current values
