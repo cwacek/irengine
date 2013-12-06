@@ -31,7 +31,7 @@ func (s idf_sortable_tokens) Less(i, j int) bool {
 	}
 
 	doccount := s.index.DocumentCount
-	if indexer.Idf(a, doccount) < indexer.Idf(b, doccount) {
+	if indexer.Idf(a, doccount) > indexer.Idf(b, doccount) {
 		return true
 	} else {
 		return false

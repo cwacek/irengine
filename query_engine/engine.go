@@ -93,14 +93,24 @@ func (engine *ZeroMQEngine) Start() error {
 			if query.QueryThresh < 1.0 {
 				thresholdedQueryTokens = ThresholdQueryTerms(
 					filteredTokens, query.QueryThresh, engine.index)
+			} else {
+				thresholdedQueryTokens = make([][]*filereader.Token, 1)
+				thresholdedQueryTokens[0] = filteredTokens
 			}
 
-			log.Infof("Processing query with %#v", ranker)
+			log.Infof("Processing %d thresholded queries with %#v",
+				len(thresholdedQueryTokens), ranker)
+
 			resultSet = new(Response)
 			for _, queryTermSet := range thresholdedQueryTokens {
-				resultSet.Extend(ranker.ProcessQuery(
-					queryTermSet, engine.index, query.Force))
+				log.Infof("Querying with %v", queryTermSet)
+				results := ranker.ProcessQuery(
+					queryTermSet, engine.index, query.Force)
+				log.Infof("Adding %d results to response", len(results.Results))
+				resultSet.ExtendUnique(results)
+				log.Infof("Response now had %d docs", len(resultSet.Results))
 
+				break
 				if resultSet.Len() > 100 {
 					//If we have the number of documents we want without
 					// processing more, return
