@@ -21,6 +21,19 @@ type Response struct {
 	Source string
 }
 
+func (r *Result) Equal(o *Result) bool {
+	switch {
+	case r.Document != o.Document:
+		return false
+	case r.Score != o.Score:
+		return false
+	case r.Info != o.Info:
+		return false
+	default:
+		return true
+	}
+}
+
 func ReceiveResponse(s *zmq.Socket) (r *Response) {
 	var msg []byte
 	var e error
@@ -29,12 +42,16 @@ func ReceiveResponse(s *zmq.Socket) (r *Response) {
 		panic(e)
 	}
 
-	log.Debugf("Received %s", msg)
-
 	r = new(Response)
 	if e = json.Unmarshal(msg, r); e != nil {
 		log.Criticalf("Error decoding JSON: %v", e)
 		panic(e)
+	}
+
+	if r.Results == nil && r.Error == "EMPTYRESULTS" {
+		// Decode as empty result set
+		r.Results = make([]*Result, 0)
+		r.Error = ""
 	}
 
 	return r
@@ -51,6 +68,10 @@ func NewResponse() *Response {
 func (r *Response) Send(s *zmq.Socket) {
 	var msg []byte
 	var e error
+
+	if len(r.Results) == 0 {
+		r.Error = "EMPTYRESULTS"
+	}
 
 	if msg, e = json.Marshal(r); e != nil {
 		panic(e)
@@ -71,6 +92,20 @@ func (r *Response) Append(result *Result) {
 
 func (r *Response) Extend(result *Response) {
 	r.Results = append(r.Results, result.Results...)
+}
+
+func (r *Response) ExtendUnique(result *Response) {
+	existing := make(map[string]bool)
+	for _, res := range r.Results {
+		existing[res.Document] = true
+	}
+
+	/* Add the ones that aren't already in another dataset */
+	for _, res := range result.Results {
+		if _, found := existing[res.Document]; !found {
+			r.Results = append(r.Results, res)
+		}
+	}
 }
 
 func (r Response) Len() int {
